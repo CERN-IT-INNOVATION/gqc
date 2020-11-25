@@ -1,7 +1,7 @@
 def varname(index):
 	jet_feats = ["pt","eta","phi","en","px","py","pz","btag"]
 	jet_nvars = len(jet_feats);
-	num_jets = 10;
+	num_jets = 7;
 	
 	met_feats = ["phi","pt","px","py"]
 	met_nvars = len(met_feats);

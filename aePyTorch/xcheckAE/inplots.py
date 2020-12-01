@@ -1,4 +1,5 @@
 import numpy as np
+<<<<<<< HEAD
 import matplotlib.pyplot as plt
 #Unormalised vars:
 bkg = np.load('/data/vabelis/disk/sample_preprocessing/input_ae/raw_bkg.npy')
@@ -13,3 +14,7 @@ for i in range(bkg.shape[1]):
     plt.savefig(f'inputPlots/plot{i}.png')
     plt.clf()
 
+=======
+
+sig = np.load(
+>>>>>>> 90b709607e4840aeaa3e71938811950e924090f3

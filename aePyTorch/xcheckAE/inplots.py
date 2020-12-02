@@ -1,5 +1,7 @@
 import numpy as np
 import matplotlib.pyplot as plt
+import os
+from varname import *
 #Unormalised vars:
 bkg = np.load('/data/vabelis/disk/sample_preprocessing/input_ae/raw_bkg.npy')
 sig = np.load('/data/vabelis/disk/sample_preprocessing/input_ae/raw_sig.npy')
@@ -12,5 +14,5 @@ for i in range(bkg.shape[1]):
     plt.xlabel(f'feature {i}')
     plt.ylabel('Entries/Bin')
     plt.legend()
-    plt.savefig(outdir+f'/plot{i}.png')
+    plt.savefig(outdir+'/plot'+varname(i)+'.png')
     plt.clf()

@@ -1,0 +1,8 @@
+The *.npy files with the processed data should be placed in this folder.
+
+To train a particular model with some parameters, import autoTF and execute
+the "compute" function. The first argument should be the number of layers of
+the model OR a list with the size of each of the layers. The remaining
+arguments are optional (see autoTF.py for more info).
+
+The "compute" function takes care of everything.

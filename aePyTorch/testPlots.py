@@ -92,17 +92,17 @@ with torch.no_grad():
 		ratioPlotter(inpSig.numpy()[:,i],outputSig.numpy()[:,i],i,classLabel='Signal')#Plot Signal distributions
 		ratioPlotter(inpBkg.numpy()[:,i],outputBkg.numpy()[:,i],i,classLabel='Background')#Plot Background distributions
 		
-		plt.savefig(savedModel+'ratioPlot'+str(i)+'.png')
+		plt.savefig(savedModel+'ratioPlot'+varname(i)+'.png')
 		plt.clf()
 	
 	samples = ['Sig','Bkg']
+	loaders = [testLoaderSig,testLoaderBkg]
 	colors = ['b','r']
 	labels = ['Test on Sig.', 'Test on Bkg.']
 	##MSE loss in test samples.
 	for j,isample in enumerate(samples):
-		test_loader = torch.utils.data.DataLoader(testDataset,batch_size = batch_size,shuffle = False)
 		meanLossBatch = []
-		for i,batch_features in enumerate(test_loader):
+		for i,batch_features in enumerate(loaders[j]):
 			batch_features = batch_features.view(-1, feature_size).to(device)
 			output,_ = model(batch_features)
 			loss = criterion(output,batch_features)

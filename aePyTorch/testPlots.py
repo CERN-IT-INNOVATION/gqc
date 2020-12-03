@@ -27,15 +27,15 @@ with warnings.catch_warnings():
 infiles = ('../input_ae/trainingTestingDataSig.npy','../input_ae/trainingTestingDataBkg.npy')
 
 parser = argparse.ArgumentParser()
+parser = argparse.ArgumentParser(formatter_class=argparse.ArgumentDefaultsHelpFormatter)#include defaults in -h
 parser.add_argument("--input", type=str, default=infiles, nargs =2, help="path to datasets")
 parser.add_argument('--model',type=str,required=True,help='path to saved model')
 parser.add_argument('--layers',type=int,required=True,nargs='+',help='type hidden layers nodes corresponding to saved model')
 parser.add_argument('--batch',type=int,default=128,help='batch size for testing histogram plot')
-parser.add_argument('--fileFlag',type=str,default='',help='fileFlag to concatenate to filetag')
 
 args = parser.parse_args()
 infiles = args.input
-(savedModel,layers,batch_size,fileFlag) = (args.model,args.layers,args.batch,args.fileFlag)
+(savedModel,layers,batch_size) = (args.model,args.layers,args.batch)
 
 _,validDataset,testDataset = splitDatasets(infiles)#Load test samples
 testLoader = torch.utils.data.DataLoader(arrayData(testDataset),batch_size = testDataset.shape[0],shuffle = False)
@@ -78,8 +78,10 @@ with torch.no_grad():
 	latentOutputSig,latentOutputBkg = latentOutputSig.numpy(), latentOutputBkg.numpy()
 	
 	for i in range(latentOutputSig.shape[1]):
-		hSig,_,_ = plt.hist(x=latentOutputSig[:,i],density=1,bins=60,alpha=0.6,histtype='step',linewidth=2.5,label='Sig')
-		hBkg,_,_ = plt.hist(x=latentOutputBkg[:,i],density=1,bins=60,alpha=0.6,histtype='step',linewidth=2.5,label='Bkg')
+		xmax = max(np.amax(latentOutputSig[:,i]),np.amax(latentOutputBkg[:,i]))
+		xmin = min(np.amin(latentOutputSig[:,i]),np.amin(latentOutputBkg[:,i]))
+		hSig,_,_ = plt.hist(x=latentOutputSig[:,i],density=1,range = (xmin,xmax),bins=50,alpha=0.6,histtype='step',linewidth=2.5,label='Sig')
+		hBkg,_,_ = plt.hist(x=latentOutputBkg[:,i],density=1,range = (xmin,xmax),bins=50,alpha=0.6,histtype='step',linewidth=2.5,label='Bkg')
 		plt.legend()
 		plt.xlabel(f'Latent feature {i}')
 		plt.savefig(savedModel+'latentPlot'+str(i)+'.png')
@@ -102,7 +104,7 @@ with torch.no_grad():
 		meanLossBatch = []
 		for i,batch_features in enumerate(test_loader):
 			batch_features = batch_features.view(-1, feature_size).to(device)
-			output = model(batch_features)
+			output,_ = model(batch_features)
 			loss = criterion(output,batch_features)
 			meanLossBatch.append(loss.item())
 		
@@ -111,4 +113,4 @@ with torch.no_grad():
 		plt.xlabel('MSE per Batch')
 		plt.title('MSE per batch, Ntest={}.'.format(len(testDataset)))
 	plt.legend()
-	plt.savefig(savedModel+'/testloss'+filetag)
+	plt.savefig(savedModel+'/testlossHist.png')

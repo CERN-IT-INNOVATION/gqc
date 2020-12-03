@@ -1,6 +1,7 @@
 # Reshape events to have a single row feature vector per event to feed the AE
 import numpy as np
-import os 
+import os
+import argparse
 #From format.py to map array indeces to the variable names
 '''
 #Variables: 
@@ -25,22 +26,27 @@ def reduce_events(infile,nend,outdir=None,nstart = 0):
 	#Save indices for the cuts and apply numpy [indices] to all arrays
 	ievents = []
 	n = 0
+	ind = np.logical_and(evdesc[:,2]>=2,evdesc[:,1]>=4)
+	
+	#event selection:
+	redJet = jets[ind]
+	redMet = met[ind]
+	redLeps = leps[ind]
+	#Old less efficient way:
+	'''
 	for i,iev in enumerate(evdesc):
 		if iev[2]>=2 and iev[1]>=4: #njet>=4 and nbtag>=2 requirement
 			ievents.append(i)
 			n+=1
+	print('Same:',np.array_equal(jets,redJet),np.array_equal(met,redMet),np.array_equal(leps,redLeps))
+	'''
 	print('Input file:',infile)
-	print('Applying EVENT SELECTION: n_events = {} ---> {}'.format(jets.shape[0],n))
+	print('Applying EVENT SELECTION: n_events = {} ---> {}'.format(jets.shape[0],redJet.shape[0]))
 	
-	#Filtered events:
-	jets = jets[ievents]
-	met = met[ievents]
-	leps = leps[ievents]
-
+	
 	print('Requested number of samples (events): {}'.format(nend-nstart))
-	#jets_red, met_red, leps_red = jets[nstart:nend], met[nstart:nend], leps[nstart:nend]
 	
-	return (jets[nstart:nend], met[nstart:nend], leps[nstart:nend])
+	return (redJet[nstart:nend], redMet[nstart:nend], redLeps[nstart:nend])
 	#Debug printing:
 	#print('Reduced from: jet/met/leps shapes=',jets.shape,met.shape,leps.shape)
 	#print('--->',jets_red.shape,met_red.shape,leps_red.shape)
@@ -62,10 +68,13 @@ def reshape_events(a):#single array or tuple(needed below for hstacking) of arra
 
 
 if __name__ == "__main__":
-	
+		
+	parser = argparse.ArgumentParser(formatter_class=argparse.ArgumentDefaultsHelpFormatter)#include defaults in -h
+	parser.add_argument("--nevents", type=int, default=int(2.4e5), help="number of samples to be generate. train+valid.+test")
+	args = parser.parse_args()
 	print('------Generating Training & Testing dataset------')
 	samples = ['sig','bkg']
-	n = int(1.2e5)#Will keep 20k for testing dataset
+	n = args.nevents
 	for isample in samples:
 		print("_____"+isample+" samples_____")
 		
@@ -86,7 +95,6 @@ if __name__ == "__main__":
 		feat_out = np.hstack(feat_resh)
 		print("Finalized data vectors to AE: (events,features) = {}".format(feat_out.shape))
 		outdir = 'input_ae/'
-		
 		if not(os.path.exists(outdir)):
 			os.mkdir(outdir)
 		

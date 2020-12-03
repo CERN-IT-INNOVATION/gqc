@@ -53,7 +53,7 @@ model = AE(node_number = layers).to(device)
 
 print('Training...')
 optimizer = optim.Adam(model.parameters(), lr=learning_rate)#create an optimizer object
-betas=(0.9, 0.999)
+#betas=(0.9, 0.999) #play with the decay of the learning rate for better results
 criterion = nn.MSELoss(reduction= 'mean')#mean-squared error loss
 
 print('Batch size ='+str(batch_size)+', learning_rate='+str(learning_rate)+', layers='+str(model.node_number))
@@ -62,7 +62,7 @@ print('Batch size ='+str(batch_size)+', learning_rate='+str(learning_rate)+', la
 layersTag = '.'.join(str(inode) for inode in model.node_number[1:])#Don't print input size
 filetag = 'L'+layersTag+'B'+str(batch_size)+'Lr{:.0e}'.format(learning_rate)+fileFlag#only have 1 decimal lr
 
-outdir = '/data/vabelis/disk/sample_preprocessing/autoencoder/trained_models/'+filetag+'/'
+outdir = '/data/vabelis/disk/sample_preprocessing/aePyTorch/trained_models/'+filetag+'/'
 if not(os.path.exists(outdir)):
 	os.mkdir(outdir)
 

@@ -13,7 +13,7 @@ from varname import *
 def ratioPlotter(inp,out,ifeature,classLabel = ''):
 	hIn,binsIn, patchIn = plt.hist(x=inp,bins=60,range =(0,1),alpha=0.5,histtype='step',linewidth=2.5,label='Original '+classLabel)
 	hOut,binsOut, patch = plt.hist(x=out,bins=60,range = (0,1),alpha=0.5,histtype='step',linewidth = 2.5,label='Output '+classLabel)
-	plt.xlabel('feature '+str(ifeature))
+	plt.xlabel('feature '+varname(i))
 	plt.ylabel('Entries/Bin')
 	plt.title('Distribution of '+varname(i))
 	plt.legend()
@@ -96,6 +96,8 @@ with torch.no_grad():
 		plt.clf()
 	
 	samples = ['Sig','Bkg']
+	testLoaderSig = torch.utils.data.DataLoader(arrayData(testDataSig),batch_size = batch_size,shuffle = False)
+	testLoaderBkg = torch.utils.data.DataLoader(arrayData(testDataBkg),batch_size = batch_size,shuffle = False)
 	loaders = [testLoaderSig,testLoaderBkg]
 	colors = ['b','r']
 	labels = ['Test on Sig.', 'Test on Bkg.']
@@ -113,4 +115,5 @@ with torch.no_grad():
 		plt.xlabel('MSE per Batch')
 		plt.title('MSE per batch, Ntest={}.'.format(len(testDataset)))
 	plt.legend()
-	plt.savefig(savedModel+'/testlossHist.png')
+
+

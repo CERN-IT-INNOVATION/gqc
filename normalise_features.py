@@ -9,34 +9,27 @@ import numpy as np
         lep_feats = ["pt","eta","phi","en","px","py","pz"],
         evdesc_feats = ["nleps", "njets", "nbtags", "nMatch_wq", "nMatch_tb", "nMatch_hb"],#Don't fit in AE!!
 '''
-def normalizer(infile,outfile):
-	dataset = np.load(infile)
-	dataset_normed = np.zeros_like(dataset.T)
+#Simultaneous trsf for sig and bkg:
+#Using numpy broadcasting without for loops for efficiency (loops run in C and not in Python)
+def normalizer(bkgfile,sigfile,outfile):
+	bkg,sig = np.load(bkgfile), np.load(sigfile)
+	maxBkg,maxSig = np.amax(bkg,axis=0),np.amax(sig,axis=0)
+	minBkg,minSig = np.amin(sig,axis=0),np.amin(bkg,axis=0)
 	
-	for i,ifeature in enumerate(dataset.T):#to iterate over the columns i.e. features and not events
-		xmax, xmin = np.amax(ifeature), np.amin(ifeature)
-		if xmax != xmin:#not cause NaN's
-			ifeature_normed = (ifeature-xmin)/(xmax-xmin)
-			dataset_normed[i] = ifeature_normed
-		else:
-			dataset_normed[i] = ifeature
-	#for i,ifeature in enumerate(dataset_normed):
-	#	print(ifeature)
-	np.save(outfile,dataset_normed.T)
-	return None
+	#Find global max/min for each feature for sig AND bkg
+	#-->Correct normalization to retain the shapes of the pdfs
+	maxTot = np.amax(np.vstack((maxBkg,maxSig)),axis=0)
+	minTot = np.amin(np.vstack((minBkg,minSig)),axis=0)
+	
+	bkgNorm = (bkg-minTot)/(maxTot-minTot)
+	sigNorm = (sig-minTot)/(maxTot-minTot)
+	np.save(outfile+'Bkg.npy',bkgNorm)
+	np.save(outfile+'Sig.npy',sigNorm)
 
-#Training
-print('Training + Testing Samples')
-infile = "input_ae/raw_sig.npy"
-outfile = "input_ae/trainingTestingDataSig.npy"
-print('Normalizing: '+infile)
-normalizer(infile,outfile)
+infileBkg,infileSig = 'input_ae/raw_bkg.npy','input_ae/raw_sig.npy'
+print('Normalizing: '+infileBkg+' & '+infileSig)
+outfile = "input_ae/trainingTestingData"
+normalizer(infileBkg,infileSig,outfile)
 print('Output: ',outfile)
 
-infile = "input_ae/raw_bkg.npy"
-outfile = "input_ae/trainingTestingDataBkg.npy"
-print('Normalizing: '+infile)
-normalizer(infile,outfile)
-print('Output: ',outfile)
 
-#

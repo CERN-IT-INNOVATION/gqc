@@ -3,16 +3,25 @@ import matplotlib.pyplot as plt
 import os
 from varname import *
 #Unormalised vars:
-bkg = np.load('/data/vabelis/disk/sample_preprocessing/input_ae/raw_bkg.npy')
-sig = np.load('/data/vabelis/disk/sample_preprocessing/input_ae/raw_sig.npy')
-outdir = 'pdfsIn'
+#bkg = np.load('/data/vabelis/disk/sample_preprocessing/input_ae/raw_bkg.npy')
+#sig = np.load('/data/vabelis/disk/sample_preprocessing/input_ae/raw_sig.npy')
+#Normed:
+#bkg = np.load('/data/vabelis/disk/sample_preprocessing/input_ae/trainingTestingDataBkg.npy')
+#sig = np.load('/data/vabelis/disk/sample_preprocessing/input_ae/trainingTestingDataSig.npy')
+#New norm:
+bkg = np.load('/data/vabelis/disk/sample_preprocessing/input_ae/trainingTestingDataBkgNew.npy')
+sig = np.load('/data/vabelis/disk/sample_preprocessing/input_ae/trainingTestingDataSigNew.npy')
+
+outdir = 'pdfsInNormNew'
 if not(os.path.exists(outdir)):
 	os.mkdir(outdir)
 for i in range(bkg.shape[1]):
 	fig, ax = plt.subplots()
 	pdfSig,pdfBkg = sig[:,i], bkg[:,i]
-	ax.hist(x=pdfSig,density=1,bins=60,alpha=0.6,histtype='step',linewidth=2.5,label='Sig')
-	ax.hist(x=pdfBkg,density=1,bins=60,alpha=0.6,color ='r',histtype='step',linewidth=2.5,label='Bkg')
+	xmax = max(np.amax(pdfSig),np.amax(pdfBkg))
+	xmin = min(np.amin(pdfSig),np.amin(pdfBkg))
+	ax.hist(x=pdfSig,density=1,bins=60,range=(xmin,xmax),alpha=0.6,histtype='step',linewidth=2.5,label='Sig')
+	ax.hist(x=pdfBkg,density=1,bins=60,range=(xmin,xmax),alpha=0.6,color ='r',histtype='step',linewidth=2.5,label='Bkg')
 	plt.xlabel('feature '+varname(i))
 	plt.ylabel('Entries/Bin')
 	plt.legend()

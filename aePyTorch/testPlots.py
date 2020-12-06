@@ -96,8 +96,8 @@ with torch.no_grad():
 		plt.clf()
 	
 	samples = ['Sig','Bkg']
-	testLoaderSig = torch.utils.data.DataLoader(arrayData(testDataSig),batch_size = batch_size,shuffle = False)
-	testLoaderBkg = torch.utils.data.DataLoader(arrayData(testDataBkg),batch_size = batch_size,shuffle = False)
+	testLoaderSig = torch.utils.data.DataLoader(arrayData(testDataSig),batch_size = batch_size,shuffle = True)
+	testLoaderBkg = torch.utils.data.DataLoader(arrayData(testDataBkg),batch_size = batch_size,shuffle = True)
 	loaders = [testLoaderSig,testLoaderBkg]
 	colors = ['b','r']
 	labels = ['Test on Sig.', 'Test on Bkg.']
@@ -109,11 +109,12 @@ with torch.no_grad():
 			output,_ = model(batch_features)
 			loss = criterion(output,batch_features)
 			meanLossBatch.append(loss.item())
-		
+		#Fix the range and normalization of the below hist:
 		plt.hist(meanLossBatch,bins=20,density = 0,color=colors[j],alpha=0.5, ec='black',label=labels[j])
 		plt.ylabel('Entries/Bin')
 		plt.xlabel('MSE per Batch')
 		plt.title('MSE per batch, Ntest={}.'.format(len(testDataset)))
 	plt.legend()
+	plt.savefig(savedModel+'testLossHist.png',dpi=300)
 
 

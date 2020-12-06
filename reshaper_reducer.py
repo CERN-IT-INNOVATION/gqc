@@ -70,7 +70,7 @@ def reshape_events(a):#single array or tuple(needed below for hstacking) of arra
 if __name__ == "__main__":
 		
 	parser = argparse.ArgumentParser(formatter_class=argparse.ArgumentDefaultsHelpFormatter)#include defaults in -h
-	parser.add_argument("--nevents", type=int, default=int(2.4e5), help="number of samples to be generate. train+valid.+test")
+	parser.add_argument("--nevents", type=int, default=int(3.6e5), help="number of samples to be generate. train+valid.+test")
 	args = parser.parse_args()
 	print('------Generating Training & Testing dataset------')
 	samples = ['sig','bkg']

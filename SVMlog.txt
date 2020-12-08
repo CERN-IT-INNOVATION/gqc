@@ -1,0 +1,9 @@
+Non-encoded data (3.6e5)
+Success ratio bkg:  0.6491666666666667
+Success ratio sig:  0.681
+Success ratio:  0.6650833333333334
+
+TF-encoded data (3.6e5)
+Success ratio bkg: 0.6214333333333333
+Success ratio sig: 0.6207666666666667
+Success ratio: 0.6211

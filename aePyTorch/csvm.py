@@ -60,7 +60,7 @@ tlabels = np.array(testLabels)
 cls = svm.SVC()
 cls.fit(train, labels);
 
-res = cls.predict(test)
+res = np.array(cls.predict(test))
 
-print("Success ratio: ", sum(test == tlabels) / len(test))
+print("Success ratio: ", sum(res == tlabels) / len(res))
 

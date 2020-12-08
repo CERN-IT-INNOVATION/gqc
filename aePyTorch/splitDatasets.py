@@ -12,7 +12,7 @@ def splitDatasets(infiles: tuple,separate = False, labels = False):
 	if dataArraySig.shape[0] != dataArrayBkg.shape[0]:
 	        raise Exception('nSig != nBkg! Events should be equal')
 	ntot = int(dataArraySig.shape[0])
-	ntrain, nvalid, ntest = int(ntot*0.4), int(0.3*ntot), int(0.3*ntot)
+	ntrain, nvalid, ntest = int(ntot*0.8), int(0.1*ntot), int(0.1*ntot)
 	print('splitDatasets.py:')
 	print('xcheck: (ntrain={}, nvalid={}, ntest={})x2; for Sig & Bkg'.format(ntrain,nvalid,ntest))
 	
@@ -23,7 +23,7 @@ def splitDatasets(infiles: tuple,separate = False, labels = False):
 	validLabels = ['s'] * nvalid + ['b'] * nvalid;
 	#Testing samples:
 	testDataset = np.vstack((dataArraySig[(ntrain+nvalid):],dataArrayBkg[(ntrain+nvalid):]))
-	testLabels = ['s'] * (ntot - (ntrain + nvalid)) + ['b'] * (ntot - (ntrain + nvalid))
+	testLabels = ['s'] * ntest + ['b'] * ntest;
 	
 	print(f'features = {dataset.shape[1]}, ntrain={dataset.shape[0]}, nvalid={validDataset.shape[0]}, ntest={testDataset.shape[0]});Sig + Bkg samples\n')
 	if np.array_equal(validDataset,testDataset):

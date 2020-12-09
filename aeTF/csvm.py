@@ -4,7 +4,7 @@ from tensorflow.keras.models import load_model
 
 from sklearn import svm
 
-model = "D-7-30-16-F2"
+model = "E-7-40-16-F3"
 
 ae = load_model("out/" + model + "/model")
 X_tr = np.array(ae.encoder(vali_bkg));

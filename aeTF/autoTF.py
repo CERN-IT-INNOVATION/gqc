@@ -50,7 +50,7 @@ class Autoencoder(Model):
 
 
 
-def compute(nlayers, verb = 0, name = "C", lsdim = 16, ep = 30, factor = None):
+def compute(nlayers, verb = 0, name = "E", lsdim = 16, ep = 30, factor = None):
 	
 	bs = 32
 	lr = 1e-3

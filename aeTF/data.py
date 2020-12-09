@@ -4,8 +4,8 @@ bkg = np.load("trainingTestingDataBkg.npy")
 sig = np.load("trainingTestingDataSig.npy")
 
 nval = int(min(bkg.shape[0], sig.shape[0]))
-limval1 = int(np.floor(nval * 10 / 12))
-limval2 = int(np.floor(nval * 11 / 12))
+limval1 = int(np.floor(nval * 0.8))
+limval2 = int(np.floor(nval * 0.9))
 
 train_bkg = bkg[0:limval1]
 train_sig = sig[0:limval1]

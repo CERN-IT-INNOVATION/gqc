@@ -1,0 +1,16 @@
+Keeping only the best. Very bad ones are just deleted.
+
+L64.52.44.32.24.16B64Lr1e-03: Min. Validation loss = 0.000990
+L64.44.32.24.16B64Lr2e-03: Min. Validation loss = 0.000808
+L64.44.32.24.16B64Lr1e-03: Min. Validation loss = 0.000957
+L64.54.44.32.24.16B64Lr2e-03Deeper: Min. Validation loss = 0.000770
+L64.52.44.32.24.16B128Lr3e-03: Min. Validation loss = 0.000734
+L64.54.44.32.24.16B32Lr8e-04: Min. Validation loss = 0.000885
+L64.52.44.32.24.16B128Lr3e-03MoreData: Min. Validation loss = 0.000605
+L64.52.44.32.24.16B128Lr2e-03: Min. Validation loss = 0.000635
+L64.52.44.32.24.16B128Lr3e-03MoreDataNewNorm: Min. Validation loss = 0.000448
+L64.52.44.32.24.16B256Lr1e-02MeanSigma: Min. Validation loss = 0.225310
+L64.52.44.32.24.16B128Lr3e-03MeanSigma: Min. Validation loss = 0.179163
+L38.32.24.20.16.8B128Lr3e-03: Min. Validation loss = 0.009319
+L38.32.28.24.20.16B128Lr3e-03: Min. Validation loss = 0.001213
+L38.32.26.20.16.8B256Lr1e-02: Min. Validation loss = 0.009373

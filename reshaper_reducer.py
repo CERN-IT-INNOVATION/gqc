@@ -22,7 +22,22 @@ def reduce_events(infile,nend,outdir=None,nstart = 0):
 	met = np.load(infile+'met.npy')
 	leps = np.load(infile+'leps.npy')
 	evdesc = np.load(infile+'evdesc.npy')
+	print('Input file:',infile)
 	
+	#Eliminate px,py,pz features:
+	jetElim = [4,5,6]
+	metElim = [2,3]
+	lepsElim = [4,5,6]
+	print('jets:',jets.shape)
+	print('met:',met.shape)
+	print('leps:',leps.shape)
+	print('\nRemoving px,py,pz:\n')
+	jets = np.delete(jets,jetElim,axis=2)
+	met = np.delete(met[:],metElim,axis=1)
+	leps = np.delete(leps,lepsElim,axis=2)
+	print('jets:',jets.shape)
+	print('met:',met.shape)
+	print('leps:',leps.shape)
 	#Save indices for the cuts and apply numpy [indices] to all arrays
 	ievents = []
 	n = 0
@@ -40,18 +55,12 @@ def reduce_events(infile,nend,outdir=None,nstart = 0):
 			n+=1
 	print('Same:',np.array_equal(jets,redJet),np.array_equal(met,redMet),np.array_equal(leps,redLeps))
 	'''
-	print('Input file:',infile)
-	print('Applying EVENT SELECTION: n_events = {} ---> {}'.format(jets.shape[0],redJet.shape[0]))
+	print('\nApplying EVENT SELECTION: n_events = {} ---> {}\n'.format(jets.shape[0],redJet.shape[0]))
 	
 	
 	print('Requested number of samples (events): {}'.format(nend-nstart))
 	
 	return (redJet[nstart:nend], redMet[nstart:nend], redLeps[nstart:nend])
-	#Debug printing:
-	#print('Reduced from: jet/met/leps shapes=',jets.shape,met.shape,leps.shape)
-	#print('--->',jets_red.shape,met_red.shape,leps_red.shape)
-	
-	#return (jets_red, met_red, leps_red, evdesc)
 
 def reshape_events(a):#single array or tuple(needed below for hstacking) of arrays as input
 #using -1 here instead of shape[1]*shape[2] e.g. 3d Jet array -> 2d Jet array
@@ -65,18 +74,17 @@ def reshape_events(a):#single array or tuple(needed below for hstacking) of arra
 		a_r = a.reshape(a.shape[0],-1)
 		return a_r
 
-
-
 if __name__ == "__main__":
 		
 	parser = argparse.ArgumentParser(formatter_class=argparse.ArgumentDefaultsHelpFormatter)#include defaults in -h
 	parser.add_argument("--nevents", type=int, default=int(3.6e5), help="number of samples to be generate. train+valid.+test")
+	parser.add_argument("--fileFlag",type=str,default='', help="Output file flag")
 	args = parser.parse_args()
 	print('------Generating Training & Testing dataset------')
 	samples = ['sig','bkg']
 	n = args.nevents
 	for isample in samples:
-		print("_____"+isample+" samples_____")
+		print("\n_____"+isample+" samples_____")
 		
 		(jets,met,leps) = reduce_events(infile=isample+'_npy_sample/',nend=n)	
 		feat_in = (jets,met,leps)
@@ -97,5 +105,4 @@ if __name__ == "__main__":
 		outdir = 'input_ae/'
 		if not(os.path.exists(outdir)):
 			os.mkdir(outdir)
-		
-		np.save(outdir+"/raw_"+isample+".npy",feat_out)
+		np.save(outdir+"/raw_"+isample+args.fileFlag+".npy",feat_out)

@@ -4,7 +4,7 @@ from aePyTorch.splitDatasets import *
 
 #Load the test dataset of the autoencoder and split it to training,validation and testing datasets for the qml
 infiles = ('input_ae/trainingTestingDataSig.npy','input_ae/trainingTestingDataBkg.npy')
-trainSigAE, trainBkgAE, validSigAE, validBkgAE, testSigAE,testBkgAE = splitDatasets(infiles,separate=True)
+trainSigAE, trainBkgAE, validSigAE, validBkgAE, testSigAE,testBkgAE = splitDatasets(infiles,separate=True, not_all = False)
 
 ntot_test = int(testSigAE.shape[0])
 ntot_train = int(trainSigAE.shape[0])

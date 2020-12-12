@@ -18,7 +18,7 @@ def splitDatasets(infiles: tuple,separate = False, labels = False, not_all = Tru
 	
 	#Training samples:
 	dataset = np.vstack((dataArraySig[:ntrain],dataArrayBkg[:ntrain]))
-	labels = ['s'] * ntrain + ['b'] * ntrain;
+	trainLabels = ['s'] * ntrain + ['b'] * ntrain;
 	#Validation samples:
 	validDataset = np.vstack((dataArraySig[ntrain:(ntrain+nvalid)],dataArrayBkg[ntrain:(ntrain+nvalid)]))
 	validLabels = ['s'] * nvalid + ['b'] * nvalid;
@@ -40,7 +40,7 @@ def splitDatasets(infiles: tuple,separate = False, labels = False, not_all = Tru
 			return testSigDataset, testBkgDataset
 
 	if labels:
-		return dataset, validDataset, testDataset, labels, validLabels, testLabels
+		return dataset, validDataset, testDataset, trainLabels, validLabels, testLabels
 	else:
 		return dataset, validDataset, testDataset
 

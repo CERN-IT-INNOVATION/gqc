@@ -34,7 +34,7 @@ def splitDatasets(infiles: tuple,separate = False, labels = False, not_all = Tru
 		testSigDataset,testBkgDataset = np.vsplit(testDataset,2)
 		trainSigDataset, trainBkgDataset = np.vsplit(dataset, 2)
 		validSigDataset, validBkgDataset = np.vsplit(validDataset, 2)
-		if !not_all:
+		if not not_all:
 			return trainSigDataset, trainBkgDataset, validSigDataset, validBkgDataset, testSigDataset,testBkgDataset
 		else:
 			return testSigDataset, testBkgDataset

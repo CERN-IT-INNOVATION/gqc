@@ -2,7 +2,7 @@ import numpy as np
 
 #Gets the full dataset and splits it into training, validation and test datasets
 #returns numpy arrays
-def splitDatasets(infiles: tuple,separate = False, labels = False):
+def splitDatasets(infiles: tuple,separate = False, labels = False, not_all = True):
 	#separate: flag to return Bkg and Sig seperately. Used for the test samples and pdf plots.
 	#(Sig,Bkg) file
 	dataArraySig = np.load(infiles[0])
@@ -34,7 +34,10 @@ def splitDatasets(infiles: tuple,separate = False, labels = False):
 		testSigDataset,testBkgDataset = np.vsplit(testDataset,2)
 		trainSigDataset, trainBkgDataset = np.vsplit(dataset, 2)
 		validSigDataset, validBkgDataset = np.vsplit(validDataset, 2)
-		return trainSigDataset, trainBkgDataset, validSigDataset, validBkgDataset, testSigDataset,testBkgDataset
+		if !not_all:
+			return trainSigDataset, trainBkgDataset, validSigDataset, validBkgDataset, testSigDataset,testBkgDataset
+		else:
+			return testSigDataset, testBkgDataset
 
 	if labels:
 		return dataset, validDataset, testDataset, labels, validLabels, testLabels

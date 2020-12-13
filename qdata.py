@@ -12,7 +12,8 @@ ntot_valid = int(validSigAE.shape[0])
 if ntot_test != testBkgAE.shape[0] or ntot_train != trainSigAE.shape[0] or ntot_valid != validSigAE.shape[0]:
 	raise Exception('nSig != nBkg!!! Events should be equal')
 
-ntrain, nvalid, ntest = int(ntot_test*0.1), int(0.1*ntot_test), int(0.1*ntot_test)
+# TODO Check if variable coefficients is defined.
+ntrain, nvalid, ntest = int(ntot_train*0.0005), int(0.002*ntot_valid), int(0.002*ntot_test)
 print(f'Loaded data for Quantum classifier: ntrain = {ntrain}, nvalid = {nvalid}, ntest = {ntest} ')
 
 train = np.vstack((trainSigAE[:ntrain],trainBkgAE[:ntrain]))
@@ -23,9 +24,9 @@ validation = np.vstack((validSigAE[:nvalid],validBkgAE[:nvalid]))
 validation_labels = ['s'] * nvalid + ['b'] * nvalid;
 validation_dict = {'s': validSigAE[:ntrain], 'b': validBkgAE[:ntrain]}
 
-
 test = np.vstack((testSigAE[:ntest],testBkgAE[:ntest]))
 test_labels = ['s'] * ntest + ['b'] * ntest;
+test_dict = {'s': testSigAE[:ntest], 'b': testBkgAE[:ntest]}
 
 if np.array_equal(validation,test):
 	raise Exception('Validation and Testing datasets are the same!')

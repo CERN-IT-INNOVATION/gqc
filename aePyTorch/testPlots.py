@@ -25,12 +25,13 @@ with warnings.catch_warnings():
 	device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 infiles = ('../input_ae/trainingTestingDataSig.npy','../input_ae/trainingTestingDataBkg.npy')
+defaultlayers = [64, 52, 44, 32, 24, 16]
 
 parser = argparse.ArgumentParser()
 parser = argparse.ArgumentParser(formatter_class=argparse.ArgumentDefaultsHelpFormatter)#include defaults in -h
 parser.add_argument("--input", type=str, default=infiles, nargs =2, help="path to datasets")
 parser.add_argument('--model',type=str,required=True,help='path to saved model')
-parser.add_argument('--layers',type=int,required=True,nargs='+',help='type hidden layers nodes corresponding to saved model')
+parser.add_argument('--layers',type=int,default=defaultlayers,nargs='+',help='type hidden layers nodes corresponding to saved model')
 parser.add_argument('--batch',type=int,default=128,help='batch size for testing histogram plot')
 
 args = parser.parse_args()
@@ -54,6 +55,9 @@ criterion = nn.MSELoss(reduction= 'mean')
 testDataSig, testDataBkg = splitDatasets(infiles,separate=True)
 testLoaderSig = torch.utils.data.DataLoader(arrayData(testDataSig),batch_size = testDataSig.shape[0],shuffle = False)
 testLoaderBkg = torch.utils.data.DataLoader(arrayData(testDataBkg),batch_size = testDataBkg.shape[0],shuffle = False)
+def mape(output,target,epsilon=1e-4):
+	loss = torch.mean(torch.abs((output-target)/(target+epsilon)))
+	return loss
 
 #Latent pdf's & input-vs-output pdf's:
 with torch.no_grad():
@@ -67,6 +71,12 @@ with torch.no_grad():
 	inp = dataIter.next()
 	output, latentOutput = model(inp.float())
 	print('Validation sample MSE:',criterion(output,inp).item())
+	
+	dataIter = iter(testLoader)
+	criterion = mape
+	inp = dataIter.next()
+	output, latentOutput = model(inp.float())
+	print('Test sample MAPE:',criterion(output,inp).item())
 	
 	#Latent pdf's:
 	dataIter = iter(testLoaderSig)
@@ -116,5 +126,4 @@ with torch.no_grad():
 		plt.title('MSE per batch, Ntest={}.'.format(len(testDataset)))
 	plt.legend()
 	plt.savefig(savedModel+'testLossHist.png',dpi=300)
-
 

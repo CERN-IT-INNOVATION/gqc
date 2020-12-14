@@ -20,12 +20,14 @@ with warnings.catch_warnings():
 	warnings.simplefilter("ignore")
 	device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 print('Using device:',device)
+
 infiles = ('../input_ae/trainingTestingDataSig.npy','../input_ae/trainingTestingDataBkg.npy')
+defaultlayers = [64, 52, 44, 32, 24, 16]
 
 parser = argparse.ArgumentParser(formatter_class=argparse.ArgumentDefaultsHelpFormatter)#include defaults in -h
 parser.add_argument("--input", type=str, default=infiles, nargs =2, help="path to datasets")
 parser.add_argument('--lr',type=float,default=2e-03,help='learning rate')
-parser.add_argument('--layers',type=int,default=[64,44,32,24,16],nargs='+',help='type hidden layers node number')
+parser.add_argument('--layers',type=int,default=defaultlayers,nargs='+',help='type hidden layers node number')
 parser.add_argument('--batch',type=int,default=64,help='batch size')
 parser.add_argument('--epochs',type=int,default=85,help='number of training epochs')
 parser.add_argument('--fileFlag',type=str,default='',help='fileFlag to concatenate to filetag')

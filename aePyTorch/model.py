@@ -18,15 +18,19 @@ class AE(nn.Module):
 		self.node_number = node_number
 		
 		self.encoderLayers = []
+		#self.encoderLayers.append(nn.BatchNorm1d(node_number[0]))
+		#self.encoderLayers.append(nn.InstanceNorm1d(node_number[0]))
 		for i,inodes in enumerate(node_number):
 			if dropout == True:
 				if i != 0:
 					prob=0.2
 					self.encoderLayers.append(nn.Dropout(p=prob))
 			self.encoderLayers.append(nn.Linear(node_number[i],node_number[i+1]))
-			self.encoderLayers.append(nn.ELU(True))
 			if i == len(node_number)-2: #break when i+1 is final index
+				#self.encoderLayers.append(nn.Softmax())
+				self.encoderLayers.append(nn.Sigmoid())
 				break	
+			self.encoderLayers.append(nn.ELU(True))
 		self.encoder = nn.Sequential(*self.encoderLayers)
 		
 		self.decoderLayers = []
@@ -40,6 +44,7 @@ class AE(nn.Module):
 				break
 			self.decoderLayers.append(nn.ELU(True))
 		self.decoderLayers.append(nn.Sigmoid())
+		#self.decoderLayers.append(nn.ELU(True))
 		self.decoder = nn.Sequential(*self.decoderLayers)
 		
 	def forward(self, x):

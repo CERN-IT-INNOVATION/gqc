@@ -1,7 +1,7 @@
 import numpy as np
 import warnings
 import torch
-from model import * #Load custom model
+from aePyTorch.model import * #Load custom model
 
 with warnings.catch_warnings():
 	warnings.simplefilter("ignore")

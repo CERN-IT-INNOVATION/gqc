@@ -13,7 +13,7 @@ if ntot_test != testBkgAE.shape[0] or ntot_train != trainSigAE.shape[0] or ntot_
 	raise Exception('nSig != nBkg!!! Events should be equal')
 
 # TODO Check if variable coefficients is defined.
-ntrain, nvalid, ntest = int(ntot_train*0.0005), int(0.002*ntot_valid), int(0.002*ntot_test)
+ntrain, nvalid, ntest = int(ntot_train*0.0002), int(0.002*ntot_valid), int(0.002*ntot_test)
 print(f'Loaded data for Quantum classifier: ntrain = {ntrain}, nvalid = {nvalid}, ntest = {ntest} ')
 
 train = np.vstack((trainSigAE[:ntrain],trainBkgAE[:ntrain]))
@@ -22,7 +22,7 @@ train_dict = {'s': trainSigAE[:ntrain], 'b': trainBkgAE[:ntrain]}
 
 validation = np.vstack((validSigAE[:nvalid],validBkgAE[:nvalid]))
 validation_labels = ['s'] * nvalid + ['b'] * nvalid;
-validation_dict = {'s': validSigAE[:ntrain], 'b': validBkgAE[:ntrain]}
+validation_dict = {'s': validSigAE[:nvalid], 'b': validBkgAE[:nvalid]}
 
 test = np.vstack((testSigAE[:ntest],testBkgAE[:ntest]))
 test_labels = ['s'] * ntest + ['b'] * ntest;

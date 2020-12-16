@@ -3,10 +3,11 @@ import warnings
 import torch
 from aePyTorch.model import * #Load custom model
 
-with warnings.catch_warnings():
-	warnings.simplefilter("ignore")
-	device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-
+#with warnings.catch_warnings():
+#	warnings.simplefilter("ignore")
+#	device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+#FIXME: If run on a GPU an error in Pytorch is raised that some part of the compution is loaded on cpu while some part is on gpu. Find source of error.
+device='cpu'
 def encode_array(data,savedModel,layers):
 	dataLoader = torch.utils.data.DataLoader(arrayData(data),batch_size = data.shape[0],shuffle = False)
 

@@ -1,6 +1,7 @@
 import numpy as np
 from aePyTorch.model import *
 from aePyTorch.splitDatasets import *
+from aePyTorch.encode import *
 
 #Load the test dataset of the autoencoder and split it to training,validation and testing datasets for the qml
 infiles = ('input_ae/trainingTestingDataSig.npy','input_ae/trainingTestingDataBkg.npy')
@@ -13,7 +14,7 @@ if ntot_test != testBkgAE.shape[0] or ntot_train != trainSigAE.shape[0] or ntot_
 	raise Exception('nSig != nBkg!!! Events should be equal')
 
 # TODO Check if variable coefficients is defined.
-ntrain, nvalid, ntest = int(ntot_train*0.0005), int(0.002*ntot_valid), int(0.002*ntot_test)
+ntrain, nvalid, ntest = int(ntot_train*0.0002), int(0.002*ntot_valid), int(0.002*ntot_test)
 print(f'Loaded data for Quantum classifier: ntrain = {ntrain}, nvalid = {nvalid}, ntest = {ntest} ')
 
 train = np.vstack((trainSigAE[:ntrain],trainBkgAE[:ntrain]))

@@ -6,8 +6,10 @@ from aePyTorch.model import * #Load custom model
 #with warnings.catch_warnings():
 #	warnings.simplefilter("ignore")
 #	device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-#FIXME: If run on a GPU an error in Pytorch is raised that some part of the compution is loaded on cpu while some part is on gpu. Find source of error.
-device='cpu'
+#print(device)
+#FIXME: Locally on Vasilis' laptop running on GPU gave cannot allocate memory error, even though device was loaded properly.
+device = torch.device
+device = 'cpu'
 def encode_array(data,savedModel,layers):
 	dataLoader = torch.utils.data.DataLoader(arrayData(data),batch_size = data.shape[0],shuffle = False)
 
@@ -17,9 +19,9 @@ def encode_array(data,savedModel,layers):
 
 	with torch.no_grad():
 		dataIter = iter(dataLoader)
-		inp = dataIter.next()
+		inp = dataIter.next().to(device)
 		_, output = model(inp.float())
-		return np.array(output);
+		return output.cpu().numpy()
 
 def encode(data,savedModel,layers):
 	if (isinstance(data, dict)):

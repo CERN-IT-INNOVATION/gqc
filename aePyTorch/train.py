@@ -1,6 +1,7 @@
 import torch
 #Train function:
 def train(train_loader,valid_loader,model,criterion,optimizer,epochs,device,outdir):
+	print('Training...')
 	lossTrainValues = []
 	lossValidValues = []
 	minValid = 99999

@@ -1,6 +1,6 @@
 import matplotlib.pyplot as plt
 import numpy as np
-import os
+import os,sys
 import torch
 import torch.nn as nn
 import torch.optim as optim
@@ -52,9 +52,7 @@ train_loader = torch.utils.data.DataLoader(dataset,batch_size = args.batch,shuff
 valid_loader = torch.utils.data.DataLoader(validDataset,batch_size = validation_size,shuffle = True)
 
 model = AE(node_number = layers).to(device)
-print(model)
 
-print('Training...')
 optimizer = optim.Adam(model.parameters(), lr=learning_rate)#create an optimizer object
 #betas=(0.9, 0.999) #play with the decay of the learning rate for better results
 #Mean Absolute Percentage Error:
@@ -74,6 +72,13 @@ filetag = 'L'+layersTag+'B'+str(batch_size)+'Lr{:.0e}'.format(learning_rate)+fil
 outdir = './trained_models/'+filetag+'/'
 if not(os.path.exists(outdir)):
 	os.mkdir(outdir)
+
+#Print model architecture in output file:
+with open(outdir+'modelArchitecture.txt', 'w') as f:
+	original_stdout = sys.stdout
+	sys.stdout = f # Change the standard output to the file we created.
+	print(model)
+	sys.stdout = original_stdout # Reset the standard output to its original value
 
 #Call training function:
 lossTrainValues,lossValidValues,minValid = train(train_loader,valid_loader,model,criterion,optimizer,epochs,device,outdir)

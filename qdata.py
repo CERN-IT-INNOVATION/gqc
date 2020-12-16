@@ -23,7 +23,7 @@ train_dict = {'s': trainSigAE[:ntrain], 'b': trainBkgAE[:ntrain]}
 
 validation = np.vstack((validSigAE[:nvalid],validBkgAE[:nvalid]))
 validation_labels = ['s'] * nvalid + ['b'] * nvalid;
-validation_dict = {'s': validSigAE[:ntrain], 'b': validBkgAE[:ntrain]}
+validation_dict = {'s': validSigAE[:nvalid], 'b': validBkgAE[:nvalid]}
 
 test = np.vstack((testSigAE[:ntest],testBkgAE[:ntest]))
 test_labels = ['s'] * ntest + ['b'] * ntest;

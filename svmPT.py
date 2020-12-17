@@ -1,19 +1,14 @@
 import numpy as np
-import warnings
 import torch
-from model import * #Load custom model
-from splitDatasets import *
+from splitDatasets import splitDatasets
 import argparse, time
 from sklearn import svm
-from encode import *
+from encodePT import encode
 
 start_time = time.time()
-with warnings.catch_warnings():
-	warnings.simplefilter("ignore")
-	device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 infiles = ('../input_ae/trainingTestingDataSig.npy','../input_ae/trainingTestingDataBkg.npy')
-savedModel = "trained_models/L64.52.44.32.24.16B128Lr3e-03MoreDataNewNorm/"
+savedModel = "trained_models/L64.52.44.32.24.16B128Lr3e-03SigmoidLatent/"
 defaultlayers = [64, 52, 44, 32, 24, 16]
 
 parser = argparse.ArgumentParser()
@@ -52,5 +47,5 @@ res = np.array(cls.predict(test))
 print("Success ratio: ", sum(res == tlabels) / len(res))
 
 end_time = time.time()
-print(f"Execution Time {end_time-start_time}")
+print(f"Execution Time {end_time-start_time} s or {(end_time-start_time)/60} min.")
 

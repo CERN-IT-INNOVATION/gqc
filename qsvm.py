@@ -4,8 +4,8 @@ from qiskit.aqua import QuantumInstance
 from qiskit.aqua.algorithms import QSVM
 import numpy as np
 import qdata
-from aePyTorch.encode import encode#, device
-import torch, time, sys
+from encodePT import encode#, device
+import torch, time, sys, argparse
 
 start_time = time.time()
 

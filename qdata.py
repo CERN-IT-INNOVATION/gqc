@@ -13,20 +13,20 @@ ntot_valid = int(validSigAE.shape[0])
 if ntot_test != testBkgAE.shape[0] or ntot_train != trainSigAE.shape[0] or ntot_valid != validSigAE.shape[0]:
 	raise Exception('nSig != nBkg!!! Events should be equal')
 
-# TODO Check if variable coefficients is defined.
-ntrain, nvalid, ntest = int(ntot_train*0.0002), int(0.002*ntot_valid), int(0.002*ntot_test)
+# TODO: Define global var to define the ntrain etc samples from the script importing this module.
+ntrain, nvalid, ntest = int(ntot_train*0.001), int(0.004*ntot_valid), int(0.004*ntot_test)
 print(f'Loaded data for Quantum classifier: ntrain = {ntrain}, nvalid = {nvalid}, ntest = {ntest} ')
 
 train = np.vstack((trainSigAE[:ntrain],trainBkgAE[:ntrain]))
-train_labels = ['s'] * ntrain + ['b'] * ntrain;
+train_labels = np.array(['s'] * ntrain + ['b'] * ntrain)
 train_dict = {'s': trainSigAE[:ntrain], 'b': trainBkgAE[:ntrain]}
 
 validation = np.vstack((validSigAE[:nvalid],validBkgAE[:nvalid]))
-validation_labels = ['s'] * nvalid + ['b'] * nvalid;
+validation_labels = np.array(['s'] * nvalid + ['b'] * nvalid)
 validation_dict = {'s': validSigAE[:nvalid], 'b': validBkgAE[:nvalid]}
 
 test = np.vstack((testSigAE[:ntest],testBkgAE[:ntest]))
-test_labels = ['s'] * ntest + ['b'] * ntest;
+test_labels = np.array(['s'] * ntest + ['b'] * ntest)
 test_dict = {'s': testSigAE[:ntest], 'b': testBkgAE[:ntest]}
 
 if np.array_equal(validation,test):

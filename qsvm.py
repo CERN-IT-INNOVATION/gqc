@@ -9,16 +9,28 @@ import torch, time, sys
 
 start_time = time.time()
 
-feature_dim = 4 #TODO should it be named feature_dim or qubits?
-feature_map = RawFeatureVector(2**feature_dim)#TODO:Use stateVectorCircuit check if can input that in qsvm class
-savedModel = "aePyTorch/trained_models/L64.52.44.32.24.16B128Lr3e-03SigmoidLatent/"#TODO: argparse
-defaultlayers = [67,64, 52, 44, 32, 24, 16]
+savedModel = "aePyTorch/trained_models/L64.52.44.32.24.16B128Lr3e-03SigmoidLatent/"
+defaultlayers = [64, 52, 44, 32, 24, 16]
+
+parser = argparse.ArgumentParser()
+parser = argparse.ArgumentParser(formatter_class=argparse.ArgumentDefaultsHelpFormatter)#include defaults in -h
+parser.add_argument('--model',type=str,default=savedModel,help='path to saved model')
+parser.add_argument('--layers',type=int,default=defaultlayers,nargs='+',help='type hidden layers nodes corresponding to saved model')
+
+args = parser.parse_args()
+infiles = args.input
+(savedModel,layers) = (args.model,args.layers)
+
+layers.insert(0,qdata.train.shape[1]) #insert number of input nodes = feature_size
 
 trainTest = torch.Tensor(qdata.train)
-train = encode(trainTest,savedModel,defaultlayers)
+train = encode(trainTest,savedModel,layers)
 labels = qdata.train_labels
 
 labels = np.where(labels =='s',1,0)
+
+feature_dim = 4 #TODO should it be named feature_dim or qubits?
+feature_map = RawFeatureVector(2**feature_dim)#TODO:Use stateVectorCircuit check if can input that in qsvm class
 
 #backend = Aer.get_backend('statevector_simulator')
 backend = Aer.get_backend('qasm_simulator')
@@ -38,7 +50,7 @@ end_time = time.time()
 
 with open('QSVMlog.txt', 'a+') as f:
 	original_stdout = sys.stdout
-	sys.stdout = f # Change the standard output to the file we created.
+	sys.stdout = f
 	print('\n-------------------------------------------')
 	print('Autoencoder model:', savedModel)
 	print(f'ntrain = {len(train)}, ntest = blah')

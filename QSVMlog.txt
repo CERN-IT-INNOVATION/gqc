@@ -1,0 +1,16 @@
+Autoencoder model: aePyTorch/trained_models/L64.52.44.32.24.16B128Lr3e-03SigmoidLatent/
+ntrain = 576, ntest = blah
+Quantum Instance: 
+Qiskit Terra version: 0.16.1
+Backend: 'qasm_simulator (AerProvider)', with following setting:
+{'basis_gates': ['u1', 'u2', 'u3', 'u', 'p', 'r', 'rx', 'ry', 'rz', 'id', 'x', 'y', 'z', 'h', 's', 'sdg', 'sx', 't', 'tdg', 'swap', 'cx', 'cy', 'cz', 'csx', 'cp', 'cu1', 'cu2', 'cu3', 'rxx', 'ryy', 'rzz', 'rzx', 'ccx', 'cswap', 'mcx', 'mcy', 'mcz', 'mcsx', 'mcp', 'mcu1', 'mcu2', 'mcu3', 'mcrx', 'mcry', 'mcrz', 'mcr', 'mcswap', 'unitary', 'diagonal', 'multiplexer', 'initialize', 'kraus', 'roerror', 'delay'], 'coupling_map': None}
+{'initial_layout': None, 'seed_transpiler': None, 'optimization_level': None}
+RunConfig(max_credits=10, shots=1024)
+{'timeout': None}
+{}
+{}
+Measurement mitigation: None
+
+Execution Time 7064.304168701172 s or 117.7384028116862 min.
+Accuracy: 0.5729166666666666 
+

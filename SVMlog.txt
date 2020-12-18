@@ -12,3 +12,13 @@ PT-encoded data
 0.6181. L64.52.44.32.24.16B128Lr3e-03 
 0.6085. L64.52.44.32.24.16B128Lr3e-03SigmoidLatent
 0.61990 L64.52.44.32.24.16B128Lr3e-03 #FIXME: debug, why different results with encode()
+
+More tests/benchmarks:
+-------------------------------------------
+Autoencoder model: aePyTorch/trained_models/L64.52.44.32.24.16B128Lr3e-03SigmoidLatent/
+ntrain = 576, ntest = 288
+
+Execution Time 0.049457550048828125 s or 0.0008242925008138021 min.
+Accuracy: 0.5520833333333334
+-------------------------------------------
+

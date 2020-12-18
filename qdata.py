@@ -1,7 +1,5 @@
 import numpy as np
-from aePyTorch.model import *
-from aePyTorch.splitDatasets import *
-from aePyTorch.encode import *
+from aePyTorch.splitDatasets import splitDatasets
 
 #Load the test dataset of the autoencoder and split it to training,validation and testing datasets for the qml
 infiles = ('input_ae/trainingTestingDataSig.npy','input_ae/trainingTestingDataBkg.npy')

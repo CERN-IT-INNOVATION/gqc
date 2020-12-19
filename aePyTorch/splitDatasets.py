@@ -18,13 +18,13 @@ def splitDatasets(infiles: tuple,separate = False, labels = False, not_all = Tru
 	
 	#Training samples:
 	dataset = np.vstack((dataArraySig[:ntrain],dataArrayBkg[:ntrain]))
-	trainLabels = ['s'] * ntrain + ['b'] * ntrain;
+	trainLabels = ['s'] * ntrain + ['b'] * ntrain
 	#Validation samples:
 	validDataset = np.vstack((dataArraySig[ntrain:(ntrain+nvalid)],dataArrayBkg[ntrain:(ntrain+nvalid)]))
-	validLabels = ['s'] * nvalid + ['b'] * nvalid;
+	validLabels = ['s'] * nvalid + ['b'] * nvalid
 	#Testing samples:
 	testDataset = np.vstack((dataArraySig[(ntrain+nvalid):],dataArrayBkg[(ntrain+nvalid):]))
-	testLabels = ['s'] * ntest + ['b'] * ntest;
+	testLabels = ['s'] * ntest + ['b'] * ntest
 	
 	print(f'features = {dataset.shape[1]}, ntrain={dataset.shape[0]}, nvalid={validDataset.shape[0]}, ntest={testDataset.shape[0]});Sig + Bkg samples\n')
 	if np.array_equal(validDataset,testDataset):

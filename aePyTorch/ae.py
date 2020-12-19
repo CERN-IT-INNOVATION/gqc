@@ -1,13 +1,11 @@
 import matplotlib.pyplot as plt
 import numpy as np
-import os,sys
-import torch
+import os,sys,torch, torchvision
 import torch.nn as nn
 import torch.optim as optim
-import torchvision
-from model import * 
-from train import *
-from splitDatasets import *
+from model import tensorData,AE
+from train import train
+from splitDatasets import splitDatasets
 import warnings #Supress GPU not existing warnings
 import argparse
 
@@ -35,7 +33,6 @@ parser.add_argument('--fileFlag',type=str,default='',help='fileFlag to concatena
 args = parser.parse_args()
 infiles = args.input
 (learning_rate,layers,batch_size,epochs,fileFlag) = (args.lr,args.layers,args.batch,args.epochs,args.fileFlag)
-#print(learning_rate,layers,batch_size,epochs,fileFlag) 
 
 #Sig+Bkg training with shuffle
 dataset, validDataset,_ = splitDatasets(infiles)
@@ -45,8 +42,8 @@ layers.insert(0,feature_size)#insert at the beginning of the list the input dim.
 validation_size = validDataset.shape[0]
 
 #Convert to torch dataset:
-dataset = arrayData(dataset) 
-validDataset = arrayData(validDataset)
+dataset = tensorData(dataset) 
+validDataset = tensorData(validDataset)
 
 train_loader = torch.utils.data.DataLoader(dataset,batch_size = args.batch,shuffle = True)
 valid_loader = torch.utils.data.DataLoader(validDataset,batch_size = validation_size,shuffle = True)
@@ -55,13 +52,8 @@ model = AE(node_number = layers).to(device)
 
 optimizer = optim.Adam(model.parameters(), lr=learning_rate)#create an optimizer object
 #betas=(0.9, 0.999) #play with the decay of the learning rate for better results
-#Mean Absolute Percentage Error:
+
 criterion = nn.MSELoss(reduction = 'mean')#mean-squared error loss
-#def mape(output,target,epsilon=1e-8):
-#	loss = torch.mean(torch.abs((output-target)/(target+epsilon)))
-#	return loss
-#criterion = nn.L1Loss(reduction = 'mean')
-#criterion = mape
 
 print('Batch size ='+str(batch_size)+', learning_rate='+str(learning_rate)+', layers='+str(model.node_number))
 

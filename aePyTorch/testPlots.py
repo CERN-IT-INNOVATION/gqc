@@ -4,8 +4,8 @@ import os
 import warnings
 import torch
 import torch.nn as nn
-from model import * #Load custom model
-from splitDatasets import *
+from model import AE,tensorData #Load custom model
+from splitDatasets import splitDatasets
 import argparse
 from varname import *
 
@@ -39,8 +39,8 @@ infiles = args.input
 (savedModel,layers,batch_size) = (args.model,args.layers,args.batch)
 
 _,validDataset,testDataset = splitDatasets(infiles)#Load test samples
-testLoader = torch.utils.data.DataLoader(arrayData(testDataset),batch_size = testDataset.shape[0],shuffle = False)
-validLoader = torch.utils.data.DataLoader(arrayData(validDataset),batch_size = validDataset.shape[0],shuffle = False)
+testLoader = torch.utils.data.DataLoader(tensorData(testDataset),batch_size = testDataset.shape[0],shuffle = False)
+validLoader = torch.utils.data.DataLoader(tensorData(validDataset),batch_size = validDataset.shape[0],shuffle = False)
 
 feature_size = testDataset.shape[1]
 layers.insert(0,feature_size)
@@ -53,8 +53,8 @@ criterion = nn.MSELoss(reduction= 'mean')
 
 #if __name__ == "__main__":
 testDataSig, testDataBkg = splitDatasets(infiles,separate=True)
-testLoaderSig = torch.utils.data.DataLoader(arrayData(testDataSig),batch_size = testDataSig.shape[0],shuffle = False)
-testLoaderBkg = torch.utils.data.DataLoader(arrayData(testDataBkg),batch_size = testDataBkg.shape[0],shuffle = False)
+testLoaderSig = torch.utils.data.DataLoader(tensorData(testDataSig),batch_size = testDataSig.shape[0],shuffle = False)
+testLoaderBkg = torch.utils.data.DataLoader(tensorData(testDataBkg),batch_size = testDataBkg.shape[0],shuffle = False)
 def mape(output,target,epsilon=1e-4):
 	loss = torch.mean(torch.abs((output-target)/(target+epsilon)))
 	return loss
@@ -106,8 +106,8 @@ with torch.no_grad():
 		plt.clf()
 	
 	samples = ['Sig','Bkg']
-	testLoaderSig = torch.utils.data.DataLoader(arrayData(testDataSig),batch_size = batch_size,shuffle = True)
-	testLoaderBkg = torch.utils.data.DataLoader(arrayData(testDataBkg),batch_size = batch_size,shuffle = True)
+	testLoaderSig = torch.utils.data.DataLoader(tensorData(testDataSig),batch_size = batch_size,shuffle = True)
+	testLoaderBkg = torch.utils.data.DataLoader(tensorData(testDataBkg),batch_size = batch_size,shuffle = True)
 	loaders = [testLoaderSig,testLoaderBkg]
 	colors = ['b','r']
 	labels = ['Test on Sig.', 'Test on Bkg.']

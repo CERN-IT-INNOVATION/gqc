@@ -18,7 +18,6 @@ parser.add_argument('--model',type=str,default=savedModel,help='path to saved mo
 parser.add_argument('--layers',type=int,default=defaultlayers,nargs='+',help='type hidden layers nodes corresponding to saved model')
 
 args = parser.parse_args()
-infiles = args.input
 (savedModel,layers) = (args.model,args.layers)
 
 layers.insert(0,qdata.train.shape[1]) #insert number of input nodes = feature_size

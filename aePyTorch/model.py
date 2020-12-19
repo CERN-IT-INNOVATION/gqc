@@ -3,7 +3,7 @@ import torch
 import torch.nn as nn
 
 #Load numpy arrays as data
-class arrayData(torch.utils.data.Dataset):#TODO change name to tensorData
+class tensorData(torch.utils.data.Dataset):
 	def __init__(self,x):
 		self.x = torch.Tensor(x) #x is the numpy array dataset #TODO float casting
 		#self.x_labels = x_labels No labels here, we want autoencoder

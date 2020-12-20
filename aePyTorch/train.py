@@ -26,10 +26,12 @@ def train(train_loader,valid_loader,model,criterion,optimizer,epochs,device,outd
 	
 		#Save best model:
 		validDataIter = iter(valid_loader)
-		validData= validDataIter.next()
-		model.eval()
+		validData= validDataIter.next().to(device)
+	
+		model.eval()	
 		output,_ = model(validData.float())
 		valid_loss = criterion(output,validData).item()
+		
 		if valid_loss < minValid:
 			minValid = valid_loss
 			print('New minimum of validation loss:')

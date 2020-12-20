@@ -1,14 +1,13 @@
 import matplotlib.pyplot as plt
 import numpy as np
-import os,sys,torch, torchvision
+import os,sys,torch,torchvision,time,argparse,warnings
 import torch.nn as nn
 import torch.optim as optim
 from model import tensorData,AE
 from train import train
 from splitDatasets import splitDatasets
-import warnings #Supress GPU not existing warnings
-import argparse
 
+start_time = time.time()
 seed = 100
 torch.manual_seed(seed)
 torch.autograd.set_detect_anomaly(True)#autograd error check
@@ -86,7 +85,9 @@ plt.legend()
 #Save loss plot:
 plt.savefig(outdir+'lossVSepochs.png')
 
+end_time = time.time()
+train_time = (end_time-start_time)/60
 #Save MSE log to check best model:
 with open('trained_models/mseLog.txt','a+') as mseLog:
-	logEntry = filetag+': Min. Validation loss = {:.6f}\n'.format(minValid)
+	logEntry = filetag+f': Training time = {train_time:.2f} min, Min. Validation loss = {minValid:.6f}\n'
 	mseLog.write(logEntry)

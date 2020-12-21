@@ -13,7 +13,7 @@ import argparse
         evdesc_feats = ["nleps", "njets", "nbtags", "nMatch_wq", "nMatch_tb", "nMatch_hb"],#Don't fit in AE!!
 '''
 
-def reduce_events(infile,nend,outdir=None,nstart = 0):
+def reduce_events(infile,nend,outdir=None,nstart = 0,elimCart=False):
 	#Reduce event size and apply event selection cuts
 	#Using evdesc info apply phase space realistic cuts:
 	#BUT we want to keep same number of signal and background events for training after the cuts.
@@ -25,36 +25,40 @@ def reduce_events(infile,nend,outdir=None,nstart = 0):
 	print('Input file:',infile)
 	
 	#Eliminate px,py,pz features:
-	jetElim = [4,5,6]
-	metElim = [2,3]
-	lepsElim = [4,5,6]
-	print('jets:',jets.shape)
-	print('met:',met.shape)
-	print('leps:',leps.shape)
-	print('\nRemoving px,py,pz:\n')
-	jets = np.delete(jets,jetElim,axis=2)
-	met = np.delete(met[:],metElim,axis=1)
-	leps = np.delete(leps,lepsElim,axis=2)
-	print('jets:',jets.shape)
-	print('met:',met.shape)
-	print('leps:',leps.shape)
+	if elimCart:
+		jetElim = [4,5,6]
+		metElim = [2,3]
+		lepsElim = [4,5,6]
+		print('jets:',jets.shape)
+		print('met:',met.shape)
+		print('leps:',leps.shape)
+		print('\nRemoving px,py,pz:\n')
+		jets = np.delete(jets,jetElim,axis=2)
+		met = np.delete(met[:],metElim,axis=1)
+		leps = np.delete(leps,lepsElim,axis=2)
+		print('jets:',jets.shape)
+		print('met:',met.shape)
+		print('leps:',leps.shape)
+	
 	#Save indices for the cuts and apply numpy [indices] to all arrays
-	ievents = []
-	n = 0
 	ind = np.logical_and(evdesc[:,2]>=2,evdesc[:,1]>=4)
 	
 	#event selection:
 	redJet = jets[ind]
 	redMet = met[ind]
 	redLeps = leps[ind]
-	#Old less efficient way:
+	
+	#Old less efficient way:#DEPRICATED
 	'''
+	ievents = []
+	n = 0
 	for i,iev in enumerate(evdesc):
 		if iev[2]>=2 and iev[1]>=4: #njet>=4 and nbtag>=2 requirement
 			ievents.append(i)
 			n+=1
 	print('Same:',np.array_equal(jets,redJet),np.array_equal(met,redMet),np.array_equal(leps,redLeps))
 	'''
+
 	print('\nApplying EVENT SELECTION: n_events = {} ---> {}\n'.format(jets.shape[0],redJet.shape[0]))
 	
 	
@@ -79,14 +83,16 @@ if __name__ == "__main__":
 	parser = argparse.ArgumentParser(formatter_class=argparse.ArgumentDefaultsHelpFormatter)#include defaults in -h
 	parser.add_argument("--nevents", type=int, default=int(3.6e5), help="number of samples to be generate. train+valid.+test")
 	parser.add_argument("--fileFlag",type=str,default='', help="Output file flag")
+	parser.add_argument("--noCart",action='store_true',help='Enable to eliminate px,py,pz')
 	args = parser.parse_args()
+	
 	print('------Generating Training & Testing dataset------')
 	samples = ['sig','bkg']
 	n = args.nevents
 	for isample in samples:
 		print("\n_____"+isample+" samples_____")
 		
-		(jets,met,leps) = reduce_events(infile=isample+'_npy_sample/',nend=n)	
+		(jets,met,leps) = reduce_events(infile=isample+'_npy_sample/',nend=n,elimCart=args.noCart)	
 		feat_in = (jets,met,leps)
 		
 		#Map Jet btag = {0,1,...,7} --> {0,1}

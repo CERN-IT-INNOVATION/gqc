@@ -18,6 +18,8 @@ parser = argparse.ArgumentParser(formatter_class=argparse.ArgumentDefaultsHelpFo
 parser.add_argument("--input", type=str, default=infiles, nargs =2, help="path to datasets")#Not needed if qdata is used
 parser.add_argument('--model',type=str,default=savedModel,help='path to saved model')
 parser.add_argument('--layers',type=int,default=defaultlayers,nargs='+',help='type hidden layers nodes corresponding to saved model')
+#TODO: choose qdata or splitDatasets
+#parser.add_argument('--qdata',type=bool, action= store_true, help='Activates the use of qdata instead of splitDatasets')
 
 args = parser.parse_args()
 infiles = args.input
@@ -48,7 +50,7 @@ print(f'Training samples for SVM: {len(train)}.')
 print(f'Testing samples for SVM: {len(test)}.')
 
 cls = svm.SVC()
-cls.fit(train, train_labels);
+cls.fit(train, train_labels)
 
 res = np.array(cls.predict(test))
 

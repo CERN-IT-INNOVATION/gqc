@@ -13,3 +13,5 @@ L38.32.24.20.16.8B64Lr1e-03: Min. Validation loss = 0.009364
 L64.52.44.32.24.16B128Lr3e-03MeanSigmaMAPE: Min. Validation loss = 42.371925
 L64.52.44.32.24.16B128Lr3e-03BatchNorm: Min. Validation loss = 4474.693848
 L64.52.44.32.24.16B128Lr3e-03SigmoidLatent: Min. Validation loss = 0.001577
+L38.32.24.20.16.8B128Lr3e-03: Training time = 78.92 min, Min. Validation loss = 0.006338
+L64.52.44.32.24.16.8B128Lr2e-037.2e5: Training time = 141.95 min, Min. Validation loss = 0.007118

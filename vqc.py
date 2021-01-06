@@ -13,7 +13,7 @@ from aePyTorch.encode import encode
 
 start_time = time.time()
 feature_dim = 4
-var_form = TwoLocal(feature_dim, 'ry', 'cx', 'linear', reps = 3, insert_barriers=False)
+var_form = TwoLocal(feature_dim, 'ry', 'cx', 'linear', reps = 1, insert_barriers=False)
 feature_map = RawFeatureVector(2**feature_dim)
 
 vqc = VQC(ISRES(), feature_map, var_form, encode(qdata.train_dict), encode(qdata.validation_dict))

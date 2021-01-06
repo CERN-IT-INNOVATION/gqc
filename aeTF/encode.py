@@ -1,7 +1,7 @@
 from tensorflow.keras.models import load_model
 import numpy as np
 
-model = "E-7-40-16-F3"
+model = "F-8-30-8-F3"
 
 ae = load_model("aeTF/out/" + model + "/model")
 

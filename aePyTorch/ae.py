@@ -58,6 +58,11 @@ print('Batch size ='+str(batch_size)+', learning_rate='+str(learning_rate)+', la
 
 #Prepare to save training outputs:
 layersTag = '.'.join(str(inode) for inode in model.node_number[1:])#Don't print input size
+
+#FIXME: Fix lr printing. Issue example:
+#> lr1,lr2 = 0.002, 0.0025
+#>print(f'lr1={lr1:.0e} and lr2={lr2:.0e}')                                                                                                             
+#>'lr1=2e-03 and lr2=3e-03'
 filetag = 'L'+layersTag+'B'+str(batch_size)+'Lr{:.0e}'.format(learning_rate)+fileFlag#only have 1 decimal lr
 
 outdir = './trained_models/'+filetag+'/'

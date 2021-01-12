@@ -32,6 +32,8 @@ class customFeatureMap(RawFeatureVector):
 
             #Add additional gates after amplitude encoding circuit
             qc = svc.construct_circuit(register=qr)
+            for iqubit in range(qc.num_qubits):
+                qc.h(iqubit)
             qc.cx(0,1)
             qc.cx(1,2)
             qc.cx(2,3)

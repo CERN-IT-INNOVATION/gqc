@@ -105,13 +105,14 @@ with torch.no_grad():
 		plt.savefig(savedModel+'ratioPlot'+varname(i)+'.png')
 		plt.clf()
 	
+	#FIXME: Not displayed properly. Values are off and seems to be bias still between sig and bkg for the MSE distributions
+	##MSE loss in test samples.
 	samples = ['Sig','Bkg']
 	testLoaderSig = torch.utils.data.DataLoader(tensorData(testDataSig),batch_size = batch_size,shuffle = True)
 	testLoaderBkg = torch.utils.data.DataLoader(tensorData(testDataBkg),batch_size = batch_size,shuffle = True)
 	loaders = [testLoaderSig,testLoaderBkg]
 	colors = ['b','r']
 	labels = ['Test on Sig.', 'Test on Bkg.']
-	##MSE loss in test samples.
 	for j,isample in enumerate(samples):
 		meanLossBatch = []
 		for i,batch_features in enumerate(loaders[j]):

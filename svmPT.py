@@ -18,33 +18,36 @@ parser = argparse.ArgumentParser(formatter_class=argparse.ArgumentDefaultsHelpFo
 parser.add_argument("--input", type=str, default=infiles, nargs =2, help="path to datasets")#Not needed if qdata is used
 parser.add_argument('--model',type=str,default=savedModel,help='path to saved model')
 parser.add_argument('--layers',type=int,default=defaultlayers,nargs='+',help='type hidden layers nodes corresponding to saved model')
+
 #TODO: choose qdata or splitDatasets
-#parser.add_argument('--qdata',type=bool, action= store_true, help='Activates the use of qdata instead of splitDatasets')
+parser.add_argument('--qdata', action= 'store_true', help='Activates the use of qdata instead of splitDatasets')
 
 args = parser.parse_args()
 infiles = args.input
 (savedModel,layers) = (args.model,args.layers)
 
-#Load samples from splitDatasets
-'''
-_,validDataset,testDataset,_,validLabels, testLabels = splitDatasets(infiles, labels=True)
-layers.insert(0,testDataset.shape[1])
 
-train = encode(validDataset,savedModel,layers)
-labels = np.array(validLabels)
+if args.qdata:
+	#qdata samples for fair benchmark with quantum classifiers:
+	print('Using  qdata')
+	layers.insert(0,qdata.train.shape[1]) #insert number of input nodes = feature_size
+	train = encode(qdata.train,savedModel,layers)
+	train_labels = qdata.train_labels
+	
+	test = encode(qdata.test,savedModel,layers)
+	test_labels = qdata.test_labels
+else:
+	#Load samples from splitDatasets
+	print('Using ',args.input)
+	_,validDataset,testDataset,_,validLabels, testLabels = splitDatasets(infiles, labels=True)
+	layers.insert(0,testDataset.shape[1])
+	
+	train = encode(validDataset,savedModel,layers)
+	labels = np.array(validLabels)
+	
+	test = encode(testDataset,savedModel,layers)
+	testlabels = np.array(testLabels)
 
-test = encode(testDataset,savedModel,layers)
-testlabels = np.array(testLabels)
-'''
-
-
-#qdata samples for fair benchmark with quantum classifiers:
-layers.insert(0,qdata.train.shape[1]) #insert number of input nodes = feature_size
-train = encode(qdata.train,savedModel,layers)
-train_labels = qdata.train_labels
-
-test = encode(qdata.test,savedModel,layers)
-test_labels = qdata.test_labels
 
 print(f'Training samples for SVM: {len(train)}.')
 print(f'Testing samples for SVM: {len(test)}.')

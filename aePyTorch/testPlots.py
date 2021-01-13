@@ -46,7 +46,7 @@ feature_size = testDataset.shape[1]
 layers.insert(0,feature_size)
 
 model = AE(node_number = layers).to(device)
-model.load_state_dict(torch.load(savedModel+'bestModel.pt'))
+model.load_state_dict(torch.load(savedModel+'bestModel.pt',map_location=torch.device('cpu')))
 model.eval()
 
 criterion = nn.MSELoss(reduction= 'mean')

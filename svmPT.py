@@ -43,10 +43,10 @@ else:
 	layers.insert(0,testDataset.shape[1])
 	
 	train = encode(validDataset,savedModel,layers)
-	labels = np.array(validLabels)
+	train_labels = np.array(validLabels)
 	
 	test = encode(testDataset,savedModel,layers)
-	testlabels = np.array(testLabels)
+	test_labels = np.array(testLabels)
 
 
 print(f'Training samples for SVM: {len(train)}.')
@@ -55,10 +55,13 @@ print(f'Testing samples for SVM: {len(test)}.')
 cls = svm.SVC()
 cls.fit(train, train_labels)
 
-res = np.array(cls.predict(test))
+res_test = np.array(cls.predict(test))
+res_train = np.array(cls.predict(train))
 
-acc = sum(res == test_labels) / len(res)
-print(f"Accuracy: {acc} ")
+acc_test = sum(res_test == test_labels)/len(res_test)
+acc_train = sum(res_train == train_labels)/len(res_train)
+print(f"Test Accuracy: {acc_test} ")
+print(f"Training Accuracy: {acc_train} ")
 
 end_time = time.time()
 with open('SVMlog.txt', 'a+') as f:
@@ -68,6 +71,6 @@ with open('SVMlog.txt', 'a+') as f:
 	print('Autoencoder model:', savedModel)
 	print(f'ntrain = {len(train)}, ntest = {len(test)}')
 	print(f'\nExecution Time {end_time-start_time} s or {(end_time-start_time)/60} min.')
-	print(f'Accuracy: {acc}')
+	print(f'Test Accuracy: {acc_test}, Training Accuracy: {acc_train}')
 	print('-------------------------------------------\n')
 	sys.stdout = original_stdout # Reset the standard output to its original value

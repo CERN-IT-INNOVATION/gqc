@@ -18,7 +18,8 @@ def encode_array(data,savedModel,layers):
 def encode(data,savedModel,layers):
 	if (isinstance(data, dict)):
 		for x in data:
+			x = torch.Tensor(x)
 			data[x] = encode_array(data[x],savedModel,layers)
 		return data;
 	
-	return encode_array(data,savedModel,layers);	
+	return encode_array(torch.Tensor(data),savedModel,layers);	

@@ -1,7 +1,7 @@
 import numpy as np
 import torch
 import torch.nn as nn
-
+#TODO: Maybe softmax as output activation? To automatize the sum to 1 of amplitudes of the Qcircuit?
 #Load numpy arrays as data
 class tensorData(torch.utils.data.Dataset):
 	def __init__(self,x):

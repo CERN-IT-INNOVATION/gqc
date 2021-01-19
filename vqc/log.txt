@@ -42,3 +42,25 @@ Elapsed time: 56003.09919691086s 15.55641644358635h
 Accuracy: 0.45357142857142857
 
 
+VQC LOG 2021-01-18 20:26:45.007523
+Feature map: Custom ZZ feature map v1
+2-local var form with 1 rep
+Autoencoder: F-8-30-8-F3
+Qubits: 4
+Used features: 4
+Training samples: 250 Testing samples: 140
+Elapsed time: 29341.094814538956s 8.15030411514971h
+Accuracy: 0.5285714285714286
+
+
+VQC LOG 2021-01-19 07:04:19.283651
+Feature map: Custom ZZ feature map v2(reps = 2)
+2-local var form with 1 rep
+Autoencoder: F-8-30-8-F3
+Qubits: 4
+Used features: 4
+Training samples: 250 Testing samples: 140
+Elapsed time: 32959.66168856621s 9.15546158015728h
+Accuracy: 0.5571428571428572
+
+

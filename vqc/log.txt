@@ -1,0 +1,66 @@
+VQC LOG 2021-01-17 00:58:18.397593
+Feature map: Custom ZZ feature map v1
+2-local var form with 1 rep
+Autoencoder: F-8-30-8-F3
+Qubits: 3
+Used features: 3
+Training samples: 80 Testing samples: 60
+Elapsed time: 5518.252445697784s 1.5328479015827179h
+Accuracy: 0.5666666666666667
+
+
+VQC LOG 2021-01-17 15:09:15.614786
+Feature map: Custom ZZ feature map v1
+2-local var form with 1 rep
+Autoencoder: F-8-30-8-F3
+Qubits: 3
+Used features: 8
+Training samples: 80 Testing samples: 60
+Elapsed time: 11731.72767663002s 3.258813243508339h
+Accuracy: 0.45
+
+
+VQC LOG 2021-01-17 19:15:31.348015
+Feature map: Custom ZZ feature map v1
+2-local var form with 1 rep
+Autoencoder: 72A-8-15-4-F3
+Qubits: 4
+Used features: 4
+Training samples: 80 Testing samples: 60
+Elapsed time: 9658.57242846489s 2.6829367856846917h
+Accuracy: 0.44166666666666665
+
+
+VQC LOG 2021-01-18 11:04:35.619471
+Feature map: Custom ZZ feature map v1
+2-local var form with 1 rep
+Autoencoder: F-8-30-8-F3
+Qubits: 4
+Used features: 8
+Training samples: 250 Testing samples: 140
+Elapsed time: 56003.09919691086s 15.55641644358635h
+Accuracy: 0.45357142857142857
+
+
+VQC LOG 2021-01-18 20:26:45.007523
+Feature map: Custom ZZ feature map v1
+2-local var form with 1 rep
+Autoencoder: F-8-30-8-F3
+Qubits: 4
+Used features: 4
+Training samples: 250 Testing samples: 140
+Elapsed time: 29341.094814538956s 8.15030411514971h
+Accuracy: 0.5285714285714286
+
+
+VQC LOG 2021-01-19 07:04:19.283651
+Feature map: Custom ZZ feature map v2(reps = 2)
+2-local var form with 1 rep
+Autoencoder: F-8-30-8-F3
+Qubits: 4
+Used features: 4
+Training samples: 250 Testing samples: 140
+Elapsed time: 32959.66168856621s 9.15546158015728h
+Accuracy: 0.5571428571428572
+
+

@@ -1,7 +1,7 @@
 from qiskit.aqua.components.feature_maps.raw_feature_vector import RawFeatureVector # Amplitude encoding.
 from qiskit.aqua.circuits import StateVectorCircuit
 from qiskit.aqua.algorithms import QSVM
-from qiskit import QuantumCircuit
+from qiskit.circuit import QuantumCircuit, ParameterVector
 import numpy as np
 import qdata
 from encodePT import encode#, device
@@ -9,10 +9,11 @@ import torch
 
 #Test feature map with good expressibility and entanglement capability from the work: https://zenodo.org/record/4298781
 #Circuit 14:
-def feature_map(x):
+def feature_map(nqubits=4,nfeatures=16):
     #transform all [0,1] (autoencoder) features to [0,2pi] range
-    x*=np.pi
-    qc = QuantumCircuit(4)
+    x = ParameterVector('x', nfeatures)
+    #x*=np.pi
+    qc = QuantumCircuit(nqubits)
     #Ry rotations for the first 4 features
     for i in range(4):
         qc.ry(x[i],i)
@@ -29,7 +30,6 @@ def feature_map(x):
     qc.crx(x[13],0,3)
     qc.crx(x[14],1,0)
     qc.crx(x[15],2,1)
-
     return qc
 
         
@@ -84,5 +84,4 @@ if __name__ == '__main__':
     #circ = pls.construct_circuit(train[0])
     #print(circ)
     train*=np.pi
-    print(feature_map(train[0]))
     

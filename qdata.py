@@ -18,6 +18,7 @@ if ntot_test != testBkgAE.shape[0] or ntot_train != trainSigAE.shape[0] or ntot_
 # TODO: Define global var to define the ntrain etc samples from the script importing this module.
 ntrain, nvalid, ntest = int(ntot_train*0.0005), int(0.002*ntot_valid), int(0.002*ntot_test)
 print(f'Loaded data for Quantum classifier: ntrain = {ntrain}, nvalid = {nvalid}, ntest = {ntest} ')
+print(f'From infiles = {infiles}')
 
 train = np.vstack((trainSigAE[:ntrain],trainBkgAE[:ntrain]))
 train_labels = np.array(['s'] * ntrain + ['b'] * ntrain)

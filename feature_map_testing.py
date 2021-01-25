@@ -2,6 +2,7 @@ from qiskit.aqua.components.feature_maps.raw_feature_vector import RawFeatureVec
 from qiskit.aqua.circuits import StateVectorCircuit
 from qiskit.aqua.algorithms import QSVM
 from qiskit.circuit import QuantumCircuit, ParameterVector
+from qiskit.visualization import circuit_drawer
 import numpy as np
 import qdata
 from encodePT import encode#, device
@@ -9,28 +10,30 @@ import torch
 
 #Test feature map with good expressibility and entanglement capability from the work: https://zenodo.org/record/4298781
 #Circuit 14:
-def feature_map(nqubits=4,nfeatures=16):
-    #transform all [0,1] (autoencoder) features to [0,2pi] range
-    x = ParameterVector('x', nfeatures)
-    #x*=np.pi
-    qc = QuantumCircuit(nqubits)
-    #Ry rotations for the first 4 features
-    for i in range(4):
-        qc.ry(x[i],i)
-    qc.barrier
-    qc.crx(x[4],3,0)
-    qc.crx(x[5],2,3)
-    qc.crx(x[6],1,2)
-    qc.crx(x[7],0,1)
-    qc.barrier
-    for i,iq in zip(range(8,12),range(4)):
-        qc.ry(x[i],iq)
-    qc.barrier
-    qc.crx(x[12],3,2)
-    qc.crx(x[13],0,3)
-    qc.crx(x[14],1,0)
-    qc.crx(x[15],2,1)
-    return qc
+def get_circuit(nqubits=4,nfeatures=16,reps=1):
+	#transform all [0,1] (autoencoder) features to [0,2pi] range
+	x = ParameterVector('x', nfeatures)
+	#x*=np.pi
+	qc = QuantumCircuit(nqubits)
+	#Ry rotations for the first 4 features
+	for irep in range(reps):
+		for i in range(4):
+			qc.ry(x[i],i)
+		qc.barrier()
+		qc.crx(x[4],3,0)
+		qc.crx(x[5],2,3)
+		qc.crx(x[6],1,2)
+		qc.crx(x[7],0,1)
+		qc.barrier()
+		for i,iq in zip(range(8,12),range(4)):
+			qc.ry(x[i],iq)
+		qc.barrier()
+		qc.crx(x[12],3,2)
+		qc.crx(x[13],0,3)
+		qc.crx(x[14],1,0)
+		qc.crx(x[15],2,1)
+		qc.barrier()
+	return qc
 
         
 class customFeatureMap(RawFeatureVector):
@@ -82,6 +85,7 @@ if __name__ == '__main__':
 #
     #pls = customFeatureMap(2**4)
     #circ = pls.construct_circuit(train[0])
-    #print(circ)
-    train*=np.pi
-    
+    #print(circ)  
+    print(get_circuit(nqubits=4,nfeatures=16,reps=2))
+    print('\n')
+    print(get_circuit(nqubits=4,nfeatures=16,reps=1))

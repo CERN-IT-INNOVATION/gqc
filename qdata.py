@@ -41,4 +41,3 @@ class qdata:
 		self.test_dict = {'s': self.testSigAE[:ntest], 'b': self.testBkgAE[:ntest]}
 
 		print(f'xcheck: train/validation/test shapes: {self.train.shape}/{self.validation.shape}/{self.test.shape}')
-

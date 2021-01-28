@@ -1,5 +1,5 @@
 #from qiskit.aqua.components.feature_maps.raw_feature_vector import RawFeatureVector # Amplitude encoding.
-from feature_map_testing import customFeatureMap
+from feature_map_testing import customFeatureMap,get_circuit
 from qiskit import Aer
 from qiskit.aqua import QuantumInstance
 from qiskit.aqua.algorithms import QSVM
@@ -32,36 +32,43 @@ train_labels = np.where(labels =='s',1,0)
 feature_dim = 4 #TODO should it be named feature_dim or qubits?
 #feature_map = RawFeatureVector(2**feature_dim)#TODO:Use stateVectorCircuit check if can input that in qsvm class
 feature_map = customFeatureMap(2**feature_dim)
+#train *= np.pi #map to [0,pi]#TEST
+#feature_map = get_circuit(nqubits=4,nfeatures=16,reps=2)
 
 backend = Aer.get_backend('statevector_simulator')
 #backend = Aer.get_backend('qasm_simulator')
 quantum_instance = QuantumInstance(backend)
-qsvm = QSVM(feature_map, quantum_instance = quantum_instance)
-qsvm.train(train,train_labels)
 
-testTest = torch.Tensor(qdata.test)
+qsvm = QSVM(feature_map, quantum_instance = quantum_instance,lambda2 = 0.2)#lambda2 Increase soft margin regularization 
+#qsvm.train(train,train_labels)
+
+#testTest = torch.Tensor(qdata.test)
 test = encode(qdata.test,savedModel,defaultlayers)
 labels = qdata.test_labels
-
 test_labels = np.where(labels == 's',1,0)
+
 acc_test = qsvm.test(test,test_labels)
 acc_train = qsvm.test(train,train_labels)
 print(f'Test Accuracy = {acc_test}')
 print(f'Training Accuracy = {acc_train}')
 end_time = time.time()
 
-#TODO: Port custom feature map to QuantumCircuit class from FeatureMap (will have deprication?)
+#TODO: Bariers for visualizing better the feature map in the log
+#TODO: rename test to validation in log and printing
 with open('QSVMlog.txt', 'a+') as f:
 	original_stdout = sys.stdout
 	sys.stdout = f
 	print(f'\n---------------------{datetime.now()}----------------------')
 	print('Autoencoder model:', savedModel)
-	print(f'ntrain = {len(train)}, ntest = {len(test)}')
-	print(f'Feature Map (params for first datapoint):\n {feature_map.construct_circuit(train[0])}')
-	print(f'Quantum Instance backend:{quantum_instance.backend})')
+	print(f'ntrain = {len(train)}, ntest = {len(test)}, lambda2 = {qsvm.lambda2}')
+	print(f'Quantum Instance backend:{quantum_instance.backend}')
 	#print(f'Quantum Instance basic info: {quantum_instance}')
-	print(f'\nExecution Time {end_time-start_time} s or {(end_time-start_time)/60} min.')
+	print(f'Execution Time {end_time-start_time} s or {(end_time-start_time)/60} min.')
 	print(f'Test Accuracy: {acc_test}')
-	print(f'Training Accuracy: {acc_train}')
+	print(f'Training Accuracy: {acc_train}')	
+	#print(f'Feature Map\n: {get_circuit(nqubits=4,nfeatures=16,reps=2)}')
+	print(f'Feature Map:\n\n {feature_map.construct_circuit(train[0])}')
 	print('-------------------------------------------\n')
 	sys.stdout = original_stdout # Reset the standard output to its original value
+#TODO: Add save model
+qsvm.save_model('qsvm/model4')

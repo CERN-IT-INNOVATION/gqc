@@ -4,15 +4,25 @@ from aePyTorch.splitDatasets import splitDatasets
 class qdata:
 
 	#Load the test dataset of the autoencoder and split it to training,validation and testing datasets for the qml
-	infiles = ('input_ae/trainingTestingDataSig.npy','input_ae/trainingTestingDataBkg.npy')
+	#infiles = ('input_ae/trainingTestingDataSig.npy','input_ae/trainingTestingDataBkg.npy')
+	infiles = ('input_ae/trainingTestingDataSig7.2e5.npy','input_ae/trainingTestingDataBkg7.2e5.npy')
 	trainSigAE, trainBkgAE, validSigAE, validBkgAE, testSigAE,testBkgAE = splitDatasets(infiles,separate=True, not_all = False)
 	
 	ntot_test = int(testSigAE.shape[0])
 	ntot_train = int(trainSigAE.shape[0])
 	ntot_valid = int(validSigAE.shape[0])
 
+#TODO: Add encode in constructor by default and make it work for TF and PT.
+	def __init__(self, encode, tf,train_p = 0.0005, valid_p = 0.002, test_p = 0.002, proportion = True):
+		if encode is None:
+			raise Exception('Choose if the data is to be raw or encoded via the Autoencoder')
+		if encode is True:
+			if tf == True:
+				print('Using tf for autoencoder model')
+			#TODO: put encode functions here:
+			else:
+				print('Using pt for autoencoder model to encode the data')
 
-	def __init__(self, train_p = 0.001, valid_p = 0.004, test_p = 0.004, proportion = True):
 		if proportion:
 			ntrain = int(self.ntot_train*train_p)
 			nvalid = int(self.ntot_valid*valid_p)
@@ -41,3 +51,19 @@ class qdata:
 		self.test_dict = {'s': self.testSigAE[:ntest], 'b': self.testBkgAE[:ntest]}
 
 		print(f'xcheck: train/validation/test shapes: {self.train.shape}/{self.validation.shape}/{self.test.shape}')
+	
+	def get_kfold_validation(self,k=5,splits_total=500):
+		'''
+		splits_total: the max number we can divide the initial validation dataset (from splitDatasets). For the 7.2e5 dataset (default), 
+		it's 500 if we want to have 288 validation samples per fold (144 Sig + 144 Bkg)
+
+		'''
+		validation_folds_sig = np.split(self.validSigAE,500)#split to folds of 288 samples: total here 500
+		validation_folds_bkg = np.split(self.validBkgAE,500)
+		
+		validation_folds_sig = np.array(validation_folds_sig)
+		validation_folds_bkg = np.array(validation_folds_bkg)
+		#Create the k-fold for validation of sig+bkg equal chunks(folds) of samples:
+		validation_folds = np.concatenate((validation_folds_sig,validation_folds_bkg),axis=1)
+		#Return k batches of validation samples:
+		return validation_folds[:k]

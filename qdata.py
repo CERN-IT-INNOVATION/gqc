@@ -1,5 +1,6 @@
 import numpy as np
 from aePyTorch.splitDatasets import splitDatasets
+from aeTF.encode import encode
 
 class qdata:
 
@@ -13,15 +14,23 @@ class qdata:
 	ntot_valid = int(validSigAE.shape[0])
 
 #TODO: Add encode in constructor by default and make it work for TF and PT.
-	def __init__(self, encode, tf,train_p = 0.0005, valid_p = 0.002, test_p = 0.002, proportion = True):
-		if encode is None:
-			raise Exception('Choose if the data is to be raw or encoded via the Autoencoder')
-		if encode is True:
-			if tf == True:
-				print('Using tf for autoencoder model')
-			#TODO: put encode functions here:
-			else:
-				print('Using pt for autoencoder model to encode the data')
+	def __init__(self, encoder, train_p = 0.0005, valid_p = 0.002, test_p = 0.002, proportion = True):
+		if encoder == "tf":
+			print('Using tf for autoencoder model')
+			self.trainSigAE = encode(self.trainSigAE)
+			self.trainBkgAE = encode(self.trainBkgAE)
+			self.validSigAE = encode(self.validSigAE)
+			self.validBkgAE = encode(self.validBkgAE)
+			self.testSigAE = encode(self.testSigAE)
+			self.testBkgAE = encode(self.testBkgAE)
+		elif encoder == "pt":
+			print('Using pt for autoencoder model to encode the data')
+			# TODO Implement encoding
+		elif encoder == "":
+			print("Using unencoded data");
+		else:
+			raise Exception('Unknown encoder')
+
 
 		if proportion:
 			ntrain = int(self.ntot_train*train_p)
@@ -30,7 +39,7 @@ class qdata:
 		else:
 			ntrain = train_p
 			nvalid = valid_p
-			ntest = test.p
+			ntest = test_p
 
 		self.ntrain = ntrain
 		self.nvalid = nvalid
@@ -40,14 +49,17 @@ class qdata:
 
 		self.train = np.vstack((self.trainSigAE[:ntrain], self.trainBkgAE[:ntrain]))
 		self.train_labels = np.array(['s'] * ntrain + ['b'] * ntrain)
+		self.train_nlabels = np.array([1] * ntrain + [0] * ntrain)
 		self.train_dict = {'s': self.trainSigAE[:ntrain], 'b': self.trainBkgAE[:ntrain]}
 
 		self.validation = np.vstack((self.validSigAE[:nvalid],self.validBkgAE[:nvalid]))
 		self.validation_labels = np.array(['s'] * nvalid + ['b'] * nvalid)
+		self.validation_nlabels = np.array([1] * nvalid + [0] * nvalid)
 		self.validation_dict = {'s': self.validSigAE[:nvalid], 'b': self.validBkgAE[:nvalid]}
 
 		self.test = np.vstack((self.testSigAE[:ntest],self.testBkgAE[:ntest]))
 		self.test_labels = np.array(['s'] * ntest + ['b'] * ntest)
+		self.test_nlabels = np.array([1] * ntest + [0] * ntest)
 		self.test_dict = {'s': self.testSigAE[:ntest], 'b': self.testBkgAE[:ntest]}
 
 		print(f'xcheck: train/validation/test shapes: {self.train.shape}/{self.validation.shape}/{self.test.shape}')

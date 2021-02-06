@@ -26,7 +26,7 @@ def get_circuit(qubits, x):
 				b = a
 				a = tmp
 			qml.CZ(wires = [a, b])
-			qml.RZ(2.0 * (np.pi - x[last + a].val) * (np.pi - x[last + b].val), wires = b)
+			qml.RZ(2.0 * (np.pi - x[last + a]) * (np.pi - x[last + b]), wires = b)
 			qml.CZ(wires = [a,b])
 
 		last += nload;

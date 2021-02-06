@@ -32,7 +32,7 @@ theta = np.random.uniform(size=24)
 
 opt = AdamOptimizer(learning_rate, beta1=0.9, beta2=0.999)
 
-accuracy train = 0
+accuracy_train = 0
 accuracy_test = 0
 
 for it in range(epochs):

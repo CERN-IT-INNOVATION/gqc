@@ -197,3 +197,14 @@ Training accuracy: 0.55
 Accuracy: 0.5083333333333333
 
 
+VQC LOG 2021-02-08 01:22:03.782329
+Feature map: Custom ZZ feature map for PL v1
+Variational form: Two-local VF with RY CX PL v1
+Qubits: 3
+epochs/lrate/bsize: 100/0.1/10
+train/valid/test: 1000/200/100
+Elapsed time: 33489.46728873253s 9.302629802425702h
+Train accuracy: 0.502
+Test accuracy: 0.49
+
+

@@ -4,12 +4,12 @@ import numpy as np
 import vqc.zzlane as fmap
 import vqc.twolane as vform
 
-nqubits = 3
+nqubits = 4
 
 
 dev = qml.device("default.qubit", wires=nqubits)
 
-@qml.qnode(dev)
+@qml.qnode(dev, interface="autograd")
 def qcircuit(theta, data, y):
 	fmap.get_circuit(nqubits, data[0:4])
 	vform.get_circuit(nqubits, theta[0:12])

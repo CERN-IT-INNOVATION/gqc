@@ -9,7 +9,7 @@ import time
 from datetime import datetime
 
 # Number of events for signal/background. Total will be doubled!
-ntrain = 500
+ntrain = 1000
 nvalid = 200
 ntest = 100
 
@@ -29,6 +29,8 @@ learning_rate = 0.1
 batch_size = 10
 
 theta = np.random.uniform(size=24)
+
+print("Running!")
 
 opt = AdamOptimizer(learning_rate, beta1=0.9, beta2=0.999)
 
@@ -61,7 +63,7 @@ f = open("vqc/log.txt", "a")
 f.write("VQC LOG " + str(datetime.now()) + "\n")
 f.write("Feature map: " + fmap.description + "\n")
 f.write("Variational form: " + vform.description + "\n")
-f.write("Autoencoder: " + model + "\n")
+#f.write("Autoencoder: " + model + "\n")
 f.write("Qubits: " + str(nqubits) + "\n")
 f.write("epochs/lrate/bsize: " + str(epochs) + "/" + str(learning_rate) + "/" + str(batch_size) + "\n")
 f.write("train/valid/test: " + str(ntrain) + "/" + str(nvalid) + "/" + str(ntest) +  "\n")

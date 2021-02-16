@@ -13,9 +13,9 @@ import time
 from datetime import datetime
 
 def get_labels(model, data):
-	data = np.array(model(data))
+	data = np.array(model.predict(data))
 	for i in range(len(data)):
-		if (i < 0.5):
+		if (data[i] < 0.5):
 			data[i] = 0
 		else:
 			data[i] = 1

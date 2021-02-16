@@ -6,7 +6,7 @@ import vqctf.twolane as vform
 
 nqubits = 4
 
-circuit_desc = "4-qubits\\ZZ(4) 2L(2rep) ZZ(4) 2L(2rep)"
+circuit_desc = "4-qubits\nZZ(4) 2L(2rep) ZZ(4) 2L(2rep)"
 
 dev = qml.device("default.qubit", wires=nqubits)
 

@@ -12,9 +12,10 @@ class qdata:
 	ntot_train = int(trainSigAE.shape[0])
 	ntot_valid = int(validSigAE.shape[0])
 
-	def __init__(self, encoder, train_p = 0.0005, valid_p = 0.002, test_p = 0.002, proportion = True):
+	def __init__(self, encoder = "", train_p = 0.0005, valid_p = 0.002, test_p = 0.002, proportion = None, shuffle = False):
 		if encoder == "tf":
 			from aeTF.encode import encode
+			from aeTF.encode import model
 			print('Using TensorFlow for autoencoder model')
 			self.trainSigAE = encode(self.trainSigAE)
 			self.trainBkgAE = encode(self.trainBkgAE)
@@ -22,6 +23,7 @@ class qdata:
 			self.validBkgAE = encode(self.validBkgAE)
 			self.testSigAE = encode(self.testSigAE)
 			self.testBkgAE = encode(self.testBkgAE)
+			self.model = model
 		elif encoder == "pt":
 			print('Using PyTorch for autoencoder model to encode the data')
 			# TODO Implement encoding
@@ -31,16 +33,16 @@ class qdata:
 			raise Exception('Unknown encoder')
 
 
-		if proportion:
+		if train_p <= 1:
 			ntrain = int(self.ntot_train*train_p)
 			nvalid = int(self.ntot_valid*valid_p)
 			ntest = int(self.ntot_test*test_p)
 			if self.ntot_train % ntrain != 0:
-				raise Exception('ntot_train mod ntrain != 0, choose train_p so the dataset can be devided')
+				raise Exception('ntot_train mod ntrain != 0, choose train_p so the dataset can be divided')
 			if self.ntot_valid % nvalid != 0:
-				raise Exception('ntot_valid mod nvalid != 0, choose valid_p so the dataset can be devided')
+				raise Exception('ntot_valid mod nvalid != 0, choose valid_p so the dataset can be divided')
 			if self.ntot_test % ntest != 0:
-				raise Exception('ntot_test mod ntest != 0, choose test_p so the dataset can be devided')
+				raise Exception('ntot_test mod ntest != 0, choose test_p so the dataset can be divided')
 			
 			self.train_p = train_p
 			self.valid_p = valid_p
@@ -65,6 +67,14 @@ class qdata:
 		self.validation_labels = np.array(['s'] * nvalid + ['b'] * nvalid)
 		self.validation_nlabels = np.array([1] * nvalid + [0] * nvalid)
 		self.validation_dict = {'s': self.validSigAE[:nvalid], 'b': self.validBkgAE[:nvalid]}
+
+		if shuffle:
+			s = np.random.permutation(len(self.train))
+			self.train = self.train[s]
+			self.train_labels = self.train_labels[s]
+			self.train_nlabels = self.train_nlabels[s]
+
+		
 
 		self.test = np.vstack((self.testSigAE[:ntest],self.testBkgAE[:ntest]))
 		self.test_labels = np.array(['s'] * ntest + ['b'] * ntest)

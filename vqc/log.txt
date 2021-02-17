@@ -219,3 +219,46 @@ Train accuracy: 0.547
 Test accuracy: 0.575
 
 
+VQC LOG 2021-02-10 21:22:12.596799
+Feature map: Custom ZZ feature map for PL v1
+Variational form: Two-local VF with RY CX PL v1
+Optimizer: Adagrad
+Qubits: 4
+epochs/lrate/bsize: 150/0.05/200
+train/valid/test: 1000/200/100
+Elapsed time: 40878.39799904823s 11.355110555291176h
+Train accuracy: 0.509
+Test accuracy: 0.5
+
+VQC LOG 2021-02-08 23:06:58.900377
+Feature map: Custom ZZ feature map for PL v1
+Variational form: Two-local VF with RY CX PL v1
+Qubits: 4
+epochs/lrate/bsize: 100/0.1/10
+train/valid/test: 1000/200/100
+Elapsed time: 46506.83776664734s 12.918566046290927h
+Train accuracy: 0.5005
+Test accuracy: 0.485
+
+
+VQC LOG 2021-02-11 01:41:56.910788
+Feature map: Custom ZZ feature map for PL v1
+Variational form: Two-local VF with RY CX PL v1
+Qubits: 4
+epochs/lrate/bsize: 150/0.05/200
+train/valid/test (x2): 2000/400/100
+Elapsed time: 142698.29926133156s 39.638416461480986h
+Train accuracy: 0.5175
+Test accuracy: 0.58
+
+
+VQC LOG 2021-02-13 10:50:39.566941
+Feature map: Custom ZZ feature map for PL v1
+Variational form: Two-local VF with RY CX PL v1
+Qubits: 4
+epochs/lrate/bsize: 150/0.0025/500
+train/valid/test (x2): 2000/400/100
+Elapsed time: 141602.58045983315s 39.33405012773143h
+Train accuracy: 0.53
+Test accuracy: 0.58
+

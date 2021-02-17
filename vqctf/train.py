@@ -30,15 +30,13 @@ class CustomCallback(keras.callbacks.Callback):
 	def __init__(self, qd):
 		self.qd = qd
 
-	def on_epoch_end(self, epoch, logs=None):
-		
-		train_acc = get_accuracy(self.model, self.qd.train, self.qd.train_nlabels)
-		valid_acc = get_accuracy(self.model, self.qd.validation, self.qd.validation_nlabels)
-		print(f"Epoch {epoch} | Train accuracy: {train_acc} | Valid accuracy: {valid_acc}", flush = True)
+#	def on_epoch_end(self, epoch, logs=None):	
+		#train_acc = get_accuracy(self.model, self.qd.train, self.qd.train_nlabels)
+		#valid_acc = get_accuracy(self.model, self.qd.validation, self.qd.validation_nlabels)
+		#print(f"Epoch {epoch} | Train accuracy: {train_acc} | Valid accuracy: {valid_acc}", flush = True)
 
 
 def train(epochs, lrate, batch_size, qd, name):
-	
 	train_data = qd.train
 	train_labels = qd.train_nlabels
 
@@ -56,7 +54,7 @@ def train(epochs, lrate, batch_size, qd, name):
 
 	opt = tf.keras.optimizers.Adam(learning_rate = lrate)
 	model.compile(opt, loss=tf.keras.losses.BinaryCrossentropy())
-	history = model.fit(train_data, train_labels, epochs = epochs, shuffle = True, validation_data = (validation_data, validation_labels), verbose = False, batch_size = batch_size, callbacks = [CustomCallback(qd)])
+	history = model.fit(train_data, train_labels, epochs = epochs, shuffle = True, validation_data = (validation_data, validation_labels), verbose = True, batch_size = batch_size, callbacks = [CustomCallback(qd)])
 
 	end_time = time.time()
 
@@ -71,7 +69,7 @@ def train(epochs, lrate, batch_size, qd, name):
 	f = open("vqctf/out/log", "a")
 	f.write("VQC " + name + "\n")
 	f.write("Autoencoder: " + qd.model + "\n")
-	f.write(circuit_desc)
+	f.write(circuit_desc + "\n")
 	f.write(f"epochs/lrate/bsize: {epochs} / {lrate} / {batch_size}\n")
 	f.write(f"train/valid {qd.ntrain} / {qd.nvalid}\n")
 	f.write("Elapsed time: " + str(end_time - start_time) + "s " + str((end_time - start_time)/3600) + "h\n")

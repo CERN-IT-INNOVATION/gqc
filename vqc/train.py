@@ -10,22 +10,14 @@ import time
 from datetime import datetime
 
 def cost(theta, data, labels):
-	# Compute prediction for each input in data batch
 	loss = 0.0
-#	probabilities = []
 	for i in range(len(data)):
-		f = prob0(theta, data[i])
-#		probabilities.append([f,1-f])
-#	print(labels)
-#	print(probabilities)
-#	print("<++++>",flush=True)
-	if (labels[i] == 0):
-		loss += (1-f)
-	else:
-		loss += f;
-#	return log_loss(labels, np.array(probabilities)) 
-	print(f"Loss: {loss}")
-	return loss
+		f = qcircuit(theta, data[i])
+		if (labels[i] == 0):
+			loss += (1-f)**2
+		else:
+			loss += f**2;
+	return loss / len(data)
 
 
 def accuracy_score(label_true, label_pred):
@@ -49,7 +41,7 @@ def train(epochs, lrate, batch_size, qd, name = "default"):
 	opt = AdamOptimizer(lrate);
 
 	accuracy_train = 0
-	accuracy_test = 0
+	accuracy_valid = 0
 	
 	theta = np.random.uniform(size=25)
 	
@@ -67,7 +59,7 @@ def train(epochs, lrate, batch_size, qd, name = "default"):
 		
 		predicted_valid = test(theta, validation_data)
 		accuracy_valid = accuracy_score(validation_labels, predicted_valid)
-		res = [it + 1, loss, accuracy_train, accuracy_test]
+		res = [it + 1, loss, accuracy_train, accuracy_valid]
 		print(
 			"Epoch: {:2d} | Loss: {:3f} | Train accuracy: {:3f} | Valid accuracy: {:3f}".format(*res), flush = True
 		)
@@ -79,14 +71,14 @@ def train(epochs, lrate, batch_size, qd, name = "default"):
 	## Logging time!
 	
 	f = open("vqc/out/log", "a")
-	f.write("VQC LOG " + str(datetime.now()) + "\n")
+	f.write("VQC LOG " + name + "\n")
 	f.write("Autoencoder: " + qd.model + "\n")
 	f.write(circuit_desc + "\n")
 	f.write(f"epochs/lrate/bsize: {str(epochs)} / {lrate} / {batch_size}\n")
 	f.write(f"train/valid: {qd.ntrain} / {qd.nvalid}\n")
 	f.write("Elapsed time: " + str(end_time - start_time) + "s " + str((end_time - start_time)/3600) + "h\n")
 	f.write("Train accuracy: " + str(accuracy_train) + "\n")
-	f.write("Test accuracy: " + str(accuracy_test) + "\n")
+	f.write("Test accuracy: " + str(accuracy_valid) + "\n")
 	f.write("\n\n")
 	f.close();
 

@@ -13,6 +13,7 @@ class qdata:
 	ntot_valid = int(validSigAE.shape[0])
 
 	def __init__(self, encoder = "", train_p = 0.0005, valid_p = 0.002, test_p = 0.002, proportion = None, shuffle = False):
+	#TODO: maybe we should go **kwargs, so we don't have a lot of argumnets
 		if encoder == "tf":
 			from aeTF.encode import encode
 			from aeTF.encode import model
@@ -25,8 +26,18 @@ class qdata:
 			self.testBkgAE = encode(self.testBkgAE)
 			self.model = model
 		elif encoder == "pt":
+			from encodePT import encode
 			print('Using PyTorch for autoencoder model to encode the data')
-			# TODO Implement encoding
+			#TODO: add functionality: use other models for autoencoder
+			self.savedModel = "aePyTorch/trained_models/L64.52.44.32.24.16B128Lr2e-037.2e5/"
+			self.layers = [67,64, 52, 44, 32, 24, 16]
+			self.trainSigAE = encode(self.trainSigAE,self.savedModel,self.layers)
+			self.trainBkgAE = encode(self.trainBkgAE,self.savedModel,self.layers)
+			self.validSigAE = encode(self.validSigAE,self.savedModel,self.layers)
+			self.validBkgAE = encode(self.validBkgAE,self.savedModel,self.layers)
+			self.testSigAE = encode(self.testSigAE,self.savedModel,self.layers)
+			self.testBkgAE = encode(self.testBkgAE,self.savedModel,self.layers)
+
 		elif encoder == "":
 			print("Using unencoded data");
 		else:

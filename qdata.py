@@ -12,7 +12,7 @@ class qdata:
 	ntot_train = int(trainSigAE.shape[0])
 	ntot_valid = int(validSigAE.shape[0])
 
-	def __init__(self, encoder = "", train_p = 0.0005, valid_p = 0.002, test_p = 0.002, proportion = None, shuffle = False):
+	def __init__(self, encoder = "", train_p = 0.0005, valid_p = 0.005, test_p = 0.005, proportion = None, shuffle = False):
 	#TODO: maybe we should go **kwargs, so we don't have a lot of argumnets
 		if encoder == "tf":
 			from aeTF.encode import encode
@@ -95,6 +95,7 @@ class qdata:
 		print(f'xcheck: train/validation/test shapes: {self.train.shape}/{self.validation.shape}/{self.test.shape}')
 	
 	def get_kfold_validation(self,k=5):
+		#FIXME: incorporate shuffle
 		splits_total = int(1/self.valid_p)
 		'''
 		splits_total: the max number we can divide the initial validation dataset (from splitDatasets). 

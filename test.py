@@ -24,39 +24,40 @@ parser.add_argument('--model',type = str,required = True,help='path to saved QSV
 parser.add_argument('--k', type = int,default=5,help='number of validation folds for testing')
 args = parser.parse_args()
 
-qdata = qd.qdata(encoder='pt',valid_p=0.004)
-defaultlayers.insert(0,qdata.train.shape[1]) #insert number of input nodes = feature_size
+qdata = qd.qdata(encoder='',valid_p = 0.005)
+#defaultlayers.insert(0,qdata.train.shape[1]) #insert number of input nodes = feature_size
 
 print('\nLoaded Model: ',args.model)
 #feature_map = u2Reuploading(nqubits=8,nfeatures=16)
-nqubits = 4
+nqubits = 6
 feature_map = RawFeatureVector(2**nqubits)
 #feature_map = customFeatureMap(2**nqubits)
 backend = Aer.get_backend('statevector_simulator')
 #backend = Aer.get_backend('qasm_simulator')
 quantum_instance = QuantumInstance(backend)
-print('\nUsing feature map:\n', feature_map.construct_circuit(encode(qdata.train,savedModel,defaultlayers)[0]))
+#Print feature map:
+datapoint = np.delete(qdata.train[0],[34,42,50])
+print('\nUsing feature map:\n', feature_map.construct_circuit(datapoint))
 
 qsvm = QSVM(feature_map, quantum_instance = quantum_instance)
 
-#TODO: Load more than one QSVM models and check their parameters?
+#TODO: load with dictionaries different feature maps (as qc!) for diff model names?
 folder = 'qsvm/'
 model_paths = [folder+ifile for ifile in listdir('qsvm/') if '.npz' in ifile]#Create a list of models saved in .npz files
 
 qsvm.load_model(args.model)
 
-validation_folds = qdata.get_kfold_validation(k=args.k,splits_total = 250)
+validation_folds = qdata.get_kfold_validation(k=args.k)
 #[0,1]->[0,2pi]
 #validation_folds *=2*np.pi
 
-labels = qdata.validation_labels#TODO: change this automatically if splits_total is changed in get_kfold_validation()
-print(labels.shape)
-validation_labels = np.where(labels == 's',1,0)#Always the same, thus outside for-loop
+#validation_labels = np.where(labels == 's',1,0)#Always the same, thus outside for-loop
 accuracies = []
 for i,fold in enumerate(validation_folds):
-	validation = encode(fold,savedModel,defaultlayers)	
+#	validation = encode(fold,savedModel,defaultlayers)
+	validation = np.delete(fold,[34,42,50],axis=1)#remove phi's for 64 features
 	print(f'fold {i}, shape = {validation.shape}')	
-	acc_validation = qsvm.test(validation,validation_labels)
+	acc_validation = qsvm.test(validation,qdata.validation_nlabels)
 	accuracies.append(acc_validation)
 	print(f'Validation Accuracy = {acc_validation}')
 
@@ -65,13 +66,14 @@ accuracies = np.array(accuracies)
 
 print(f'Validation Accuracy mean = {np.mean(accuracies):.4f}, std = {np.std(accuracies):.4f},for k={args.k} validation datasets')
 end_time = time.time()
-print(f'{args.k}-folds Total Runtime = {end_time-start_time}')
+print(f'{args.k}-folds Total Runtime = {(end_time-start_time)/60}:.4f min.')
 
 original_stdout = sys.stdout
 with open(args.model[:-4]+'.txt','a+') as f:
 	sys.stdout = f # Change the standard output to the file we created.
-	print(f'Validation Accuracy mean = {np.mean(accuracies):.4f}, std = {np.std(accuracies):.4f},for k={args.k} validation datasets')
+	print(f'Validation Accuracy mean = {np.mean(accuracies):.4f}, std = {np.std(accuracies):.4f},for k={args.k} validation datasets'
+	'each with n_valid = {qdata.validation} samples')
 	end_time = time.time()
-	print(f'{args.k}-folds Total Runtime = {end_time-start_time}/60:.4f min.')
+	print(f'{args.k}-folds Total Runtime = {(end_time-start_time)/60:.4f} min.')
 	print('-------------------------------------------\n')
 	sys.stdout = original_stdout # Reset the standard output to its original value

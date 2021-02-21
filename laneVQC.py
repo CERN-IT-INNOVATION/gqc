@@ -7,17 +7,33 @@ from vqctf.train import *
 from qdata import qdata
 
 # Number of events for signal/background. Total will be doubled!
-ntrain = 1500
-nvalid = 500
+ntrain = 2000
+nvalid = 100
 ntest = 0
 
 qd = qdata("tf", ntrain, nvalid, ntest, shuffle = True)
 
-epochs = 150
-learning_rate = 0.025
-batch_size = 500
+epochs = 30
+learning_rate = 0.001
+batch_size = 50
 
-model, hist = train(epochs, learning_rate, batch_size, qd, "TF1-Big-1")
+name = "NM1"
+
+model, hist = train(epochs, learning_rate, batch_size, qd, name)
+
+qd = qdata("tf")
+valid = qd.get_kfold_validation()
+
+encoded = []
+
+for i in range(len(valid)):
+	sample = valid[i]
+	encoded.append(np.array(model.predict(sample)))
+
+encoded = np.array(encoded)
+
+np.save("vqctf/out/" + name, encoded)
+
 
 #acc = accuracy_score(qd.test_nlabels, test(theta, qd.test))
 

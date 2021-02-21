@@ -78,7 +78,6 @@ def train(epochs, lrate, batch_size, qd, name):
 	f.write("\n\n")
 	f.close();
 
-	os.mkdir("vqctf/out/" + name)
 	model.save_weights("vqctf/out/" + name + "/" + name)
 
 	errs = history.history['loss'];
@@ -89,3 +88,17 @@ def train(epochs, lrate, batch_size, qd, name):
 	plt.savefig("vqctf/out/plot-" + name + ".png");
 
 	return model, history
+
+
+def load_model(name):
+	wshape = {"theta": 24}
+
+	start_time = time.time()
+
+	qlayer = qml.qnn.KerasLayer(qcircuit, wshape, output_dim=1)
+	model = tf.keras.models.Sequential([qlayer])
+	opt = tf.keras.optimizers.Adam()
+	model.compile(opt, loss=tf.keras.losses.BinaryCrossentropy())
+	model.built = True
+	model.load_weights("vqctf/out" + name)
+	return model

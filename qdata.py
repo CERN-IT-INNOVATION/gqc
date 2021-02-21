@@ -48,22 +48,30 @@ class qdata:
 
 		if train_p <= 1:
 			ntrain = int(self.ntot_train*train_p)
-			nvalid = int(self.ntot_valid*valid_p)
-			ntest = int(self.ntot_test*test_p)
+			self.train_p = train_p
 			if self.ntot_train % ntrain != 0:
 				raise Exception('ntot_train mod ntrain != 0, choose train_p so the dataset can be divided')
-			if self.ntot_valid % nvalid != 0:
-				raise Exception('ntot_valid mod nvalid != 0, choose valid_p so the dataset can be divided')
-			if self.ntot_test % ntest != 0:
-				raise Exception('ntot_test mod ntest != 0, choose test_p so the dataset can be divided')
-			
-			self.train_p = train_p
-			self.valid_p = valid_p
-			self.test_p = test_p
 		else:
 			ntrain = train_p
+			self.train_p = train_p / self.ntot_train
+
+		if valid_p <= 1:
+			nvalid = int(self.ntot_valid*valid_p)
+			self.valid_p = valid_p
+			if self.ntot_valid % nvalid != 0:
+				raise Exception('ntot_valid mod nvalid != 0, choose valid_p so the dataset can be divided')
+		else:
 			nvalid = valid_p
+			self.valid_p = valid_p / self.ntot_valid
+		
+		if (test_p <= 1) & (test_p > 0):
+			ntest = int(self.ntot_test*test_p)
+			self.test_p = test_p
+			if self.ntot_test % ntest != 0:
+				raise Exception('ntot_test mod ntest != 0, choose test_p so the dataset can be divided')
+		else:
 			ntest = test_p
+			self.test_p = test_p / self.ntot_test
 
 		self.ntrain = ntrain
 		self.nvalid = nvalid

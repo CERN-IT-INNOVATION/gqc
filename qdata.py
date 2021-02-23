@@ -1,6 +1,8 @@
 import numpy as np
 from aePyTorch.splitDatasets import splitDatasets
 
+#TODO: Takes some time to load encoded datasets, because the AE model runs on the full datasets and then outputs only a subset 
+
 class qdata:
 
 	#Load the test dataset of the autoencoder and split it to training,validation and testing datasets for the qml

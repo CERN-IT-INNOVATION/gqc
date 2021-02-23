@@ -43,7 +43,7 @@ def train(epochs, lrate, batch_size, qd, name):
 	validation_data = qd.validation
 	validation_labels = qd.validation_nlabels 
 
-	wshape = {"theta": 24}
+	wshape = {"theta": 32}
 
 	start_time = time.time()
 

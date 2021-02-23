@@ -17,7 +17,7 @@ epochs = 30
 learning_rate = 0.001
 batch_size = 50
 
-name = "NM1"
+name = "NM2"
 
 model, hist = train(epochs, learning_rate, batch_size, qd, name)
 

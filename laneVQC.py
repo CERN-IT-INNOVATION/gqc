@@ -7,17 +7,17 @@ from vqctf.train import *
 from qdata import qdata
 
 # Number of events for signal/background. Total will be doubled!
-ntrain = 2000
+ntrain = 1500
 nvalid = 100
 ntest = 0
 
 qd = qdata("tf", ntrain, nvalid, ntest, shuffle = True)
 
-epochs = 30
-learning_rate = 0.001
+epochs = 120
+learning_rate = 0.005
 batch_size = 50
 
-name = "NM2"
+name = "NM3xl"
 
 model, hist = train(epochs, learning_rate, batch_size, qd, name)
 

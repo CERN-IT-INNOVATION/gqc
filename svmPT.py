@@ -77,7 +77,7 @@ with open('SVMlog.txt', 'a+') as f:
 	sys.stdout = original_stdout # Reset the standard output to its original value
 '''
 #Training:
-validation_datasets = qdata.get_kfold_validation(k=10)
+validation_datasets = qdata.get_kfold_validation()
 for ikernel in kernels:
 	print('Kernel: '+ikernel)
 	cls = svm.SVC(kernel=ikernel)

@@ -6,7 +6,7 @@ import vqctf.twolane as vform
 
 nqubits = 4
 
-circuit_desc = "4-qubits\nZZ(4) 2L(2rep) ZZ(4) 2L(2rep)"
+circuit_desc = "4-qubits\nZZ(4) 2L(4rep) ZZ(4) 2L(4rep)"
 
 dev = qml.device("default.qubit", wires=nqubits)
 
@@ -22,20 +22,12 @@ y = density_matrix(state_0)
 @qml.qnode(dev, interface="tf")
 def qcircuit(inputs, theta):
 	fmap.get_circuit(nqubits, inputs[0:4])
-	vform.get_circuit(nqubits, theta[0:12])
+	vform.get_circuit(nqubits, theta[0:20], reps = 4)
 	fmap.get_circuit(nqubits, inputs[4:8])
-	vform.get_circuit(nqubits, theta[12:24])
+	vform.get_circuit(nqubits, theta[20:40], reps = 4)
 	return qml.expval(qml.Hermitian(y, wires=[0]))
 
-def test(theta, data):
-	predicted = []
-	for i in range(len(data)):
-		p0 = prob0(theta, data(i))
-		if (p0 >= .5):
-			predicted.append(0)
-		else:
-			predicted.append(1)
-	return np.array(predicted)
+
 
 
 

@@ -43,7 +43,7 @@ def train(epochs, lrate, batch_size, qd, name):
 	validation_data = qd.validation
 	validation_labels = qd.validation_nlabels 
 
-	wshape = {"theta": 24}
+	wshape = {"theta": 40}
 
 	start_time = time.time()
 
@@ -86,6 +86,11 @@ def train(epochs, lrate, batch_size, qd, name):
 	plt.title("Loss for " + name)
 	plt.xlabel("Epochs")
 	plt.savefig("vqctf/out/plot-" + name + ".png");
+
+	print("Loss")
+	print(history.history['loss'])
+	print("VLoss")
+	print(history.history['val_loss'])
 
 	return model, history
 

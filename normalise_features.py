@@ -46,7 +46,7 @@ def normalizerMeanStd(bkgfile,sigfile,outfile,fileflag):
 
 if __name__ == "__main__":
 	parser = argparse.ArgumentParser(formatter_class=argparse.ArgumentDefaultsHelpFormatter)#include defaults in -h
-	infileBkg,infileSig = 'input_ae/raw_bkg.npy','input_ae/raw_sig.npy'
+	infileBkg,infileSig = 'input_ae/raw_bkg7.2e5.npy','input_ae/raw_sig7.2e5.npy'
 	infiles = (infileBkg,infileSig)
 	parser.add_argument("--infiles",type=str,default=infiles,nargs=2, help="path to files")
 	parser.add_argument('--fileFlag',type=str,default='',help='fileFlag to concatenate to outputFiles')

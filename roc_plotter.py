@@ -11,13 +11,23 @@ models_names_dict_16 = {'QSVM (4 qubits)':'amp_enc_only_yscoreList.npy', 'SVM rb
 labels_flat = np.tile(qdata.validation_nlabels,5)#construct the labels for flattened y_score vector (5,720)->(3600,)
 #ROC plots latent space:
 f1 = plt.figure(1,figsize=(10,10))
-plt.rc('xtick', labelsize=17)    # fontsize of the tick labels
-plt.rc('ytick', labelsize=17)    # fontsize of the tick labels
-#plt.rc('font', size=SMALL_SIZE)          # controls default text sizes
-plt.rc('axes', titlesize=18)     # fontsize of the axes title
+
+
+#plt.rc('xtick', labelsize=17)    # fontsize of the tick labels
+#plt.rc('ytick', labelsize=17)    # fontsize of the tick labels
+##plt.rc('font', size=SMALL_SIZE)          # controls default text sizes
+#plt.rc('axes', titlesize=18)     # fontsize of the axes title
+#plt.rc('axes', labelsize=20)    # fontsize of the x and y labels
+#plt.rc('legend', fontsize=30)    # legend fontsize
+#plt.rc('figure', titlesize=18)  # fontsize of the figure title
+
+plt.rc('xtick', labelsize=18)    # fontsize of the tick labels
+plt.rc('ytick', labelsize=18)    # fontsize of the tick labels
+plt.rc('axes', titlesize=20)     # fontsize of the axes title
 plt.rc('axes', labelsize=20)    # fontsize of the x and y labels
-plt.rc('legend', fontsize=30)    # legend fontsize
-plt.rc('figure', titlesize=18)  # fontsize of the figure title
+plt.rc('legend', fontsize=20)    # legend fontsize
+plt.rc('figure', titlesize=20)  # fontsize of the figure title
+
 for model_name in models_names_dict_16.keys():
     y_scores = np.load('qsvm/'+models_names_dict_16[model_name])
     #computation of auc +/- 1sigma

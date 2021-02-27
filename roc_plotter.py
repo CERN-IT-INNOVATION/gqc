@@ -32,7 +32,7 @@ for model_name in models_names_dict_16.keys():
 
 plt.title(r'$N^{train}$'+f'={len(qdata.train)},'+r' $N^{test}$'+f'={len(qdata.validation)} ($x 5$)',
 loc='left')
-plt.xlabel('Background  Efficiency (FPR)')
+plt.xlabel('Background Efficiency (FPR)')
 plt.ylabel('Signal Efficiency (TPR)')
 
 x = np.linspace(0,1,num=50)#draw x=y line for random binary classifier ROC
@@ -63,7 +63,7 @@ for model_name in models_names_dict_input.keys():
 
 plt.title(r'$N^{train}$'+f'={len(qdata.train)},'+r' $N^{test}$'+f'={len(qdata.validation)} ($x 5$)',
 loc='left')
-plt.xlabel('Background  Efficiency (FPR)')
+plt.xlabel('Background Efficiency (FPR)')
 plt.ylabel('Signal Efficiency (TPR)')
 x = np.linspace(0,1,num=50)#draw x=y line for random binary classifier ROC
 plt.plot(x,x,'--',color = 'k',label = 'Random Classifier')
@@ -94,7 +94,7 @@ for model_name in models_names_dict_16auc.keys():
 
 plt.title(r'$N^{train}$'+f'={len(qdata.train)},'+r' $N^{test}$'+f'={len(qdata.validation)} ($x 5$)',
 loc='left')
-plt.xlabel('Background  Efficiency (FPR)')
+plt.xlabel('Background Efficiency (FPR)')
 plt.ylabel('Signal Efficiency (TPR)')
 
 x = np.linspace(0,1,num=50)#draw x=y line for random binary classifier ROC

@@ -51,12 +51,12 @@ def get_plot(model_dictionary,ntrain,nvalid=720,nfolds=5):
 
 	# Style config
 	f1 = plt.figure(1,figsize=(10,10))
-	plt.rc('xtick', labelsize=18)    # fontsize of the tick labels
-	plt.rc('ytick', labelsize=18)    # fontsize of the tick labels
-	plt.rc('axes', titlesize=20)     # fontsize of the axes title
-	plt.rc('axes', labelsize=20)    # fontsize of the x and y labels
-	plt.rc('legend', fontsize=20)    # legend fontsize
-	plt.rc('figure', titlesize=20)  # fontsize of the figure title
+	plt.rc('xtick', labelsize=20)    # fontsize of the tick labels
+	plt.rc('ytick', labelsize=20)    # fontsize of the tick labels
+	plt.rc('axes', titlesize=22)     # fontsize of the axes title
+	plt.rc('axes', labelsize=22)    # fontsize of the x and y labels
+	plt.rc('legend', fontsize=22)    # legend fontsize
+	plt.rc('figure', titlesize=22)  # fontsize of the figure title
 
 
 	for model_name in model_dictionary:
@@ -79,9 +79,9 @@ def get_plot(model_dictionary,ntrain,nvalid=720,nfolds=5):
 
 
 model_dictionary = {"VQC": get_info("AZ1-nenc-1"),
-"RF": get_info("randomforest"),
-"Log Reg": get_info("logreg"),
-"AdaBoost": get_info("adaboost")}
+"RF": get_info("randomforest")}
+#"Log Reg": get_info("logreg"),
+#"AdaBoost": get_info("adaboost")}
 
 #"MLP": get_info("mlperceptron"),
 

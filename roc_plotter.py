@@ -10,12 +10,12 @@ labels_flat = np.tile(qdata.validation_nlabels,5)#construct the labels for flatt
 def get_plots(model_dictionary, filename):
 	f1 = plt.figure(1,figsize=(10,10))
 
-	plt.rc('xtick', labelsize=18)    # fontsize of the tick labels
-	plt.rc('ytick', labelsize=18)    # fontsize of the tick labels
-	plt.rc('axes', titlesize=20)     # fontsize of the axes title
-	plt.rc('axes', labelsize=20)    # fontsize of the x and y labels
-	plt.rc('legend', fontsize=20)    # legend fontsize
-	plt.rc('figure', titlesize=20)  # fontsize of the figure title
+	plt.rc('xtick', labelsize=20)    # fontsize of the tick labels
+	plt.rc('ytick', labelsize=20)    # fontsize of the tick labels
+	plt.rc('axes', titlesize=22)     # fontsize of the axes title
+	plt.rc('axes', labelsize=22)    # fontsize of the x and y labels
+	plt.rc('legend', fontsize=22)    # legend fontsize
+	plt.rc('figure', titlesize=22)  # fontsize of the figure title
 
 	for model_name in model_dictionary.keys():
 		y_scores = np.load('qsvm/'+model_dictionary[model_name])

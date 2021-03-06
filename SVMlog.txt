@@ -95,3 +95,204 @@ Execution Time 0.23920559883117676 s or 0.003986759980519613 min.
 Test Accuracy: 0.5590277777777778, Training Accuracy: 0.5642361111111112
 -------------------------------------------
 
+
+---------------------2021-01-20 18:35:59.299984----------------------
+Autoencoder model: aePyTorch/trained_models/L64.52.44.32.24.16B128Lr2e-037.2e5/
+ntrain = 5760, ntest = 288.
+
+Kernel: linear
+Execution Time 1.061591625213623 s or 0.017693193753560384 min.
+Test Accuracy: 0.6041666666666666, Training Accuracy: 0.5784722222222223
+
+Kernel: poly
+Execution Time 2.839045524597168 s or 0.0473174254099528 min.
+Test Accuracy: 0.6215277777777778, Training Accuracy: 0.6260416666666667
+
+Kernel: rbf
+Execution Time 5.437438488006592 s or 0.09062397480010986 min.
+Test Accuracy: 0.6388888888888888, Training Accuracy: 0.6230902777777778
+
+Kernel: sigmoid
+Execution Time 7.036996364593506 s or 0.1172832727432251 min.
+Test Accuracy: 0.46875, Training Accuracy: 0.48506944444444444
+-------------------------------------------
+
+
+---------------------2021-01-20 18:38:52.330445----------------------
+Autoencoder model: aePyTorch/trained_models/L64.52.44.32.24.16B128Lr2e-037.2e5/
+ntrain = 11520, ntest = 288.
+
+Kernel: linear
+Execution Time 4.400000095367432 s or 0.07333333492279052 min.
+Test Accuracy: 0.6111111111111112, Training Accuracy: 0.57734375
+
+Kernel: poly
+Execution Time 10.49972128868103 s or 0.1749953548113505 min.
+Test Accuracy: 0.6493055555555556, Training Accuracy: 0.6219618055555556
+
+Kernel: rbf
+Execution Time 19.913941621780396 s or 0.3318990270296733 min.
+Test Accuracy: 0.6423611111111112, Training Accuracy: 0.62890625
+
+Kernel: sigmoid
+Execution Time 26.28506636619568 s or 0.43808443943659464 min.
+Test Accuracy: 0.4618055555555556, Training Accuracy: 0.4813368055555556
+-------------------------------------------
+
+
+---------------------2021-01-20 18:51:18.921503----------------------
+Autoencoder model: aePyTorch/trained_models/L64.52.44.32.24.16B128Lr2e-037.2e5/
+ntrain = 11520, nvalidation = 288.
+
+Kernel: linear
+Execution Time 4.374727964401245 s or 0.07291213274002076 min.
+Test Accuracy: 0.6111111111111112, Training Accuracy: 0.57734375
+
+Kernel: poly
+Execution Time 10.44324254989624 s or 0.17405404249827067 min.
+Test Accuracy: 0.6180555555555556, Training Accuracy: 0.6219618055555556
+
+Kernel: rbf
+Execution Time 19.84027910232544 s or 0.3306713183720907 min.
+Test Accuracy: 0.6388888888888888, Training Accuracy: 0.62890625
+
+Kernel: sigmoid
+Execution Time 26.219014883041382 s or 0.43698358138402305 min.
+Test Accuracy: 0.4513888888888889, Training Accuracy: 0.4813368055555556
+-------------------------------------------
+
+
+---------------------2021-01-20 18:58:44.625693----------------------
+Autoencoder model: aePyTorch/trained_models/L64.52.44.32.24.16B128Lr2e-037.2e5/
+ntrain = 11520, nvalidation = 576.
+
+Kernel: linear
+Execution Time 4.432302713394165 s or 0.07387171188990276 min.
+Test Accuracy: 0.6319444444444444, Training Accuracy: 0.57734375
+
+Kernel: poly
+Execution Time 10.59260892868042 s or 0.17654348214467366 min.
+Test Accuracy: 0.609375, Training Accuracy: 0.6219618055555556
+
+Kernel: rbf
+Execution Time 20.139379501342773 s or 0.3356563250223796 min.
+Test Accuracy: 0.625, Training Accuracy: 0.62890625
+
+Kernel: sigmoid
+Execution Time 26.6987464427948 s or 0.4449791073799133 min.
+Test Accuracy: 0.4600694444444444, Training Accuracy: 0.4813368055555556
+-------------------------------------------
+
+#FIXME: WHAT? Changing from validation to test set really changes the numbers 
+of acc up to ~5%. More tests are needed?
+
+---------------------2021-01-20 19:01:01.349987----------------------
+Autoencoder model: aePyTorch/trained_models/L64.52.44.32.24.16B128Lr2e-037.2e5/
+ntrain = 11520, ntest = 576.
+
+Kernel: linear
+Execution Time 4.501991510391235 s or 0.07503319183985392 min.
+Test Accuracy: 0.59375, Training Accuracy: 0.57734375
+
+Kernel: poly
+Execution Time 10.913875102996826 s or 0.18189791838328043 min.
+Test Accuracy: 0.625, Training Accuracy: 0.6219618055555556
+
+Kernel: rbf
+Execution Time 20.39302349090576 s or 0.3398837248484294 min.
+Test Accuracy: 0.6319444444444444, Training Accuracy: 0.62890625
+
+Kernel: sigmoid
+Execution Time 26.863982677459717 s or 0.4477330446243286 min.
+Test Accuracy: 0.4756944444444444, Training Accuracy: 0.4813368055555556
+-------------------------------------------
+
+
+---------------------2021-01-20 19:04:10.051056----------------------
+Autoencoder model: aePyTorch/trained_models/L64.52.44.32.24.16B128Lr2e-037.2e5/
+ntrain = 11520, ntest = 5760.
+
+Kernel: linear
+Execution Time 5.2069923877716064 s or 0.08678320646286011 min.
+Test Accuracy: 0.58125, Training Accuracy: 0.57734375
+
+Kernel: poly
+Execution Time 12.099499464035034 s or 0.2016583244005839 min.
+Test Accuracy: 0.6086805555555556, Training Accuracy: 0.6219618055555556
+
+Kernel: rbf
+Execution Time 23.211158990859985 s or 0.38685264984766643 min.
+Test Accuracy: 0.6142361111111111, Training Accuracy: 0.62890625
+
+Kernel: sigmoid
+Execution Time 30.920610666275024 s or 0.5153435111045838 min.
+Test Accuracy: 0.478125, Training Accuracy: 0.4813368055555556
+-------------------------------------------
+
+
+---------------------2021-01-20 19:11:49.447934----------------------
+Autoencoder model: aePyTorch/trained_models/L64.52.44.32.24.16B128Lr2e-037.2e5/
+ntrain = 11520, nvalidation = 5760.
+
+Kernel: linear
+Execution Time 5.050384283065796 s or 0.08417307138442993 min.
+Test Accuracy: 0.5855902777777777, Training Accuracy: 0.57734375
+
+Kernel: poly
+Execution Time 11.901268720626831 s or 0.19835447867711384 min.
+Test Accuracy: 0.5984375, Training Accuracy: 0.6219618055555556
+
+Kernel: rbf
+Execution Time 23.04695749282837 s or 0.3841159582138062 min.
+Test Accuracy: 0.6072916666666667, Training Accuracy: 0.62890625
+
+Kernel: sigmoid
+Execution Time 30.71787691116333 s or 0.5119646151860555 min.
+Test Accuracy: 0.47934027777777777, Training Accuracy: 0.4813368055555556
+-------------------------------------------
+
+
+---------------------2021-01-20 19:27:14.137650----------------------
+Autoencoder model: aePyTorch/trained_models/L64.52.44.32.24.16B128Lr2e-037.2e5/
+ntrain = 11520, nvalidation = 11520.
+
+Kernel: linear
+Execution Time 5.777101516723633 s or 0.09628502527872722 min.
+Test Accuracy: 0.5815104166666667, Training Accuracy: 0.57734375
+
+Kernel: poly
+Execution Time 13.450946569442749 s or 0.2241824428240458 min.
+Test Accuracy: 0.6035590277777778, Training Accuracy: 0.6219618055555556
+
+Kernel: rbf
+Execution Time 26.458088397979736 s or 0.44096813996632894 min.
+Test Accuracy: 0.6114583333333333, Training Accuracy: 0.62890625
+
+Kernel: sigmoid
+Execution Time 35.48068404197693 s or 0.5913447340329488 min.
+Test Accuracy: 0.47760416666666666, Training Accuracy: 0.4813368055555556
+-------------------------------------------
+
+
+---------------------2021-01-20 19:28:26.613168----------------------
+Autoencoder model: aePyTorch/trained_models/L64.52.44.32.24.16B128Lr2e-037.2e5/
+ntrain = 11520, ntest = 11520.
+
+Kernel: linear
+Execution Time 5.7660627365112305 s or 0.09610104560852051 min.
+Test Accuracy: 0.5810763888888889, Training Accuracy: 0.57734375
+
+Kernel: poly
+Execution Time 13.423404932022095 s or 0.2237234155337016 min.
+Test Accuracy: 0.6059895833333333, Training Accuracy: 0.6219618055555556
+
+Kernel: rbf
+Execution Time 26.376699209213257 s or 0.43961165348688763 min.
+Test Accuracy: 0.6091145833333333, Training Accuracy: 0.62890625
+
+Kernel: sigmoid
+Execution Time 35.41825079917908 s or 0.5903041799863179 min.
+Test Accuracy: 0.4783854166666667, Training Accuracy: 0.4813368055555556
+-------------------------------------------
+
+

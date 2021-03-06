@@ -11,11 +11,18 @@ from varname import *
 
 #give 2 1d arrays
 def ratioPlotter(inp,out,ifeature,classLabel = ''):
-	hIn,binsIn, patchIn = plt.hist(x=inp,bins=60,range =(0,1),alpha=0.5,histtype='step',linewidth=2.5,label='Original '+classLabel)
-	hOut,binsOut, patch = plt.hist(x=out,bins=60,range = (0,1),alpha=0.5,histtype='step',linewidth = 2.5,label='Output '+classLabel)
-	plt.xlabel('feature '+varname(i))
-	plt.ylabel('Entries/Bin')
-	plt.title('Distribution of '+varname(i))
+	plt.rc('xtick', labelsize=20)    # fontsize of the tick labels
+	plt.rc('ytick', labelsize=20)    # fontsize of the tick labels
+	plt.rc('axes', titlesize=22)     # fontsize of the axes title
+	plt.rc('axes', labelsize=22)    # fontsize of the x and y labels
+	plt.rc('legend', fontsize=22)    # legend fontsize
+	#plt.rc('figure', titlesize=22)  # fontsize of the figure title	
+	hIn,binsIn, patchIn = plt.hist(x=inp,bins=60,range =(0,1),alpha=0.8,histtype='step',linewidth=2.5,label=classLabel,density = True)
+	hOut,binsOut, patch = plt.hist(x=out,bins=60,range = (0,1),alpha=0.8,histtype='step',linewidth = 2.5,label='Rec. '+classLabel, density = True)
+	plt.xlabel(varname(i)+' (normalized)')
+	plt.ylabel('Density')
+	plt.xlim(0,0.4)
+	#plt.title('Distribution of '+varname(i))
 	plt.legend()
 
 
@@ -99,10 +106,11 @@ with torch.no_grad():
 
 	#Input VS Output:
 	for i in range(inpSig.numpy().shape[1]):
-		ratioPlotter(inpSig.numpy()[:,i],outputSig.numpy()[:,i],i,classLabel='Signal')#Plot Signal distributions
+		plt.figure(figsize=(12,10))
 		ratioPlotter(inpBkg.numpy()[:,i],outputBkg.numpy()[:,i],i,classLabel='Background')#Plot Background distributions
+		ratioPlotter(inpSig.numpy()[:,i],outputSig.numpy()[:,i],i,classLabel='Signal')#Plot Signal distributions
 		
-		plt.savefig(savedModel+'ratioPlot'+varname(i)+'.png')
+		plt.savefig(savedModel+'ratioPlot'+varname(i)+'.pdf')
 		plt.clf()
 	
 	#FIXME: Not displayed properly. Values are off and seems to be bias still between sig and bkg for the MSE distributions

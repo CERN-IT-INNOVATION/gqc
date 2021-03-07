@@ -14,6 +14,8 @@ from datetime import datetime
 #Test qsvm models accross different subsets of validation/testing data
 start_time = time.time()
 
+#TODO: load with dictionaries different feature maps (as qc!) for diff model names?
+#TODO: test.py is depricated use ROC curves instead
 infiles = ('input_ae/trainingTestingDataSig7.2e5.npy','input_ae/trainingTestingDataBkg7.2e5.npy')
 savedModel = "aePyTorch/trained_models/L64.52.44.32.24.16B128Lr2e-037.2e5/"
 defaultlayers = [64, 52, 44, 32, 24, 16]
@@ -24,7 +26,7 @@ parser.add_argument('--model',type = str,required = True,help='path to saved QSV
 parser.add_argument('--k', type = int,default=5,help='number of validation folds for testing')
 args = parser.parse_args()
 
-qdata = qd.qdata(encoder='',valid_p = 0.005)
+qdata = qd.qdata(encoder='')
 #defaultlayers.insert(0,qdata.train.shape[1]) #insert number of input nodes = feature_size
 
 print('\nLoaded Model: ',args.model)
@@ -41,7 +43,6 @@ print('\nUsing feature map:\n', feature_map.construct_circuit(datapoint))
 
 qsvm = QSVM(feature_map, quantum_instance = quantum_instance)
 
-#TODO: load with dictionaries different feature maps (as qc!) for diff model names?
 folder = 'qsvm/'
 model_paths = [folder+ifile for ifile in listdir('qsvm/') if '.npz' in ifile]#Create a list of models saved in .npz files
 

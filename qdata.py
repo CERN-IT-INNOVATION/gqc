@@ -51,7 +51,7 @@ class qdata:
 			self.testBkgAE = encode(self.testBkgAE)
 			self.model = model
 		elif encoder == "pt":
-			from encodePT import encode
+			from aePyTorch.encodePT import encode
 			print('Using PyTorch for autoencoder model to encode the data')
 			#TODO: add functionality: use other models for autoencoder
 			self.savedModel = "aePyTorch/trained_models/L64.52.44.32.24.16B128Lr2e-037.2e5/"

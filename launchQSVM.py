@@ -1,5 +1,5 @@
 from qiskit.aqua.components.feature_maps.raw_feature_vector import RawFeatureVector # Amplitude encoding.
-from feature_map_testing import customFeatureMap,get_circuit14,u2Reuploading
+from feature_map_circuits import customFeatureMap,get_circuit14,u2Reuploading
 from qiskit import Aer
 from qiskit.aqua import QuantumInstance
 from qiskit.aqua.algorithms import QSVM

@@ -20,7 +20,7 @@ class qdata:
 	ntot_valid = int(validSigAE.shape[0])
 
 	def __init__(self, encoder = "", train_p = 0.0005, valid_p = 0.005, 
-				test_p = 0.005, proportion = None, shuffle = False):
+				test_p = 0.005):
 		'''	   
 		Args:	
     	----------
@@ -36,9 +36,6 @@ class qdata:
 			float: Proportion of total testing data set (from splitDatasets) that will be used in the training of the quantum
 			classifiers and the classical models used for benchmarking (trained and tested on the same data sets)
 			int: Number of testing data samples to be used
-		proportion: (depricated!) Functionality added in *_p using float or int
-		shuffle : bool (depricated!(?)) Samuel: needed for the VQC training but TF already handles that
-			Shuffle the training dataset
     	-------
 		'''
 		#TODO: maybe we should go **kwargs, so we don't have a lot of argumnets
@@ -115,14 +112,6 @@ class qdata:
 		self.validation_nlabels = np.array([1] * nvalid + [0] * nvalid)
 		self.validation_dict = {'s': self.validSigAE[:nvalid], 'b': self.validBkgAE[:nvalid]}
 
-		if shuffle:
-			s = np.random.permutation(len(self.train))
-			self.train = self.train[s]
-			self.train_labels = self.train_labels[s]
-			self.train_nlabels = self.train_nlabels[s]
-
-		
-
 		self.test = np.vstack((self.testSigAE[:ntest],self.testBkgAE[:ntest]))
 		self.test_labels = np.array(['s'] * ntest + ['b'] * ntest)
 		self.test_nlabels = np.array([1] * ntest + [0] * ntest)
@@ -131,7 +120,6 @@ class qdata:
 		print(f'xcheck: train/validation/test shapes: {self.train.shape}/{self.validation.shape}/{self.test.shape}')
 	
 	def get_kfold_validation(self,k=5):
-		#FIXME: incorporate shuffle
 		splits_total = int(1/self.valid_p)
 		'''
 		splits_total: the max number we can divide the initial validation dataset (from splitDatasets). 

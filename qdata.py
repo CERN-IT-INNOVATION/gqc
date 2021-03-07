@@ -4,6 +4,11 @@ from aePyTorch.splitDatasets import splitDatasets
 #TODO: Takes some time to load encoded datasets, because the AE model runs on the full datasets and then outputs only a subset 
 
 class qdata:
+	'''
+	Class from with which the training, validation and testing datasets of quantum classifiers is defined
+	
+
+	'''
 
 	#Load the test dataset of the autoencoder and split it to training,validation and testing datasets for the qml
 	#infiles = ('input_ae/trainingTestingDataSig.npy','input_ae/trainingTestingDataBkg.npy')
@@ -14,8 +19,29 @@ class qdata:
 	ntot_train = int(trainSigAE.shape[0])
 	ntot_valid = int(validSigAE.shape[0])
 
-	def __init__(self, encoder = "", train_p = 0.0005, valid_p = 0.005, test_p = 0.005, proportion = None, shuffle = False):
-	#TODO: maybe we should go **kwargs, so we don't have a lot of argumnets
+	def __init__(self, encoder = "", train_p = 0.0005, valid_p = 0.005, 
+				test_p = 0.005, proportion = None, shuffle = False):
+		'''	   
+		Args:	
+    	----------
+    	train_p : float or int
+			float: Proportion of total training data set (from splitDatasets) that will be used in the training of the quantum
+			classifiers and the classical models used for benchmarking (trained and tested on the same data sets)
+			int: Number of training data samples to be used
+    	valid_p : float
+			float: Proportion of total validation data set (from splitDatasets) that will be used in the training of the quantum
+			classifiers and the classical models used for benchmarking (trained and tested on the same data sets)
+			int: Number of validation data samples to be used
+    	test_p : float
+			float: Proportion of total testing data set (from splitDatasets) that will be used in the training of the quantum
+			classifiers and the classical models used for benchmarking (trained and tested on the same data sets)
+			int: Number of testing data samples to be used
+		proportion: (depricated!) Functionality added in *_p using float or int
+		shuffle : bool (depricated!(?)) Samuel: needed for the VQC training but TF already handles that
+			Shuffle the training dataset
+    	-------
+		'''
+		#TODO: maybe we should go **kwargs, so we don't have a lot of argumnets
 		if encoder == "tf":
 			from aeTF.encode import encode
 			from aeTF.encode import model
@@ -41,7 +67,7 @@ class qdata:
 			self.testBkgAE = encode(self.testBkgAE,self.savedModel,self.layers)
 
 		elif encoder == "":
-			print("Using unencoded data");
+			print("Using unencoded data")
 		else:
 			raise Exception('Unknown encoder')
 

@@ -1,31 +1,38 @@
 import pennylane as qml
 import numpy as np
 
-import vqctf.zzlane as fmap
-import vqctf.twolane as vform
+from vqctf.fmaps import *
+from vqctf.vforms import *
 
-nqubits = 4
-
-circuit_desc = "4-qubits\nZZ(4) 2L(4rep) ZZ(4) 2L(4rep)"
-
-dev = qml.device("default.qubit", wires=nqubits)
 
 state_0 = [[1], [0]]
-state_1 = [[0], [1]]
-states = [state_0, state_1]
+y = state_0 * np.conj(state_0).T
 
-def density_matrix(state):
-	return state * np.conj(state).T
+def get_layer(spec, nqubits, inputs, theta):
+	name = spec[0]
+	nfrom = int(spec[1])
+	nto = int(spec[2])
 
-y = density_matrix(state_0)
+	if (name == "zzfm"):
+		zzfm(nqubits, inputs[nfrom:nto])
+	elif (name == "2local"):
+		twolocal(nqubits, theta[nfrom:nto], reps = int(spec[3]))
+	else:
+		raise Exception("Unknown template!")
 
-@qml.qnode(dev, interface="tf")
-def qcircuit(inputs, theta):
-	fmap.get_circuit(nqubits, inputs[0:4])
-	vform.get_circuit(nqubits, theta[0:20], reps = 4)
-	fmap.get_circuit(nqubits, inputs[4:8])
-	vform.get_circuit(nqubits, theta[20:40], reps = 4)
-	return qml.expval(qml.Hermitian(y, wires=[0]))
+
+def get_circuit(spec):
+	nqubits = spec[0]
+	dev = qml.device("default.qubit", wires=nqubits)
+	
+	@qml.qnode(dev, interface="tf")
+	def qcircuit(inputs, theta):
+		for l in range(1,len(spec)):
+			get_layer(spec[l], nqubits, inputs, theta)
+			
+		return qml.expval(qml.Hermitian(y, wires=[0]))
+	
+	return qcircuit
 
 
 

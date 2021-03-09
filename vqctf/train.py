@@ -2,7 +2,7 @@ import pennylane as qml
 import numpy as np
 import tensorflow as tf
 from tensorflow import keras
-from tensorflow.keras.models import save_model
+from vqcroc import *
 
 import os
 import matplotlib.pyplot as plt
@@ -26,84 +26,106 @@ def get_accuracy(model, data, real):
 	return sum(data == real) / len(data)
 
 
-class CustomCallback(keras.callbacks.Callback):
-	def __init__(self, qd):
-		self.qd = qd
+def create_model(spec):
+	params = 0
+	for i in range(1, len(spec)):
+		is_vf = False
+		name = spec[i][0]
+		if (name == "2local"):
+			is_vf = True
 
-#	def on_epoch_end(self, epoch, logs=None):	
-		#train_acc = get_accuracy(self.model, self.qd.train, self.qd.train_nlabels)
-		#valid_acc = get_accuracy(self.model, self.qd.validation, self.qd.validation_nlabels)
-		#print(f"Epoch {epoch} | Train accuracy: {train_acc} | Valid accuracy: {valid_acc}", flush = True)
+		if (is_vf):
+			params += spec[i][2] - spec[i][1]
+	
+	wshape = {"theta": params}
+	qlayer = qml.qnn.KerasLayer(get_circuit(spec), wshape, output_dim=1)
+	model = tf.keras.models.Sequential([qlayer])
+	return model
 
+			
 
-def train(epochs, lrate, batch_size, qd, name):
+def train(epochs, lrate, batch_size, spec, ntrain, encoder, name):
+	
+	qd = qdata(encoder, ntrain, 50)
+	
 	train_data = qd.train
 	train_labels = qd.train_nlabels
 
 	validation_data = qd.validation
 	validation_labels = qd.validation_nlabels 
 
-	wshape = {"theta": 40}
-
-	start_time = time.time()
-
-	c0layer = tf.keras.layers.Dense(8)
-	qlayer = qml.qnn.KerasLayer(qcircuit, wshape, output_dim=1)
-	clayer = tf.keras.layers.Dense(1, activation="sigmoid")
-	model = tf.keras.models.Sequential([qlayer])
-
+	model = create_model(spec)
 	opt = tf.keras.optimizers.Adam(learning_rate = lrate)
 	model.compile(opt, loss=tf.keras.losses.BinaryCrossentropy())
-	history = model.fit(train_data, train_labels, epochs = epochs, shuffle = True, validation_data = (validation_data, validation_labels), verbose = True, batch_size = batch_size, callbacks = [CustomCallback(qd)])
 
+	start_time = time.time()
+	history = model.fit(train_data, train_labels, epochs = epochs, shuffle = True, validation_data = (validation_data, validation_labels), verbose = True, batch_size = batch_size)
 	end_time = time.time()
-
-	accuracy_train = get_accuracy(model, qd.train, qd.train_nlabels)
-	accuracy_valid = get_accuracy(model, qd.validation, qd.validation_nlabels)
-
 
 	if not (os.path.isdir("vqctf/out")):
 		os.mkdir("vqctf/out")
+	dirname = "vqctf/out/" + name
+	if not (os.path.isdir(dirname)):
+		os.mkdir(dirname)
+
+	print("Saving model...", flush = True)
+
+	weights = model.get_weights()
+	np.save(dirname + "/weights.npy", weights)
+
+	tloss = np.array(history.history['loss'])
+	vloss = np.array(history.history['val_loss'])
+
+	plt.figure();
+	plt.plot(range(len(tloss)), tloss)
+	plt.plot(range(len(vloss)), vloss)
+	plt.title(name)
+	plt.ylabel("Loss")
+	plt.xlabel("Epochs")
+	plt.savefig("vqctf/out/" + name + "/loss.pdf");
+	plt.close()
 	
+	np.save(dirname + "/tloss.npy", tloss)
+	np.save(dirname + "/vloss.npy", vloss)
+
+	print("Computing predictions...", flush = True)
+
+	qd = qdata(encoder)
+	valid = qd.get_kfold_validation()
+
+	encoded = []
+
+	for i in range(len(valid)):
+		sample = valid[i]
+		encoded.append(np.array(model.predict(sample)))
+		print(f"{i+1}/{len(valid)}",flush = True)
+
+	encoded = np.array(encoded)
+
+	print("Computing AUCs and saving...", flush = True)
+
+	np.save(dirname + "/encoded.npy", encoded)
+
+	np.save(dirname + "/features.npy", np.array([encoder]))
+	np.save(dirname + "/spec.npy", np.array(spec, dtype = object))
+
+	info = get_info(name)
+	auc_valid = info[2]
+	auc_std = info[3]
+	get_plot({name : info}, ntrain, folder = '/' + name)
+
+
 	## Logging time!
 	f = open("vqctf/out/log", "a")
 	f.write("VQC " + name + "\n")
-	f.write("Autoencoder: " + qd.model + "\n")
-	f.write(circuit_desc + "\n")
 	f.write(f"epochs/lrate/bsize: {epochs} / {lrate} / {batch_size}\n")
 	f.write(f"train/valid {qd.ntrain} / {qd.nvalid}\n")
 	f.write("Elapsed time: " + str(end_time - start_time) + "s " + str((end_time - start_time)/3600) + "h\n")
-	f.write("Train accuracy: " + str(accuracy_train) + "\n")
-	f.write("Valid accuracy: " + str(accuracy_valid) + "\n")
+	f.write("Valid AUC: " + str(auc_valid) + "+/-" + str(auc_std) + "\n")
 	f.write("\n\n")
 	f.close();
 
-	model.save_weights("vqctf/out/" + name + "/" + name)
-
-	errs = history.history['loss'];
-	plt.figure();
-	plt.plot(range(len(errs)), errs)
-	plt.title("Loss for " + name)
-	plt.xlabel("Epochs")
-	plt.savefig("vqctf/out/plot-" + name + ".png");
-
-	print("Loss")
-	print(history.history['loss'])
-	print("VLoss")
-	print(history.history['val_loss'])
-
-	return model, history
-
-
-def load_model(name):
-	wshape = {"theta": 24}
-
-	start_time = time.time()
-
-	qlayer = qml.qnn.KerasLayer(qcircuit, wshape, output_dim=1)
-	model = tf.keras.models.Sequential([qlayer])
-	opt = tf.keras.optimizers.Adam()
-	model.compile(opt, loss=tf.keras.losses.BinaryCrossentropy())
-	model.built = True
-	model.load_weights("vqctf/out" + name)
 	return model
+
+
+

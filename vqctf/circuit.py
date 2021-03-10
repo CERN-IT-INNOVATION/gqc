@@ -16,7 +16,7 @@ def get_layer(spec, nqubits, inputs, theta):
 	if (name == "zzfm"):
 		zzfm(nqubits, inputs[nfrom:nto])
 	elif (name == "2local"):
-		twolocal(nqubits, theta[nfrom:nto], reps = int(spec[3]))
+		twolocal(nqubits, theta[nfrom:nto], reps = int(spec[3]), entanglement = spec[4])
 	else:
 		raise Exception("Unknown template!")
 

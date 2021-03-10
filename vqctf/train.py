@@ -42,11 +42,10 @@ def create_model(spec):
 	model = tf.keras.models.Sequential([qlayer])
 	return model
 
-			
 
 def train(epochs, lrate, batch_size, spec, ntrain, encoder, name):
 	
-	qd = qdata(encoder, ntrain, 50)
+	qd = qdata(encoder, ntrain, 100)
 	
 	train_data = qd.train
 	train_labels = qd.train_nlabels
@@ -70,11 +69,15 @@ def train(epochs, lrate, batch_size, spec, ntrain, encoder, name):
 
 	print("Saving model...", flush = True)
 
-	weights = model.get_weights()
-	np.save(dirname + "/weights.npy", weights)
-
+	weights = np.array(model.get_weights())
 	tloss = np.array(history.history['loss'])
 	vloss = np.array(history.history['val_loss'])
+
+	np.save(dirname + "/weights.npy", weights)
+	np.save(dirname + "/tloss.npy", tloss)
+	np.save(dirname + "/vloss.npy", vloss)
+	np.save(dirname + "/features.npy", np.array([encoder]))
+	np.save(dirname + "/spec.npy", np.array(spec, dtype = object))
 
 	plt.figure();
 	plt.plot(range(len(tloss)), tloss)
@@ -84,31 +87,21 @@ def train(epochs, lrate, batch_size, spec, ntrain, encoder, name):
 	plt.xlabel("Epochs")
 	plt.savefig("vqctf/out/" + name + "/loss.pdf");
 	plt.close()
-	
-	np.save(dirname + "/tloss.npy", tloss)
-	np.save(dirname + "/vloss.npy", vloss)
 
 	print("Computing predictions...", flush = True)
 
 	qd = qdata(encoder)
 	valid = qd.get_kfold_validation()
-
 	encoded = []
-
 	for i in range(len(valid)):
 		sample = valid[i]
 		encoded.append(np.array(model.predict(sample)))
 		print(f"{i+1}/{len(valid)}",flush = True)
-
 	encoded = np.array(encoded)
 
 	print("Computing AUCs and saving...", flush = True)
 
 	np.save(dirname + "/encoded.npy", encoded)
-
-	np.save(dirname + "/features.npy", np.array([encoder]))
-	np.save(dirname + "/spec.npy", np.array(spec, dtype = object))
-
 	info = get_info(name)
 	auc_valid = info[2]
 	auc_std = info[3]

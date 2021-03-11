@@ -1,0 +1,7 @@
+VQC vqc-5rep
+epochs/lrate/bsize: 60 / 0.005 / 50
+train/valid 288 / 360
+Elapsed time: 34432.37543988228s 9.564548733300633h
+Valid AUC: 0.6566851851851851+/-0.013876288522991215
+
+

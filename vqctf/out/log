@@ -1,0 +1,7 @@
+VQC vqc-fent
+epochs/lrate/bsize: 60 / 0.005 / 50
+train/valid 288 / 360
+Elapsed time: 40666.69391298294s 11.296303864717483h
+Valid AUC: 0.6594336419753086+/-0.01639324664228457
+
+

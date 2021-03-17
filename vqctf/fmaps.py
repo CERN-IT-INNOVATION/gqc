@@ -2,9 +2,7 @@ import pennylane as qml
 from itertools import combinations
 import numpy as np
 
-description = "Custom ZZ feature map for PL v1"
-
-def get_circuit(qubits, x):
+def zzfm(qubits, x):
 	
 	features = len(x);
 
@@ -30,20 +28,3 @@ def get_circuit(qubits, x):
 			qml.CZ(wires = [a,b])
 
 		last += nload;
-	
-
-"""
-def my_circuit(x):
-	get_circuit(4, x)
-	return qml.expval(qml.Hermitian([0,1,0],wires=[0,1,2]))
-
-
-
-dev = qml.device('default.qubit', wires=4)
-circuit = qml.QNode(my_circuit, dev)
-
-circuit([1,2,3,4,5,6])
-
-print(circuit.draw())
-"""
-

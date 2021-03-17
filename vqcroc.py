@@ -9,7 +9,7 @@ def get_info(name):
 
 	truelabels = qd.validation_nlabels
 
-	data = "vqctf/out/" + name + ".npy"
+	data = "vqctf/out/" + name + "/encoded.npy"
 
 	predictions = np.load(data)
 
@@ -45,18 +45,18 @@ def get_info(name):
 	return [X[0], X[1], np.mean(aucs), np.std(aucs)]
 
 
-def get_plot(model_dictionary,ntrain,nvalid=720,nfolds=5):
+def get_plot(model_dictionary,ntrain,nvalid=720,nfolds=5,folder=""):
 	
 	qd = qdata()
 
 	# Style config
-	f1 = plt.figure(1,figsize=(10,10))
-	plt.rc('xtick', labelsize=20)    # fontsize of the tick labels
-	plt.rc('ytick', labelsize=20)    # fontsize of the tick labels
-	plt.rc('axes', titlesize=22)     # fontsize of the axes title
-	plt.rc('axes', labelsize=22)    # fontsize of the x and y labels
-	plt.rc('legend', fontsize=22)    # legend fontsize
-	plt.rc('figure', titlesize=22)  # fontsize of the figure title
+#	f1 = plt.figure(1,figsize=(10,10))
+#	plt.rc('xtick', labelsize=20)    # fontsize of the tick labels
+#	plt.rc('ytick', labelsize=20)    # fontsize of the tick labels
+#	plt.rc('axes', titlesize=22)     # fontsize of the axes title
+#	plt.rc('axes', labelsize=22)    # fontsize of the x and y labels
+#	plt.rc('legend', fontsize=22)    # legend fontsize
+#	plt.rc('figure', titlesize=22)  # fontsize of the figure title
 
 
 	for model_name in model_dictionary:
@@ -74,16 +74,16 @@ def get_plot(model_dictionary,ntrain,nvalid=720,nfolds=5):
 	plt.tight_layout()
 	plt.legend()
 	#f1.savefig('rocky.png')
-	plt.show()
+	plt.savefig("vqctf/out" + folder + "/roc.pdf");
 
 
 
-model_dictionary = {"VQC": get_info("AZ1-nenc-1"),
-"RF": get_info("randomforest")}
+#model_dictionary = {"VQC": get_info("AZ1-nenc-1"),
+#"RF": get_info("randomforest")}
 #"Log Reg": get_info("logreg"),
 #"AdaBoost": get_info("adaboost")}
 
 #"MLP": get_info("mlperceptron"),
 
 
-get_plot(model_dictionary,3000)
+#get_plot(model_dictionary,3000)

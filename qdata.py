@@ -39,6 +39,10 @@ class qdata:
     	-------
 		'''
 		#TODO: maybe we should go **kwargs, so we don't have a lot of argumnets
+		
+		if type(encoder) == np.ndarray:
+			encoder = list(encoder)
+
 		if encoder == "tf":
 			from aeTF.encode import encode
 			from aeTF.encode import model
@@ -62,7 +66,13 @@ class qdata:
 			self.validBkgAE = encode(self.validBkgAE,self.savedModel,self.layers)
 			self.testSigAE = encode(self.testSigAE,self.savedModel,self.layers)
 			self.testBkgAE = encode(self.testBkgAE,self.savedModel,self.layers)
-
+		elif type(encoder) == list:
+			self.trainSigAE = self.trainSigAE[:,encoder]
+			self.trainBkgAE = self.trainBkgAE[:,encoder]
+			self.validSigAE = self.validSigAE[:,encoder]
+			self.validBkgAE = self.validBkgAE[:,encoder]
+			self.testSigAE = self.testSigAE[:,encoder]
+			self.testBkgAE = self.testBkgAE[:,encoder]
 		elif encoder == "":
 			print("Using unencoded data")
 		else:

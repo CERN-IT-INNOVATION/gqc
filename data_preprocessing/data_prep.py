@@ -1,122 +1,135 @@
+# Takes the .h5 file output of format.py and saves it in .npy format, while
+# also doing some small formatting tasks such as calculating the four momentum
+# and the invariatn mass.
+
 from __future__ import print_function
 import pandas as pd
-import glob
 import numpy as np
-import argparse
+import glob, argparse, os
 import ROOT
-import os
 import root_numpy
 
-def load_df(folder):
-    if len(folder) == 1 and os.path.isdir(folder[0]):
-        print("loading files from folder {0}".format(folder[0]))
-        files = sorted(glob.glob(folder[0] + '/*flat*.root'))
-    elif isinstance(folder, list):
-        files = list(folder)
+parser = argparse.ArgumentParser()
+parser.add_argument("--output", type=str,
+    default="data.h5", action="store",
+    help="output file"
+)
+parser.add_argument( "--input", type=str,
+    required=True, action="store", nargs='+',
+    help="Input data_folder or list of files.")
 
-    #in case we are trying to load from T3, add prefix
-    new_files = []
-    for fi in files:
-        if fi.startswith("/pnfs/psi.ch"):
-            fi = "root://t3dcachedb.psi.ch/" + fi
-        new_files += [fi]
-    files = new_files
+args = parser.parse_args()
 
-    for fi in files:
-        print(fi)
-    df = pd.DataFrame(root_numpy.root2array(files, treename="tree"))
-    #df["JointLikelihoodRatioLog"] = np.log10(df["JointLikelihoodRatio"])
-    return df
 
-def make_p4(df,collection,iob):
-    iob = "" if iob is None else "_%d" % iob
-    pt   =  df['%s_pt%s'  % (collection,iob)]
-    eta  = df['%s_eta%s' % (collection,iob)]
-    phi  = df['%s_phi%s' % (collection,iob)]
-    mass = df['%s_mass%s' % (collection,iob)]
-    df["%s_px%s" % (collection,iob)] = pt * np.cos(phi)
-    df["%s_py%s" % (collection,iob)] = pt * np.sin(phi)
-    df["%s_pz%s" % (collection,iob)] = pt * np.sinh(eta)
-    df["%s_en%s" % (collection,iob)] = np.sqrt(mass**2 + (1+np.sinh(eta)**2)*pt**2)
-    
-    
-def make_m2(df,coll1,iob1,coll2,iob2):
-    
+def main():
+    data_frame = load_data(args.input); print(data_frame.columns)
+
+    for ilep in range(2):  construct_four_momentum(data_frame, 'leps', ilep)
+    for ijet in range(10): construct_four_momentum(data_frame, 'jets', ijet)
+
+    if "nbtags" not list(data_frame): data_frame['nbtags'] = sum(
+        data_frame['jets_btag_{0}'.format(i)]>1 for i in range(10))
+    recompute_bbnMatch(data_frame)
+
+    # Why call the same stuff as above again? Maybe meant make_m2?
+    for ilep in range(2):  construct_four_momentum(data_frame, 'leps', ilep)
+    for ijet in range(10): construct_four_momentum(data_frame, 'jets', ijet)
+
+    print("Saving {0} to {1}".format(data_frame.shape, args.output))
+    print(list(data_frame.columns))
+    data_frame.to_hdf(args.output, key='data_frame', format='t', mode='w')
+
+
+def check_single_folder(data_folder):
+    if len(data_folder) == 1 and os.path.isdir(data_folder[0]):
+        return 1
+
+    return 0
+
+def format_web_files(data_files):
+    # Format the data files if they are imported from the web.
+    # In case we are trying to load from T3, add prefix.
+    web_data_files= []
+    for file in data_files:
+        if file.startswith("/pnfs/psi.ch"):
+            file = "root://t3dcachedb.psi.ch/" + file
+        web_data_files.append(file)
+
+    return web_data_files
+
+
+def load_data(data_folder):
+    """
+    Loads the data from .h5 format files produced by format.py.
+
+    @data_folder :: String with path to the folder where the data is.
+
+    @returns :: Pandas data frame object with all the files.
+    """
+    if check_single_folder(data_folder):
+        print("Loading files from data folder {0}.".format(data_folder[0]))
+        data_files = sorted(glob.glob(data_folder[0] + '/*flat*.root'))
+    elif isinstance(data_folder, list): data_files = list(data_folder)
+    else: raise TypeError("Given data folder is not correct!")
+
+    data_files = format_web_files(data_files)
+    for file in data_files: print(file)
+    data_frame= pd.DataFrame(root_numpy.root2array(data_files,treename="tree"))
+
+    return data_frame
+
+def construct_four_momentum(data, ptype, idx):
+    """
+    Constructs the 4-momentum from the given data and stores it in the same
+    data frame. Works with pointers so you don't need to return anything.
+
+    @data  :: Imported data frame object.
+    @ptype :: Type of particle we are dealing with, lepton or jet (quarks).
+    @idx   :: The identifier index of the particle.
+    """
+    idx  = "" if idx is None else "_%d" % idx
+    pt   = data['%s_pt%s'   % (ptype, idx)]
+    eta  = data['%s_eta%s'  % (ptype, idx)]
+    phi  = data['%s_phi%s'  % (ptype, idx)]
+    mass = data['%s_mass%s' % (ptype, idx)]
+    data["%s_px%s" % (ptype, idx)] = pt * np.cos(phi)
+    data["%s_py%s" % (ptype, idx)] = pt * np.sin(phi)
+    data["%s_pz%s" % (ptype, idx)] = pt * np.sinh(eta)
+    data["%s_en%s" % (ptype, idx)] = np.sqrt(mass**2 +
+        (1 + np.sinh(eta)**2) * pt**2)
+
+def construct_invariant_mass(data, ptype1, idx1, ptype2, idx2):
+    """
+    Constructs the invariant mass from the given data and stores it in the same
+    data frame. Works with pointers so you don't need to return anything.
+
+    @data  :: Imported data frame object.
+    @ptype :: Type of particle we are dealing with, lepton or jet (quarks).
+    @idx   :: The identifier index of the particle.
+    """
     im = ""
-    if iob1 is not None:
-        iob1 = "_%d" % iob1
-        im += iob1
+
+    if idx1 is None: idx1 = ""
+    else: idx1 = "_%d" % idx1; im += idx1
+    if idx2 is None: idx2 = ""
     else:
-        iob1 = ""
-    if iob2 is not None:
-        if im.startswith("_"):
-            im += "%d" % iob2
-        else:
-            im += "_%d" % iob2
-        iob2 = "_%d" % iob2
-    else:
-        iob2 = ""
-    
-    px = df[ "%s_px%s" % (coll1,iob1) ] + df[ "%s_px%s" % (coll2,iob2) ]
-    py = df[ "%s_py%s" % (coll1,iob1) ] + df[ "%s_py%s" % (coll2,iob2) ]
-    pz = df[ "%s_pz%s" % (coll1,iob1) ] + df[ "%s_pz%s" % (coll2,iob2) ]
-    en = df[ "%s_en%s" % (coll1,iob1) ] + df[ "%s_en%s" % (coll2,iob2) ]
-    
-    df["%s_%s_m2%s" %(coll1,coll2,im)] = en*en - px*px - py*py - pz*pz
+        im  += "%d" % idx2 if im.startswith("_") else "_%d" % idx2
+        idx2 = "_%d" % idx2
+
+    px = data["%s_px%s" % (ptype1,idx1)] + data["%s_px%s" % (ptype2,idx2)]
+    py = data["%s_py%s" % (ptype1,idx1)] + data["%s_py%s" % (ptype2,idx2)]
+    pz = data["%s_pz%s" % (ptype1,idx1)] + data["%s_pz%s" % (ptype2,idx2)]
+    en = data["%s_en%s" % (ptype1,idx1)] + data["%s_en%s" % (ptype2,idx2)]
+    data["%s_%s_m2%s" % (ptype1,ptype2,im)] = en*en - px*px - py*py - pz*pz
+
+def recompute_bbnMatch(data_frame):
+    # Re-compute bbnMatch for reasons???
+    if "bb_nMatch" in list(data_frame):
+        data_frame.drop(['bb_nMatch'], axis=1)
+        print("Deleted pre-defined bb_nMatch.")
+    data_frame['bb_nMatch'] = sum(data_frame['jets_matchFlag_{0}'.format(i)]
+        for i in range(10))
+    print("Re-computed bb_nMatch.")
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser()
-    parser.add_argument(
-        "--output", type=str,
-        default="data.h5", action="store",
-        help="output file"
-    )
-    parser.add_argument(
-        "--input", type=str,
-        required=True, action="store", nargs='+',
-        help="input folder or list of files"
-    )
-    
-    args = parser.parse_args()
-
-    df = load_df(args.input)
-    print(df.columns)
-
-    for ilep in range(2):
-        make_p4(df,'leps',ilep)
-
-    for ijet in range(10):
-        make_p4(df,'jets',ijet)
-
-    
-    if "nbtags" not list(df):
-        df['nbtags'] = sum(df['jets_btag_{0}'.format(i)]>1 for i in range(10))
-
-    
-    if "bb_nMatch" in list(df):
-        df.drop(['bb_nMatch'], axis=1)
-        print("deleted bb_nMatch counting")
-    df['bb_nMatch'] = sum(df['jets_matchFlag_{0}'.format(i)] for i in range(10))
-    print("compute bb_nMatch")
-
-    for ilep in range(2):
-        make_p4(df,'leps',ilep)
-
-    for ijet in range(10):
-        make_p4(df,'jets',ijet)
-    """
-    #partons currently missing from tree
-    for parton in ["jlr_top","jlr_atop","jlr_bottom","jlr_abottom"]:
-        make_p4(df,parton,None)       
- 
-    make_m2(df,"jlr_top",None,"jlr_atop",None)
-    make_m2(df,"jlr_top",None,"jlr_bottom",None)
-    make_m2(df,"jlr_top",None,"jlr_abottom",None)
-    make_m2(df,"jlr_atop",None,"jlr_bottom",None)
-    make_m2(df,"jlr_atop",None,"jlr_abottom",None)
-    make_m2(df,"jlr_bottom",None,"jlr_abottom",None)
-    """    
-
-    print("saving {0} to {1}".format(df.shape, args.output))
-    print(list(df.columns))
-    df.to_hdf(args.output, key='df', format='t', mode='w')
+    main()

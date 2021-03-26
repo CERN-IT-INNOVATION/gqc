@@ -1,1 +1,4 @@
 data/
+*.npy
+*.h5
+*.root

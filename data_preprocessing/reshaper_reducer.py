@@ -133,6 +133,5 @@ def prepare_output(features, feats_reshaped):
         print("Finalized data vectors to AE: (events,features) = {}".
             format(feat_out.shape))
 
-
 if __name__ == "__main__":
     main()

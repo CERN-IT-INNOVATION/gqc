@@ -1,62 +1,64 @@
-# Formatting the data depending on what the data is (simulation or real).
-from pyjlr.utils import make_p4, make_m2
-import argparse
-import os
+# Takes the .h5 data files and formats them depending on what the data contains
+import argparse, os, glob, itertools
 import pandas as pd
 import numpy as np
-import glob
-import itertools
 
 
 parser = argparse.ArgumentParser()
-parser.add_argument("--outdir", type=str,
-    default="/scratch/{0}/jlr/".format(os.environ["USER"]), action="store",
-    help="The output directory.")
-parser.add_argument("--infile", type=str,
-    required=True, action="store",
+parser.add_argument("--outdir", type=str, action="store",
+    default="data/", help="The output directory.")
+parser.add_argument("--infile", type=str, required=True, action="store",
     help="The input folder/data file.")
-parser.add_argument("--datatype", type=str,
-    choices=datatype_choices.keys(), required=True,
-    help="datatype choice")
+parser.add_argument("--datatype", type=str, required=True,
+    choices=["cms_0l","cms_1l","cms_2l","delphes_1l","delphes_2l","delphes_had"
+             "mass_1l", "class_2016_1l", "class_2016_2l", "cms_2017_1l",
+             "cms_2017_2l"], help="Choice of the data type.")
 parser.add_argument("--dataset", type=str,
     help="The name of dataset, determines also if ttCls is used or not.")
-parser.add_argument("--target", type=str,
-    required=True,
+parser.add_argument("--target", type=str, required=True,
     help="The regression target: binary_classifier, multi_classifier, \
           Higgs_classifier, mbb, jlr")
 
+# What is the point of the --dataset flag??
 args = parser.parse_args()
 
 def main():
     # This code imports the data, formats it and stores it in h5 files.
     # An output folder with the given name in outdir will be created.
-    opts = choose_data_type(args.datatype); globals().update(opts)
-    data = load_files()
-    data = set_data_column_headers(data)
+    features = opts(); features.update(choose_data_type(args.datatype))
+    globals().update(features)
+    data = load_files(args.infile); os.makedirs(args.outdir)
 
-    if selection is not None: data = data.query(selection)
-    os.makedirs(args.outdir)
+    chunk_nb = 0
+    for chunk in data:
+        chunk_nb += 1
+        print("\n------------\nProcessing chunk number {0}".format(chunk_nb))
+        chunk = set_data_column_headers(chunk)
 
-    trutha = None
+        if selection is not None: chunk = chunk.query(selection)
 
-    flats = []
-    if jet_feats is not None: flats = jet_formatting(data, flats)
-    if lep_feats is not None and nleps > 0: flats = lep_formatting(data, flats)
-    if met_feats is not None: flats = met_formatting(data, flats)
-    if jet_feats is not None and "jet_cmb" in data.columns:
-        flats = jet_combinations_formatting(data, flats)
-    if truth_feats is not None: flats = truth_level_formatting(data, flats)
+        flats = []
+        if jet_feats is not None: flats = jet_formatting(chunk, flats)
+        if lep_feats is not None and nleps > 0:
+            flats = lep_formatting(chunk, flats)
+        if met_feats is not None: flats = met_formatting(chunk, flats)
+        if jet_feats is not None and "jet_cmb" in chunk.columns:
+            flats = jet_combinations_formatting(chunk, flats)
+        if truth_feats is not None:
+            flats = truth_level_formatting(chunk, flats)
 
-    print('\n-----------------------------------\nMaking the target...')
+        print('Making the target...')
 
-    if args.target == "jlr": make_jlr_target(data)
-    if args.target == "mbb": make_mbb_target(data)
-    if args.target == "Higgs_classifier": make_higgsclass_target(data)
-    if args.target == "multi_classifier": make_multiclass_target(data)
-    if args.target == "binary_classifier": make_binarclass_target(data)
+        if args.target == "jlr": make_jlr_target(chunk)
+        if args.target == "mbb": make_mbb_target(chunk)
+        if args.target == "Higgs_classifier": make_higgsclass_target(chunk)
+        if args.target == "multi_classifier": make_multiclass_target(chunk)
+        if args.target == "binary_classifier": make_binarclass_target(chunk)
 
-    if 'mem_tth_SL_2w2h2t_p' in data and 'mem_ttbb_SL_2w2h2t_p' in data:
-        make_mem(data)
+        if 'mem_tth_SL_2w2h2t_p' in chunk and 'mem_ttbb_SL_2w2h2t_p' in chunk:
+            make_mem(chunk)
+
+        make_event_desc(chunk)
 
 
 def choose_data_type(user_choice):
@@ -237,23 +239,24 @@ def cms_0l():
     )
     return cms_0l
 
-def load_files():
-    """
-    Load the files specified by the user in argparse. Write then in hdf format.
-    """
-    if args.infile.endswith(".h5"):
-        print("Loading hdf file {0} ...".format(args.infile))
-        return  pd.read_hdf(args.infile)
+def read_single_file(path):
+    # Load a single .h5 file with chunksize 10000.
+    print("Loading hdf file {0}...".format(path))
+    return pd.read_hdf(path, chunksize="1000000")
 
-    file_paths = sorted(glob.glob(args.infile + '/data*.h5'))
-    for path in files_paths:
-        print("Loading hdf file {0} ...".format(path))
-        if file_paths.index(path) == 0: data = pd.read_hdf(path)
-        else: data = data.append(pd.read_hdf(path),ignore_index=True)
+def load_files(path):
+    """
+    Load a single file specified by path or load all .h5 files in the folder
+    specified by path.
+    """
+    if path.endswith(".h5"): return read_single_file(path)
 
-    data.to_hdf(args.outdir + "data.h5", key='data', format='t', mode='w')
-    print("Data shape: {0}".format(data.shape))
-    print("Data list: {0}".format(list(df)))
+    file_paths = sorted(glob.glob(path + '/data*.h5'))
+    for path in file_paths:
+        if file_paths.index(path) == 0: data = read_single_file(path)
+        else: data = itertools.chain(data, read_single_file(path))
+
+    print("All data is loaded!")
 
     return data
 
@@ -278,7 +281,6 @@ def set_data_column_headers(data):
         else: name = column
         column_headers.append(name)
     data.columns = column_headers
-    print("Data list: {0}".format(list(data)))
 
     return data
 
@@ -296,6 +298,19 @@ def pad(X, npad=6):
     elif X.shape[0] > npad: X = X[:npad]
     return X.reshape(-1,*X.shape)
 
+def numpy_append_file(file, array_to_append):
+    # Append an array to an already existing numpy file.
+    print("Appending to {0} file.".format(file))
+    path = os.path.join(args.outdir, file)
+    if not os.path.exists(path + ".npy"):np.save(path, array_to_append); return
+
+    old_array = np.load(path + ".npy")
+    print(old_array.shape)
+    print(array_to_append.shape)
+    new_array = np.concatenate((old_array, array_to_append))
+    np.save(path, new_array)
+
+
 def jet_formatting(data, flats):
     """
     Formatting the jets features.
@@ -312,7 +327,7 @@ def jet_formatting(data, flats):
     jet_col = ["jets_%s_%d"%(feat,jet) for jet in onejet for feat in jet_feats]
     jetsa = data[jet_col].values
     flats.append(jetsa); jetsa = jetsa.reshape(-1, njets, number_jet_feats)
-    np.save(args.outdir + "/jets", jetsa)
+    numpy_append_file("jets", jetsa)
     print('Jet formatting done.', jetsa.shape)
 
     return flats
@@ -334,7 +349,7 @@ def lep_formatting(data, flats):
         for feat in lep_feats]].values
     flats.append(lepsa)
     lepsa = lepsa.reshape(-1, nleps, number_lep_feats)
-    np.save(args.outdir + "/leps", lepsa)
+    numpy_append_file("leps", lepsa)
     print('Lepton formatting done.', lepsa.shape)
 
     return flats
@@ -351,13 +366,13 @@ def met_formatting(data, flats):
     print('Formatting metadata features...')
 
     meta = None
-    data["met_px"] = data["met_" + met_feats[1]] *
+    data["met_px"] = data["met_" + met_feats[1]] * \
         np.cos(data["met_"+met_feats[0]])
-    data["met_py"] = data["met_" + met_feats[1]] *
+    data["met_py"] = data["met_" + met_feats[1]] * \
         np.sin(data["met_"+met_feats[0]])
     meta = data[["met_%s" % feat for feat in met_feats]].values
     flats.append(meta)
-    np.save(args.outdir + "/met", meta)
+    numpy_append_file("met", meta)
     print('Metadata formatting done.', meta.shape)
 
     return flats
@@ -388,8 +403,9 @@ def jet_combinations_formatting(data, flats):
 
     flats.append(hcanda.reshape(hcanda.shape[0],-1))
     flats.append(kina.reshape(kina.shape[0],-1))
-    np.save(args.outdir+"/hcand", hcanda)
-    np.save(args.outdir+"/kinsols", kina)
+    numpy_append_file("hcand", hcanda)
+    numpy_append_file("kinsols", kina)
+
     print('Jet combinations formatting done.', hcanda.shape, kina.shape)
 
     return flats
@@ -404,12 +420,14 @@ def truth_level_formatting(data, feats):
     @returns :: The updated flats array.
     """
     print('Formatting truth level features...')
+
+    trutha = None
     ntf = len(truth_feats)
     trutha = data[["%s_%s" % (part,feat) for feat in truth_feats
         for part in ["jlr_top","jlr_atop","jlr_bottom","jlr_abottom"]]].values
     trutha = trutha.reshape(-1, 4, ntf)
     flats.append(trutha)
-    np.save(args.outdir + "/truth", trutha)
+    numpy_append_file("truth", trutha)
     print('Done formatting turth level features.')
 
     return flats
@@ -417,13 +435,13 @@ def truth_level_formatting(data, feats):
 def make_jlr_target(data):
     # Make the target for the jlr classifier.
     jlra = data["JointLikelihoodRatioLog"].values
-    np.save(args.outdir + "/target", jlra)
+    numpy_append_file("target", jlra)
     print('Done making the jlr target.', jlra.shape)
 
 def make_mbb_target(data):
     # Make the target for the mbb classifier.
     m_bb = data["m_bb"].values
-    np.save(args.outdir + "/target", m_bb)
+    numpy_append_file("target", m_bb)
     print('Done making the mbb target.', m_bb.shape)
 
 def make_higgsclass_target(data):
@@ -439,11 +457,11 @@ def make_higgsclass_target(data):
         list_of_masses.append(mass)
     target = np.array(list_of_flags).T
     dijet_masses = np.array(list_of_masses).T
-    np.save(args.outdir + "/target", target)
+    numpy_append_file("target", target)
     print("Done making the higgsclass target.", target.shape)
     print("Making dijet_masses...")
-    np.save(args.outdir + "/dijet_masses", dijet_masses, allow_pickle=False,
-        fix_imports=True)
+    # This numpy save uses allow_pickle false and fix_imports True
+    numpy_append_file("dijet_masses", dijet_masses)
     print("Done making dijet masses.", dijet_masses.shape)
 
 def make_multiclass_target(data):
@@ -462,30 +480,30 @@ def make_multiclass_target(data):
         target[np.ix_(ttcc, [4])] = 1
         target[np.ix_(~(ttbb | tt2b | ttb | ttcc), [5])] = 1
     else: raise Exception("Unknown dataset, not sure if signal or background.")
-    np.save(args.outdir + "/target", target)
+    numpy_append_file("target", target)
     print('Done making multiclass target.', target.shape)
 
 def make_binarclass_target(data):
     # Make the target for the binary classifier.
-    if args.dataset is not None:
+    if not args.dataset is None:
         if "ttH" in args.dataset: label = np.full(data.shape[0], 1)
         elif "TT" in args.dataset: label = np.full(data.shape[0], 0)
         else: raise Exception("Dataset is not correctly specified in args.")
-        np.save(args.outdir + "/target", label)
+        numpy_append_file("target", target)
         print('Done making binaryclass target.', label.shape)
 
 def make_mem(data):
-    # Make MEM -> no idea what this is... needs clarification.
+    # What is this MEM thing?
     print('Making MEM...')
     arr = data[["mem_tth_SL_2w2h2t_p", "mem_ttbb_SL_2w2h2t_p"]].values
-    np.save(args.outdir + "/mem", arr)
+    numpy_append_file("mem", arr)
     print('Done making the mem.', arr.shape)
 
 def make_event_desc(data):
     # Making the event description features.
     print('Making evdesc features...')
     arr = data[evdesc_feats].values
-    np.save(args.outdir + "/evdesc", arr)
+    numpy_append_file("evdesc", arr)
     print('Done making evdesc features.', arr.shape)
 
 if __name__ == "__main__":

@@ -1,7 +1,7 @@
-# Takes the .h5 file output of format.py and saves it in .npy format, while
-# also doing some small formatting tasks such as calculating the four momentum
-# and the invariatn mass.
+# Takes the .root files as input and formats them. Outputs .h5 files that are
+# then taken by format.py and formatted further.
 
+# TO BE TESTED BY VASILIS ON THE ROOT FILES BEFORE MERGING!
 from __future__ import print_function
 import pandas as pd
 import numpy as np
@@ -10,16 +10,14 @@ import ROOT
 import root_numpy
 
 parser = argparse.ArgumentParser()
-parser.add_argument("--output", type=str,
-    default="data.h5", action="store",
-    help="output file"
-)
 parser.add_argument( "--input", type=str,
     required=True, action="store", nargs='+',
     help="Input data_folder or list of files.")
-
+parser.add_argument("--output", type=str,
+    default="data.h5", action="store",
+    help="The output data file.")
 args = parser.parse_args()
-
+output_folder = 'preprocessed_data'
 
 def main():
     data_frame = load_data(args.input); print(data_frame.columns)
@@ -27,7 +25,7 @@ def main():
     for ilep in range(2):  construct_four_momentum(data_frame, 'leps', ilep)
     for ijet in range(10): construct_four_momentum(data_frame, 'jets', ijet)
 
-    if "nbtags" not list(data_frame): data_frame['nbtags'] = sum(
+    if not "nbtags" in list(data_frame): data_frame['nbtags'] = sum(
         data_frame['jets_btag_{0}'.format(i)]>1 for i in range(10))
     recompute_bbnMatch(data_frame)
 
@@ -46,18 +44,6 @@ def check_single_folder(data_folder):
 
     return 0
 
-def format_web_files(data_files):
-    # Format the data files if they are imported from the web.
-    # In case we are trying to load from T3, add prefix.
-    web_data_files= []
-    for file in data_files:
-        if file.startswith("/pnfs/psi.ch"):
-            file = "root://t3dcachedb.psi.ch/" + file
-        web_data_files.append(file)
-
-    return web_data_files
-
-
 def load_data(data_folder):
     """
     Loads the data from .h5 format files produced by format.py.
@@ -72,7 +58,7 @@ def load_data(data_folder):
     elif isinstance(data_folder, list): data_files = list(data_folder)
     else: raise TypeError("Given data folder is not correct!")
 
-    data_files = format_web_files(data_files)
+    print("Data files: ")
     for file in data_files: print(file)
     data_frame= pd.DataFrame(root_numpy.root2array(data_files,treename="tree"))
 

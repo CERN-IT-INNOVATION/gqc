@@ -17,6 +17,10 @@ def get_layer(spec, nqubits, inputs, theta):
 		zzfm(nqubits, inputs[nfrom:nto])
 	elif (name == "2local"):
 		twolocal(nqubits, theta[nfrom:nto], reps = int(spec[3]), entanglement = spec[4])
+	elif (name == "tree"):
+		treevf(nqubits, theta[nfrom:nto],reps = int(spec[3]))
+	elif (name == "step"):
+		stepc(nqubits, theta[nfrom:nto],reps = int(spec[3]))
 	else:
 		raise Exception("Unknown template!")
 

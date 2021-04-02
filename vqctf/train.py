@@ -33,7 +33,11 @@ def create_model(spec):
 		name = spec[i][0]
 		if (name == "2local"):
 			is_vf = True
-
+		elif (name == "tree"):
+			is_vf = True
+		elif (name == "step"):
+			is_vf = True
+		
 		if (is_vf):
 			params += spec[i][2] - spec[i][1]
 	

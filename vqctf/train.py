@@ -44,8 +44,9 @@ def create_model(spec):
 
 
 def train(epochs, lrate, batch_size, spec, ntrain, encoder, name):
-	
-	qd = qdata(encoder, ntrain, 100)
+
+	nvalid = 100	
+	qd = qdata(encoder, ntrain, nvalid)
 	
 	train_data = qd.train
 	train_labels = qd.train_nlabels
@@ -112,7 +113,7 @@ def train(epochs, lrate, batch_size, spec, ntrain, encoder, name):
 	f = open("vqctf/out/log", "a")
 	f.write("VQC " + name + "\n")
 	f.write(f"epochs/lrate/bsize: {epochs} / {lrate} / {batch_size}\n")
-	f.write(f"train/valid {qd.ntrain} / {qd.nvalid}\n")
+	f.write(f"train/valid {ntrain} / {nvalid}\n")
 	f.write("Elapsed time: " + str(end_time - start_time) + "s " + str((end_time - start_time)/3600) + "h\n")
 	f.write("Valid AUC: " + str(auc_valid) + "+/-" + str(auc_std) + "\n")
 	f.write("\n\n")

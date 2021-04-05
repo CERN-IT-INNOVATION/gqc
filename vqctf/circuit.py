@@ -16,11 +16,11 @@ def get_layer(spec, nqubits, inputs, theta):
 	nto = int(spec[2])
 
 	if (name == "zzfm"):
-		zzfm(nqubits, inputs[nfrom:nto]
-	elif (name == "zzfm2")
+		zzfm(nqubits, inputs[nfrom:nto])
+	elif (name == "zzfm2"):
 		zzfm(nqubits, inputs[nfrom:nto], scaled = True)
-	elif (name = "ae")
-		AmplitudeEmbedding(features = inputs[nfrom:nto], wires = range(nqubits))
+	elif (name == "ae"):
+		AmplitudeEmbedding(features = inputs[nfrom:nto], wires = range(nqubits), normalize = True)
 	elif (name == "2local"):
 		twolocal(nqubits, theta[nfrom:nto], reps = int(spec[3]), entanglement = spec[4])
 	elif (name == "tree"):

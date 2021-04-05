@@ -4,6 +4,8 @@ import numpy as np
 from vqctf.fmaps import *
 from vqctf.vforms import *
 
+from pennylane.templates import AmplitudeEmbedding
+
 
 state_0 = [[1], [0]]
 y = state_0 * np.conj(state_0).T
@@ -14,9 +16,17 @@ def get_layer(spec, nqubits, inputs, theta):
 	nto = int(spec[2])
 
 	if (name == "zzfm"):
-		zzfm(nqubits, inputs[nfrom:nto])
+		zzfm(nqubits, inputs[nfrom:nto]
+	elif (name == "zzfm2")
+		zzfm(nqubits, inputs[nfrom:nto], scaled = True)
+	elif (name = "ae")
+		AmplitudeEmbedding(features = inputs[nfrom:nto], wires = range(nqubits))
 	elif (name == "2local"):
 		twolocal(nqubits, theta[nfrom:nto], reps = int(spec[3]), entanglement = spec[4])
+	elif (name == "tree"):
+		treevf(nqubits, theta[nfrom:nto],reps = int(spec[3]))
+	elif (name == "step"):
+		stepc(nqubits, theta[nfrom:nto],reps = int(spec[3]))
 	else:
 		raise Exception("Unknown template!")
 

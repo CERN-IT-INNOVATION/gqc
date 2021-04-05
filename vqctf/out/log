@@ -11,6 +11,7 @@ Elapsed time: 40666.69391298294s 11.296303864717483h
 Valid AUC: 0.6594336419753086+/-0.01639324664228457
 
 
+<<<<<<< HEAD
 VQC vqc-chi2
 epochs/lrate/bsize: 70 / 0.005 / 50
 train/valid 288 / 360
@@ -44,5 +45,12 @@ epochs/lrate/bsize: 80 / 0.005 / 50
 train/valid 1000 / 100
 Elapsed time: 35860.05580186844s 9.961126611630123h
 Valid AUC: 0.6573935185185185+/-0.0178114242161978
+
+
+VQC vqc-tree0
+epochs/lrate/bsize: 47 / 0.005 / 50
+train/valid 288 / 360
+Elapsed time: 15992.827699899673s 4.442452138861021h
+Valid AUC: 0.6577283950617284+/-0.016123261967561735
 
 

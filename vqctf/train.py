@@ -50,7 +50,7 @@ def create_model(spec):
 def train(epochs, lrate, batch_size, spec, ntrain, encoder, name):
 
 	nvalid = 100	
-	qd = qdata(encoder, ntrain, nvalid)
+	qd = qdata(encoder, ntrain, nvalid, use_complex = True)
 	
 	train_data = qd.train
 	train_labels = qd.train_nlabels
@@ -95,7 +95,7 @@ def train(epochs, lrate, batch_size, spec, ntrain, encoder, name):
 
 	print("Computing predictions...", flush = True)
 
-	qd = qdata(encoder)
+	qd = qdata(encoder, use_complex = True)
 	valid = qd.get_kfold_validation()
 	encoded = []
 	for i in range(len(valid)):

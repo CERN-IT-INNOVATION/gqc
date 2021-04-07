@@ -3,3 +3,4 @@ data/
 *.h5
 *.root
 Tests_qiskit/
+__pycache__

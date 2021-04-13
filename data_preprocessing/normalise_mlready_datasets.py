@@ -1,25 +1,32 @@
-# Use different feature normalisations to see how it affects the autoencoder.
-# Make batch normalisation work.
-import numpy as np
+# Imports an .npy file as constructed in prepare_mlready_data.npy or any
+# .npy file that contains a 2D matrix with number of events and features.
+# Sklearn is then used to normalize the data sets. Each normalized copy
+# is saved as an .npy file.
 import argparse
-from sklearn import preprocessing
+import os
+
+import numpy as np
+from sklearn.preprocessing import MinMaxScaler
+from sklearn.preprocessing import MaxAbsScaler
+from sklearn.preprocessing import StandardScaler
+from sklearn.preprocessing import RobustScaler
+from sklearn.preprocessing import Normalizer
+from sklearn.preprocessing import QuantileTransformer
+from sklearn.preprocessing import PowerTransformer
+from sklearn.preprocessing import minmax_scale
 
 parser = argparse.ArgumentParser(formatter_class=argparse.
     ArgumentDefaultsHelpFormatter)
-parser.add_argument("--infiles", type=str, default=infiles, nargs=2,
-    help="Path to the signal and background files.")
-parser.add_argument('--outfile', type=str, default='',
-    help='Path to output file.')
-parser.add_argument('--fileFlag', type=str, default='',
-    help='Fileflag to concatenate to outputFiles.')
+parser.add_argument("--infile", type=str, required=True,
+    help="Path to the .npy file containing data to be normalized.")
 args = parser.parse_args()
 
-if __name__ == "__main__":
-    infile_bkg, infile_sig = args.infiles
-    print('Normalizing: ' + infile_bkg + ' and ' + infile_sig)
-    sig = np.load(infile_sig)
-    bkg = np.load(infile_bkg)
-    scaler = preprocessing.StandardScaler().fit(infile_sig)
 
-    outfile = args.outfile
-    print('Output: ', outfile)
+if __name__ == "__main__":
+    infile = args.infile; print('Normalizing: ' + infile)
+
+    data = np.load(infile); data.shape
+    data_minmax = MinMaxScaler().fit_transform(data)
+
+    base_filename = os.path.splitext(args.infile)[0]
+    np.save(base_filename + "_minmax_norm", data_minmax)

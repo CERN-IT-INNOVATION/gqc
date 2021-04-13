@@ -1,8 +1,19 @@
-# Takes the .h5 data files and formats them depending on what the data contains
+# Reads in one signal and one background .h5 file containing the simulated
+# signal and background data of a studied pp process. Selects the interesting
+# variables, applies selection cuts on the raw data, formats it, and casts it
+# into a flat 2D array that is saved in the x_data_ray.npy file.
+
+# Caution, you need to either have a lot of ram or a lot of swap memory to run
+# this script. Pandas is not the best tool for working with large datasets.
+# This should be changed in the future, but it is good enough for now.
 import argparse, os, glob, itertools
 import pandas as pd
 import numpy as np
 import data_features_definitions
+
+# Disable the pandas warning when working on a copy. Re-enable if you care
+# about what you do to a dataframe copy making it back to original.
+pd.options.mode.chained_assignment = None  # default='warn'
 
 
 parser = argparse.ArgumentParser()
@@ -17,13 +28,14 @@ parser.add_argument("--datatype", type=str, required=True,
 args = parser.parse_args()
 
 def main():
-    # This code imports the data, formats it and stores it in h5 files.
-    # An output folder with the given name in outdir will be created.
-    # Additional selection cuts differing from standard ones are added.
     features = data_features_definitions.opts()
     features.update(data_features_definitions.choose_data_type(args.datatype))
+
+    # Specify which variables are interesting for the imported data and specify
+    # the selection criteria.
     globals().update(features)
-    selection = "nleps == 1 & (nbtags >= 2) & (njets >= 4)"; njets = 7
+    globals()['selection'] = "nleps == 1 & (nbtags >= 2) & (njets >= 4)"
+    globals()['njets'] = 7
 
     # Load .h5 data. Create the output directory.
     data_sig = load_files(args.infile + "Sig.h5")
@@ -34,13 +46,11 @@ def main():
     sig, y_sig = make_flat_numpy_array(data_sig)
     bkg, y_bkg = make_flat_numpy_array(data_bkg, False)
 
-    # Prepare for training.
-    x = np.concatenate((sig, bkg), axis=0)
-    y = np.concatenate((y_sig, y_bkg), axis=0)
-
     # Save to .npy arrays.
-    np.save(os.path.join(args.outdir, "x_data_raw"), x)
-    np.save(os.path.join(args.outdir, "y_data_raw"), y)
+    np.save(os.path.join(args.outdir, "x_data_raw"),
+        np.concatenate((sig, bkg), axis=0))
+    np.save(os.path.join(args.outdir, "y_data_raw"),
+        np.concatenate((y_sig, y_bkg), axis=0))
 
 def read_single_file(path):
     # Load a single .h5 file with chunksize 10000.
@@ -48,10 +58,8 @@ def read_single_file(path):
     return pd.read_hdf(path, chunksize="1000000")
 
 def load_files(path):
-    """
-    Load a single file specified by path or load all .h5 files in the folder
-    specified by path.
-    """
+    # Load a single file specified by path or load all .h5 files in the folder
+    # specified by path.
     if path.endswith(".h5"): return read_single_file(path)
 
     file_paths = sorted(glob.glob(path + '/data*.h5'))
@@ -63,7 +71,7 @@ def load_files(path):
 
     return data
 
-def map_jets_values(data):
+def map_jet_values(data):
     # Map the jet values from being 0-10 to being 0 when there are no jets
     # and being one when there are any jets.
     for idx in range(10):
@@ -84,12 +92,13 @@ def jet_formatting(data, flats):
     """
     print('Formatting jets...')
 
-    jetsa = None
     onejet = list(range(njets)); number_jet_feats = len(jet_feats)
     jet_col = ["jets_%s_%d"%(feat,jet) for jet in onejet for feat in jet_feats]
     jetsa = data[jet_col].values
-    flats.append(jetsa); jetsa = jetsa.reshape(-1, njets, number_jet_feats)
-    print('Jet formatting done.', jetsa.shape)
+    if flats[0].size == 0:   flats[0] = jetsa
+    else:                    flats[0] = np.concatenate((flats[0], jetsa))
+    jetsa = jetsa.reshape(-1, njets,number_jet_feats)
+    print('Jet formatting done. Shape of the proc jets array: ', jetsa.shape)
 
     return flats
 
@@ -104,13 +113,13 @@ def lep_formatting(data, flats):
     """
     print('Formatting leptons...')
 
-    lepsa = None
     number_lep_feats = len(lep_feats)
     lepsa = data[["leps_%s_%d" % (feat,lep) for lep in range(nleps)
         for feat in lep_feats]].values
-    flats.append(lepsa)
+    if flats[1].size == 0:   flats[1] = lepsa
+    else:                    flats[1] = np.concatenate((flats[1], lepsa))
     lepsa = lepsa.reshape(-1, nleps, number_lep_feats)
-    print('Lepton formatting done.', lepsa.shape)
+    print('Lepton formatting done. Shape of the proc lept array:', lepsa.shape)
 
     return flats
 
@@ -125,21 +134,29 @@ def met_formatting(data, flats):
     """
     print('Formatting metadata features...')
 
-    meta = None
     data["met_px"] = data["met_" + met_feats[1]] * \
         np.cos(data["met_"+met_feats[0]])
     data["met_py"] = data["met_" + met_feats[1]] * \
         np.sin(data["met_"+met_feats[0]])
     meta = data[["met_%s" % feat for feat in met_feats]].values
-    flats.append(meta)
-    print('Metadata formatting done.', meta.shape)
+    if flats[2].size == 0:  flats[2] = meta
+    else:                   flats[2] = np.concatenate((flats[2], meta))
+    print('Metadata formatting done. Shape of the proc met array:', meta.shape)
 
     return flats
 
 def make_flat_features(flats, is_signal=True):
-    # Make the flats object constructed earlier into a flat array, and generate
-    # vector of 1s or 0s depending on the type of data (signal or bkg).
-    print('Making flat features...')
+    """
+    Make the flats object constructed earlier into a flat array, and generate
+    vector of 1s or 0s depending on the type of data (signal or bkg).
+
+    @flats     :: The flats array as constructed in make_flat_numpy_array.
+    @is_signal :: Bool of whether we are dealing with signal or background.
+
+    @returns :: A 2D matrix, containing rows as many as the number of events
+        and columns as many as features.
+    """
+    print('\n-----------\nMaking flat features...')
     flat_array = np.hstack(flats)
 
     nevents = flat_array.shape[0]
@@ -149,18 +166,25 @@ def make_flat_features(flats, is_signal=True):
     return flat_array, y
 
 def make_flat_numpy_array(data, is_signal=True):
-    # Take the loaded .h5 data file and make a flat numpy array out of it
-    # containing only the interesting features, processed such that they are
-    # ready for the machine learning training.
+    """
+    Take the loaded .h5 datasets and save the important features chunk by
+    chunk. The flats array elements are as follows:
+    [0] - The jets features.
+    [1] - The lepton features.
+    [2] - The meta features.
 
-    chunk_nb = 0; flats_array = []; y = []
+    @data      :: The .h5 imported data.
+    @is_signal :: Bool of whether the data is signal (True) or background.
+
+    @returns   :: A python list containing the feature arrays (flats).
+    """
+    chunk_nb = 0; flats = [np.array([]), np.array([]), np.array([])]
     for chunk in data:
         chunk_nb += 1
-        print("\n------------\nProcessing chunk number {0}".format(chunk_nb))
-        chunk = map_jets_values(chunk)
-        if selection is not None: chunk = chunk.query(selection)
+        print("\n----------\nProcessing chunk number {0}.\n".format(chunk_nb))
+        chunk = map_jet_values(chunk)
 
-        flats = []
+        if selection is not None: chunk = chunk.query(selection)
         if jet_feats is not None: flats = jet_formatting(chunk, flats)
         if lep_feats is not None: flats = lep_formatting(chunk, flats)
         if met_feats is not None: flats = met_formatting(chunk, flats)

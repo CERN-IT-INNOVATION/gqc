@@ -40,7 +40,7 @@ def get_layer(spec, nqubits, inputs, theta):
 
 def get_circuit(spec):
 	nqubits = 0
-	measure = "1"
+	measure = "first"
 	if (isinstance(spec[0], list)):
 		nqubits = spec[0][0]
 		measure = spec[0][1]
@@ -61,7 +61,7 @@ def get_circuit(spec):
 		elif (measure == "first"):
 			return qml.expval(qml.Hermitian(y, wires = [0]))
 		else:
-			raise Expception("Undefined measurement")
+			raise Exception("Undefined measurement")
 
 	
 	return qcircuit

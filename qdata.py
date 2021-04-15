@@ -14,13 +14,14 @@ class qdata:
 	#infiles = ('input_ae/trainingTestingDataSig.npy','input_ae/trainingTestingDataBkg.npy')
 	infiles = ('input_ae/trainingTestingDataSig7.2e5.npy','input_ae/trainingTestingDataBkg7.2e5.npy')
 	trainSigAE, trainBkgAE, validSigAE, validBkgAE, testSigAE,testBkgAE = splitDatasets(infiles,separate=True, not_all = False)
-	
+
+
 	ntot_test = int(testSigAE.shape[0])
 	ntot_train = int(trainSigAE.shape[0])
 	ntot_valid = int(validSigAE.shape[0])
 
 	def __init__(self, encoder = "", train_p = 0.0005, valid_p = 0.005, 
-				test_p = 0.005):
+				test_p = 0.005, use_complex = False):
 		'''	   
 		Args:	
     	----------
@@ -78,6 +79,13 @@ class qdata:
 		else:
 			raise Exception('Unknown encoder')
 
+		if use_complex:
+			self.trainSigAE = self.trainSigAE.astype(complex)
+			self.trainBkgAE = self.trainBkgAE.astype(complex)
+			self.validSigAE = self.validSigAE.astype(complex)
+			self.validBkgAE = self.validBkgAE.astype(complex)
+			self.testSigAE = self.testSigAE.astype(complex)
+			self.testBkgAE = self.testBkgAE.astype(complex)
 
 		if train_p <= 1:
 			ntrain = int(self.ntot_train*train_p)

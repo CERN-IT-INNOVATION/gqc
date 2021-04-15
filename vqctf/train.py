@@ -33,7 +33,11 @@ def create_model(spec):
 		name = spec[i][0]
 		if (name == "2local"):
 			is_vf = True
-
+		elif (name == "tree"):
+			is_vf = True
+		elif (name == "step"):
+			is_vf = True
+		
 		if (is_vf):
 			params += spec[i][2] - spec[i][1]
 	
@@ -44,8 +48,9 @@ def create_model(spec):
 
 
 def train(epochs, lrate, batch_size, spec, ntrain, encoder, name):
-	
-	qd = qdata(encoder, ntrain, 100)
+
+	nvalid = 100	
+	qd = qdata(encoder, ntrain, nvalid, use_complex = True)
 	
 	train_data = qd.train
 	train_labels = qd.train_nlabels
@@ -90,7 +95,7 @@ def train(epochs, lrate, batch_size, spec, ntrain, encoder, name):
 
 	print("Computing predictions...", flush = True)
 
-	qd = qdata(encoder)
+	qd = qdata(encoder, use_complex = True)
 	valid = qd.get_kfold_validation()
 	encoded = []
 	for i in range(len(valid)):
@@ -112,7 +117,7 @@ def train(epochs, lrate, batch_size, spec, ntrain, encoder, name):
 	f = open("vqctf/out/log", "a")
 	f.write("VQC " + name + "\n")
 	f.write(f"epochs/lrate/bsize: {epochs} / {lrate} / {batch_size}\n")
-	f.write(f"train/valid {qd.ntrain} / {qd.nvalid}\n")
+	f.write(f"train/valid {ntrain} / {nvalid}\n")
 	f.write("Elapsed time: " + str(end_time - start_time) + "s " + str((end_time - start_time)/3600) + "h\n")
 	f.write("Valid AUC: " + str(auc_valid) + "+/-" + str(auc_std) + "\n")
 	f.write("\n\n")

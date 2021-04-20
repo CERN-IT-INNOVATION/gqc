@@ -1,3 +1,5 @@
+# The autoencoder code. It reduces the number of features using in training the
+# actuall ML algorithm from 67 (for the ttH dataset) to a smaller number.
 import matplotlib.pyplot as plt
 import numpy as np
 import os,sys,torch,torchvision,time,argparse,warnings
@@ -8,30 +10,35 @@ from train import train
 from splitDatasets import splitDatasets
 
 start_time = time.time()
-seed = 100
-torch.manual_seed(seed)
-torch.autograd.set_detect_anomaly(True)#autograd error check
+seed = 100; torch.manual_seed(seed)
+torch.autograd.set_detect_anomaly(True)
 
-#use gpu if available
+# Use GPUs if they are available.
 with warnings.catch_warnings():
 	warnings.simplefilter("ignore")
 	device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
-print('Using device:',device)
+print('Using device:', device)
 
-infiles = ('../input_ae/trainingTestingDataSig.npy','../input_ae/trainingTestingDataBkg.npy')
 defaultlayers = [64, 52, 44, 32, 24, 16]
 
-parser = argparse.ArgumentParser(formatter_class=argparse.ArgumentDefaultsHelpFormatter)#include defaults in -h
-parser.add_argument("--input", type=str, default=infiles, nargs =2, help="path to datasets")
-parser.add_argument('--lr',type=float,default=2e-03,help='learning rate')
-parser.add_argument('--layers',type=int,default=defaultlayers,nargs='+',help='type hidden layers node number')
-parser.add_argument('--batch',type=int,default=64,help='batch size')
-parser.add_argument('--epochs',type=int,default=85,help='number of training epochs')
-parser.add_argument('--fileFlag',type=str,default='',help='fileFlag to concatenate to filetag')
-
+parser = argparse.ArgumentParser(formatter_class=argparse.
+    ArgumentDefaultsHelpFormatter)
+parser.add_argument("--input", type=str, required=True, nargs=2,
+    help="Path to the datasets that we use.")
+parser.add_argument('--lr', type=float, default=2e-03,
+    help="The learning rate of the autoencoder.")
+parser.add_argument('--layers', type=int, default=defaultlayers, nargs='+',
+    help="The layers of the autoencoder.")
+parser.add_argument('--batch', type=int, default=64,
+    help="The batch size of the data to be processed by the autoencoder.")
+parser.add_argument('--epochs',type=int,default=85,
+    help="The number of training epochs.")
+parser.add_argument('--fileFlag',type=str,default='',
+    help='The fileFlag to concatenate to filetag.')
 args = parser.parse_args()
-infiles = args.input
-(learning_rate,layers,batch_size,epochs,fileFlag) = (args.lr,args.layers,args.batch,args.epochs,args.fileFlag)
+
+def main():
+    infiles = args.input
 
 #Sig+Bkg training with shuffle
 dataset, validDataset,_ = splitDatasets(infiles)
@@ -41,7 +48,7 @@ layers.insert(0,feature_size)#insert at the beginning of the list the input dim.
 validation_size = validDataset.shape[0]
 
 #Convert to torch dataset:
-dataset = tensorData(dataset) 
+dataset = tensorData(dataset)
 validDataset = tensorData(validDataset)
 
 train_loader = torch.utils.data.DataLoader(dataset,batch_size = args.batch,shuffle = True)
@@ -61,7 +68,7 @@ layersTag = '.'.join(str(inode) for inode in model.node_number[1:])#Don't print 
 
 #FIXME: Fix lr printing. Issue example:
 #> lr1,lr2 = 0.002, 0.0025
-#>print(f'lr1={lr1:.0e} and lr2={lr2:.0e}')                                                                                                             
+#>print(f'lr1={lr1:.0e} and lr2={lr2:.0e}')
 #>'lr1=2e-03 and lr2=3e-03'
 filetag = 'L'+layersTag+'B'+str(batch_size)+'Lr{:.0e}'.format(learning_rate)+fileFlag#only have 1 decimal lr
 
@@ -96,3 +103,6 @@ train_time = (end_time-start_time)/60
 with open('trained_models/mseLog.txt','a+') as mseLog:
 	logEntry = filetag+f': Training time = {train_time:.2f} min, Min. Validation loss = {minValid:.6f}\n'
 	mseLog.write(logEntry)
+
+if __name__ == "__main__":
+    main()

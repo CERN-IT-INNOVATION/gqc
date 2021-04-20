@@ -1,3 +1,4 @@
+# The deprecated data splitting algorithm.
 import numpy as np
 
 #Gets the full dataset and splits it into training, validation and test datasets
@@ -7,7 +8,7 @@ def splitDatasets(infiles: tuple,separate = False, labels = False, not_all = Tru
 	#(Sig,Bkg) file
 	dataArraySig = np.load(infiles[0])
 	dataArrayBkg = np.load(infiles[1])
-	
+
 	#ntot each bkg & sig
 	if dataArraySig.shape[0] != dataArrayBkg.shape[0]:
 	        raise Exception('nSig != nBkg! Events should be equal')
@@ -15,7 +16,7 @@ def splitDatasets(infiles: tuple,separate = False, labels = False, not_all = Tru
 	ntrain, nvalid, ntest = int(ntot*0.8), int(0.1*ntot), int(0.1*ntot)
 	print('splitDatasets.py:')
 	print('xcheck: (ntrain={}, nvalid={}, ntest={})x2; for Sig & Bkg'.format(ntrain,nvalid,ntest))
-	
+
 	#Training samples:
 	dataset = np.vstack((dataArraySig[:ntrain],dataArrayBkg[:ntrain]))
 	trainLabels = ['s'] * ntrain + ['b'] * ntrain
@@ -25,11 +26,11 @@ def splitDatasets(infiles: tuple,separate = False, labels = False, not_all = Tru
 	#Testing samples:
 	testDataset = np.vstack((dataArraySig[(ntrain+nvalid):],dataArrayBkg[(ntrain+nvalid):]))
 	testLabels = ['s'] * ntest + ['b'] * ntest
-	
+
 	print(f'features = {dataset.shape[1]}, ntrain={dataset.shape[0]}, nvalid={validDataset.shape[0]}, ntest={testDataset.shape[0]});Sig + Bkg samples\n')
 	if np.array_equal(validDataset,testDataset):
 		raise Exception('Validation and Testing datasets are the same!')
-	
+
 	if separate:
 		testSigDataset,testBkgDataset = np.vsplit(testDataset,2)
 		trainSigDataset, trainBkgDataset = np.vsplit(dataset, 2)

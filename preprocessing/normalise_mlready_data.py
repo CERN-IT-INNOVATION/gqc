@@ -29,18 +29,22 @@ args = parser.parse_args()
 
 
 def split_and_save(data, target, name):
-    # Splits a given data set into training and testing samples that then are
-    # saved with corresponding names in .npy files.
+    # Splits a given data set into training, testing, and validation samples
+    # that then are saved with corresponding names in .npy files.
     print("Splitting data into training and testing, then saving...")
     x_train, x_test, y_train, y_test = train_test_split(data, target,
-        test_size=0.2, shuffle=True)
+        test_size=0.1, shuffle=True)
+    x_train, x_vali, y_train, y_vali = train_test_split(x_train, y_train,
+        test_size=0.1, shuffle=True)
 
     base_filename_y = os.path.splitext(args.infile_target)[0]
 
-    np.save(name + "_train", data)
-    np.save(name + "_test", data)
-    np.save(base_filename_y + "_train", target)
-    np.save(base_filename_y + "_test", target)
+    np.save(name + "_train", x_train)
+    np.save(name + "_test", x_test)
+    np.save(name + "_vali", x_vali)
+    np.save(base_filename_y + "_train", y_train)
+    np.save(base_filename_y + "_test", y_test)
+    np.save(base_filename_y + "_vali", y_vali)
 
 if __name__ == "__main__":
     print('Normalizing: ' + args.infile_data)

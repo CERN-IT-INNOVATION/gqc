@@ -152,3 +152,19 @@ class qdata:
 		validation_folds = np.concatenate((validation_folds_sig,validation_folds_bkg),axis=1)
 		#Return k batches of validation samples:
 		return validation_folds[:k]#if k>splits_total it will just return the [:splits_total] folds
+
+	def get_kfold_test(self,k=5):
+		splits_total = int(1/self.valid_p)
+		'''
+		splits_total: the max number we can divide the initial validation dataset (from splitDatasets). 
+		E.g. for the 7.2e5 dataset (default),  it's 500 if we want to have 288 validation samples per fold (144 Sig + 144 Bkg)
+		'''
+		test_folds_sig = np.split(self.testSigAE,splits_total)
+		test_folds_bkg = np.split(self.testBkgAE,splits_total)
+		
+		test_folds_sig = np.array(test_folds_sig)
+		test_folds_bkg = np.array(test_folds_bkg)
+		#Create the k-fold for validation of sig+bkg equal chunks(folds) of samples:
+		test_folds = np.concatenate((test_folds_sig,test_folds_bkg),axis=1)
+		#Return k batches of validation samples:
+		return test_folds[:k]#if k>splits_total it will just return the [:splits_total] folds

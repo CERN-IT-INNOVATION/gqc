@@ -62,9 +62,13 @@ def train(epochs, lrate, batch_size, spec, ntrain, encoder, name):
 	opt = tf.keras.optimizers.Adam(learning_rate = lrate)
 	model.compile(opt, loss=tf.keras.losses.BinaryCrossentropy())
 
+	earlystop = tf.keras.callbacks.EarlyStopping(monitor="val_loss", patience=5, verbose=1, restore_best_weights=True)
+
 	start_time = time.time()
-	history = model.fit(train_data, train_labels, epochs = epochs, shuffle = True, validation_data = (validation_data, validation_labels), verbose = True, batch_size = batch_size)
+	history = model.fit(train_data, train_labels, epochs = epochs, shuffle = True, validation_data = (validation_data, validation_labels), verbose = True, batch_size = batch_size, callbacks = [earlystop])
 	end_time = time.time()
+
+	epused = len(history.history['loss'])
 
 	if not (os.path.isdir("vqctf/out")):
 		os.mkdir("vqctf/out")
@@ -97,29 +101,40 @@ def train(epochs, lrate, batch_size, spec, ntrain, encoder, name):
 
 	qd = qdata(encoder, use_complex = True)
 	valid = qd.get_kfold_validation()
-	encoded = []
+	test = qd.get_kfold_test()
+	encoded_val = []
+	encoded_test = []
 	for i in range(len(valid)):
-		sample = valid[i]
-		encoded.append(np.array(model.predict(sample)))
+		sample_val = valid[i]
+		sample_test = test[i]
+		encoded_val.append(np.array(model.predict(sample_val)))
+		encoded_test.append(np.array(model.predict(sample_test)))
 		print(f"{i+1}/{len(valid)}",flush = True)
-	encoded = np.array(encoded)
+	encoded_val = np.array(encoded_val)
+	encoded_test = np.array(encoded_test)
 
 	print("Computing AUCs and saving...", flush = True)
 
-	np.save(dirname + "/encoded.npy", encoded)
-	info = get_info(name)
-	auc_valid = info[2]
-	auc_std = info[3]
-	get_plot({name : info}, ntrain, folder = '/' + name)
+	np.save(dirname + "/encoded_val.npy", encoded_val)
+	np.save(dirname + "/encoded_test.npy", encoded_test)
+	info_val = get_info(name + "/encoded_val.npy")
+	info_test = get_info(name + "/encoded_test.npy")
+	auc_valid = info_val[2]
+	auc_valid_std = info_val[3]
+	auc_test = info_test[2]
+	auc_test_std = info_test[3]
+	get_plot({name + "_valid": info_val}, ntrain, folder = '/' + name)
+	get_plot({name + "_test": info_test}, ntrain, folder = '/' + name)
 
 
 	## Logging time!
 	f = open("vqctf/out/log", "a")
 	f.write("VQC " + name + "\n")
-	f.write(f"epochs/lrate/bsize: {epochs} / {lrate} / {batch_size}\n")
+	f.write(f"epochs/lrate/bsize: {epused} / {lrate} / {batch_size}\n")
 	f.write(f"train/valid {ntrain} / {nvalid}\n")
 	f.write("Elapsed time: " + str(end_time - start_time) + "s " + str((end_time - start_time)/3600) + "h\n")
-	f.write("Valid AUC: " + str(auc_valid) + "+/-" + str(auc_std) + "\n")
+	f.write("Valid AUC: " + str(auc_valid) + "+/-" + str(auc_valid_std) + "\n")
+	f.write("Test AUC: " + str(auc_test) + "+/-" + str(auc_test_std) + "\n")
 	f.write("\n\n")
 	f.close();
 

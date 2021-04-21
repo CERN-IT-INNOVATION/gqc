@@ -9,7 +9,7 @@ def get_info(name):
 
 	truelabels = qd.validation_nlabels
 
-	data = "vqctf/out/" + name + "/encoded.npy"
+	data = "vqctf/out/" + name 
 
 	predictions = np.load(data)
 

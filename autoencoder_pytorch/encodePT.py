@@ -1,8 +1,6 @@
 import numpy as np
 import torch
-from aePyTorch.model import AE,tensorData 
-#NB: python path naming. If encodePT is called from ../qdata.py the path is defined from the ../ hence
-# aePyTorch.model is needed instead of model (even though encodePT.py is IN the aePyTorch directory)
+from aePyTorch.model import AE,tensorData
 
 def encode_array(data,savedModel,layers):
 	dataLoader = torch.utils.data.DataLoader(tensorData(data),batch_size = data.shape[0],shuffle = False)
@@ -23,5 +21,5 @@ def encode(data,savedModel,layers):
 			x = torch.Tensor(x)
 			data[x] = encode_array(data[x],savedModel,layers)
 		return data
-	
+
 	return encode_array(torch.Tensor(data),savedModel,layers)

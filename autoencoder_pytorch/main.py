@@ -2,8 +2,7 @@
 import os, sys, time, argparse, warnings
 import matplotlib.pyplot as plt
 import numpy as np
-import torch
-import torchvision
+import torch, torchvision
 import torch.nn as nn
 import torch.optim as optim
 
@@ -75,5 +74,6 @@ if __name__ == '__main__':
     end_time = time.time()
     train_time = (end_time - start_time)/60
 
-    util.diagnosis_plots(loss_train, loss_valid, min_valid, model.node_number)
+    plotting.diagnosis_plots(loss_train, loss_valid, min_valid,
+        model.node_number)
     util.save_MSE_log(filetag, train_time, min_valid)

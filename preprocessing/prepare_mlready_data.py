@@ -17,10 +17,10 @@ pd.options.mode.chained_assignment = None  # default='warn'
 
 
 parser = argparse.ArgumentParser()
-parser.add_argument("--infile", type=str, required=True, action="store",
-    help="The input folder/data file.")
-parser.add_argument("--outdir", type=str, action="store",
-    default="data/", help="The output directory.")
+parser.add_argument("--infile_prefix", type=str, required=True, action="store",
+    help="The prefix of .h5 files (which should have Sig.h5 or Bkg.h5 after).")
+parser.add_argument("--outdir", type=str, action="store", default="data/",
+    help="The output directory.")
 parser.add_argument("--datatype", type=str, required=True,
     choices=["cms_0l","cms_1l","cms_2l","delphes_1l","delphes_2l","delphes_had"
              "mass_1l", "class_2016_1l", "class_2016_2l", "cms_2017_1l",
@@ -38,8 +38,8 @@ def main():
     globals()['njets'] = 7
 
     # Load .h5 data. Create the output directory.
-    data_sig = load_files(args.infile + "Sig.h5")
-    data_bkg = load_files(args.infile + "Bkg.h5")
+    data_sig = load_files(args.infile_prefix + "Sig.h5")
+    data_bkg = load_files(args.infile_prefix + "Bkg.h5")
     os.makedirs(args.outdir)
 
     # Preprocess the data and create flat arrays.

@@ -5,4 +5,4 @@ data/
 Tests_qiskit/
 __pycache__
 trained_models/
-
+*.log

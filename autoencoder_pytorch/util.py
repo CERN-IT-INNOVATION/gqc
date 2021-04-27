@@ -1,20 +1,27 @@
 # Utility methods for dealing with all the different autoencoder things.
 import torch
 import numpy as np
+import os, warnings
 
 class tensor_data(torch.utils.data.Dataset):
-    # I do not know how to define this exactly.
+    # Turn a dataset into a torch tensor dataset, that can then be passed
+    # to a ML algorithm and provide training. Very needed to cast to GPU.
     def __init__(self,x):
-        # x is the numpy array dataset #TODO float casting
-        # self.x_labels = x_labels No labels here, we want autoencoder
         self.x = torch.Tensor(x)
     def __len__(self):
         return len(self.x)
     def __getitem__(self, index):
         return self.x[index]
 
+def define_torch_device():
+    # Use gpu if available.
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore")
+        device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
-def to_pytorch_data(data, batch_size=None, shuffle):
+    return device
+
+def to_pytorch_data(data, batch_size=None, shuffle=True):
     """
     Convert training and validation data into pytorch ready data objects.
 
@@ -44,13 +51,14 @@ def split_sig_bkg(data, target):
 
     return data_sig, data_bkg
 
-def load_model(model_module, layers, model_path):
+def load_model(model_module, layers, model_path, device):
     """
     Loads a model that was trained previously.
 
     @model_module :: The class of the model imported a the top.
     @layers       :: The layer structure of the model.
     @model_path   :: The path to where the trained model was saved.
+    @device       :: Type of device where pytorch runs: cpu or gpu.
 
     @returns :: The pytorch model object as trained in the training file.
     """
@@ -88,14 +96,14 @@ def mean_batch_loss(data_loader, feature_size, device):
 
     return mean_loss_batch
 
-def prepare_output(model_nodes, batch_size, learning_rate):
+def prepare_output(model_nodes, batch_size, learning_rate, flag):
     # Prepare the naming of training outputs. Do not print output size.
     layersTag = '.'.join(str(inode) for inode in model_nodes[1:])
     filetag = 'L' + layersTag + '_B' + str(batch_size) + '_Lr{:.0e}'.\
-        format(learning_rate) + "_" + fileFlag
+        format(learning_rate) + "_" + flag
 
     outdir = './trained_models/' + filetag + '/'
-    if not(os.path.exists(outdir)): os.mkdir(outdir)
+    if not os.path.exists(outdir): os.makedirs(outdir)
 
     return filetag, outdir
 
@@ -103,4 +111,36 @@ def save_MSE_log(filetag, train_time, min_valid):
     # Save MSE log to check best model:
     with open('trained_models/mse_log.txt','a+') as mse_log:
         log_entry = filetag + f': Training time = {train_time:.2f} min, Min. Validation loss = {min_valid:.6f}\n'
-        mseLog.write(logEntry)
+        mse_log.write(log_entry)
+
+def varname(index):
+    # Gets the name of what variable is currently considered based on the index
+    # in the data.
+    jet_feats = ["$p_t$","eta","phi","en","$p_x$","$p_y$","$p_z$","btag"]
+    jet_nvars = len(jet_feats); num_jets = 7
+    met_feats = ["phi","$p_t$","$p_x$","$p_y$"]
+    met_nvars = len(met_feats)
+    lep_feats = ["$p_t$","eta","phi","en","$p_x$","$p_y$","$p_z$"]
+    lep_nvars = len(lep_feats)
+
+    if (index < jet_nvars * num_jets):
+        jet = index // jet_nvars + 1
+        var = index % jet_nvars
+        varstring = "Jet " + str(jet) + " " + jet_feats[var]
+        return varstring
+
+    index -= jet_nvars * num_jets;
+
+    if (index < met_nvars):
+        var = index % met_nvars;
+        varstring = "MET " + met_feats[var];
+        return varstring
+
+    index -= met_nvars;
+
+    if (index < lep_nvars):
+        var = index % lep_nvars
+        varstring = "Lepton " + lep_feats[var]
+        return varstring;
+
+    return None

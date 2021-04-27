@@ -54,7 +54,7 @@ if __name__ == "__main__":
     target = np.load(args.infile_target)
     base_filename = os.path.splitext(args.infile_data)[0].replace('_raw', '')
 
-    print("\n\nDoing the MinMax normalisation...")
+    print("\nMinMax normalisation in progress...")
     data_minmax = MinMaxScaler().fit_transform(data)
     np.save(base_filename + "_minmax_norm", data_minmax)
     split_and_save(data_minmax, target, base_filename + "_minmax_norm")

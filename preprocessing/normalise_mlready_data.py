@@ -35,7 +35,7 @@ def split_and_save(data, target, name):
     x_train, x_test, y_train, y_test = train_test_split(data, target,
         test_size=0.1, shuffle=True)
     x_train, x_vali, y_train, y_vali = train_test_split(x_train, y_train,
-        test_size=0.1, shuffle=True)
+        test_size=0.111111, shuffle=True)
 
     base_filename_y = os.path.splitext(args.infile_target)[0]
 

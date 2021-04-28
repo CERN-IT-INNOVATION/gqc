@@ -135,8 +135,8 @@ def diagnosis_plots(loss_train, loss_valid, min_valid, nodes, batch_size, lr,
         label='Validation Loss (1 per epoch)')
     plt.ylabel("MSE")
     plt.xlabel("epochs")
-    plt.title("B = " + str(batch_size) + ", lr=" + str(lr) + ", " +
-        str(nodes) + ', L ={:.6f}'.format(min_valid))
+    plt.title("B=" + str(batch_size) + ", lr=" + str(lr) + ", L=" +
+        str(nodes) + ', min={:.6f}'.format(min_valid))
     plt.legend()
     plt.savefig(outdir + 'loss_epochs.png')
 

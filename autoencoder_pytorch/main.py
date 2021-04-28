@@ -33,6 +33,8 @@ parser.add_argument('--batch', type=int, default=64,
     help='The batch size.')
 parser.add_argument('--epochs', type=int, default=85,
     help='The number of training epochs.')
+parser.add_argument('--maxdata_perc', type=float, default=1,
+    help='How much (in percentage) of the data one should use.')
 parser.add_argument('--file_flag', type=str, default='',
     help='Flag the file in a certain way for easier labeling.')
 
@@ -41,9 +43,9 @@ if __name__ == '__main__':
     args = parser.parse_args()
     # Define torch device
     device = util.define_torch_device()
-
+    exit(1)
     # Load the data.
-    train_data   = np.load(args.training_file)
+    train_data   = np.split(np.load(args.training_file), )
     valid_data   = np.load(args.validation_file)
     train_loader = util.to_pytorch_data(train_data, args.batch, True)
     valid_loader = util.to_pytorch_data(valid_data, args.batch, True)
@@ -57,7 +59,7 @@ if __name__ == '__main__':
     criterion = nn.MSELoss(reduction='mean')
 
     print('---\nBatch size = ' + str(args.batch) + '\nLearning rate = ' +
-        str(args.lr) + '\nLayers = ' + str(model.node_number))
+        str(args.lr) + '\nLayers = ' + str(model.node_number), flush=True)
 
     # Print out model architecture.
     filetag, outdir = util.prepare_output(model.node_number, args.batch,
@@ -75,6 +77,7 @@ if __name__ == '__main__':
     end_time = time.time()
     train_time = (end_time - start_time)/60
 
+    print("Training time: {:.2e} mins.".format(train_time), flush=True)
     plotting.diagnosis_plots(loss_train, loss_valid, min_valid,
         model.node_number, args.batch, args.lr, args.epochs, outdir)
-    util.save_MSE_log(filetag, train_time, min_valid)
+    util.save_MSE_log(filetag, train_time, min_valid, outdir)

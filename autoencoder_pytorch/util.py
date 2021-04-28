@@ -6,7 +6,7 @@ import os, warnings
 class tensor_data(torch.utils.data.Dataset):
     # Turn a dataset into a torch tensor dataset, that can then be passed
     # to a ML algorithm and provide training. Very needed to cast to GPU.
-    def __init__(self,x):
+    def __init__(self, x):
         self.x = torch.Tensor(x)
     def __len__(self):
         return len(self.x)
@@ -15,10 +15,9 @@ class tensor_data(torch.utils.data.Dataset):
 
 def define_torch_device():
     # Use gpu if available.
-    with warnings.catch_warnings():
-        warnings.simplefilter("ignore")
-        device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
+    print("Using device: ", device, flush=True)
     return device
 
 def to_pytorch_data(data, batch_size=None, shuffle=True):
@@ -26,15 +25,15 @@ def to_pytorch_data(data, batch_size=None, shuffle=True):
     Convert training and validation data into pytorch ready data objects.
 
     @data       :: The data we want to convert.
-    @batch_size :: The batch sizeto import the data with.
+    @batch_size :: The batch size to import the data with.
     @shuffle    :: Bool of wheter to shuffle the data or not.
 
     @returns :: Pytorch ready data object.
     """
     if batch_size is None: batch_size = data.shape[0]
     data = tensor_data(data)
-    pytorch_loader = torch.utils.data.DataLoader(
-        data, batch_size=batch_size, shuffle=True)
+    pytorch_loader = torch.utils.data.DataLoader(data, batch_size=batch_size,
+        shuffle=shuffle)
 
     return pytorch_loader
 
@@ -102,14 +101,14 @@ def prepare_output(model_nodes, batch_size, learning_rate, flag):
     filetag = 'L' + layersTag + '_B' + str(batch_size) + '_Lr{:.0e}'.\
         format(learning_rate) + "_" + flag
 
-    outdir = './trained_models/' + filetag + '/'
+    outdir = './autoencoder_pytorch/trained_models/' + filetag + '/'
     if not os.path.exists(outdir): os.makedirs(outdir)
 
     return filetag, outdir
 
-def save_MSE_log(filetag, train_time, min_valid):
+def save_MSE_log(filetag, train_time, min_valid, outdir):
     # Save MSE log to check best model:
-    with open('trained_models/mse_log.txt','a+') as mse_log:
+    with open(outdir + 'mse_log.txt','a+') as mse_log:
         log_entry = filetag + f': Training time = {train_time:.2f} min, Min. Validation loss = {min_valid:.6f}\n'
         mse_log.write(log_entry)
 

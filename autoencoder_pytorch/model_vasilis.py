@@ -22,6 +22,7 @@ class AE(nn.Module):
         or encoder.
 
         @encoder :: Bool, true if encoder, false if decoder.
+        @dropout :: Drop any node in a layer with 20% probability.
 
         @results :: The layers arrays of the autoencoder.
         """
@@ -48,7 +49,7 @@ class AE(nn.Module):
         return layers
 
     def forward(self, x):
-        # You never use this method?
+        # Need to define it even if you do not use it... maybe. Need to test.
         latent = self.encoder(x)
         reconstructed = self.decoder(latent)
         return reconstructed, latent
@@ -65,79 +66,44 @@ def eval_valid_loss(model, valid_loader, criterion, min_valid, outdir, device):
     valid_loss = criterion(model_output, valid_data).item()
     if valid_loss < min_valid:
         min_valid = valid_loss
-        print('New minimum of validation loss: ')
+        print('New min of valid loss: {:.2e}'.format(min_valid), flush=True)
         torch.save(model.state_dict(), outdir + 'best_model.pt')
 
-    return valid_loss
+    return valid_loss, min_valid
 
 def eval_train_loss(model, batch_features, criterion, optimizer, device):
     # Evaluate the training loss.
-    feature_size = batch_features.shape[1]
+    feature_size   = batch_features.shape[1]
     batch_features = batch_features.view(-1, feature_size).to(device)
     model_output,_ = model(batch_features.float())
-    # Using both Sig+Bkg arrays gave problems expecting float getting double.
     train_loss = criterion(model_output, batch_features.float())
-    # PyTorch accumulates gradients on subsequent backward passes.
-    # Rest gradients, perform a backward pass, and update the weights.
     optimizer.zero_grad()
     train_loss.backward()
     optimizer.step()
 
-    return train_loss
+    return train_loss, optimizer
 
 def train(train_loader, valid_loader, model, criterion, optimizer, epochs,
     device, outdir):
     # Train the autoencoder that was implemented above.
-    print('Training the Vasilis model...')
+    print('Training the Vasilis model...', flush=True)
     loss_training = []; loss_validation = []; min_valid = 99999
 
     for epoch in range(epochs):
         model.train()
         for i, batch_features in enumerate(train_loader):
-            train_loss = \
-            eval_train_loss(model,batch_features, criterion, optimizer, device)
+            train_loss, optimizer = eval_train_loss(model, batch_features,
+                criterion, optimizer, device)
 
-        valid_loss = eval_valid_loss(model, valid_loader, criterion, min_valid,
-            outdir, device)
+        valid_loss, min_valid = eval_valid_loss(model, valid_loader, criterion,
+            min_valid, outdir, device)
 
         loss_validation.append(valid_loss)
         loss_training.append(train_loss.item())
 
         print("Epoch : {}/{}, Training loss (last batch) = {:.8f}".
-            format(epoch + 1, epochs, train_loss.item()))
+            format(epoch + 1, epochs, train_loss.item()), flush=True)
         print("Epoch : {}/{}, Validation loss = {:.8f}".
-            format(epoch + 1, epochs, valid_loss))
+            format(epoch + 1, epochs, valid_loss), flush=True)
 
     return loss_training, loss_validation, min_valid
-
-# Are these two methods still used/useful?
-def encode_array(data, saved_model, layers):
-    """
-    Not sure what the details of this method are. Talk to Vasilis.
-    """
-    data_loader = torch.utils.data.DataLoader(tensorData(data),
-        batch_size=data.shape[0], shuffle = False)
-    device ='cpu'
-    model = AE(node_number = layers).to(device)
-    model.load_state_dict(torch.load(saved_model + 'best_model.pt',
-        map_location=torch.device('cpu')))
-    model.eval()
-
-    with torch.no_grad():
-        data_iter = iter(data_loader)
-        input_data = data_iter.next().to(device)
-        _, output = model(input_data.float())
-
-        return output.cpu().numpy()
-
-def encode(data, saved_model, layers):
-    """
-    Again, not sure what it does. Have not seen it used anywhere.
-    """
-    if (isinstance(data, dict)):
-        for x in data:
-            x = torch.Tensor(x)
-            data[x] = encode_array(data[x], saved_model, layers)
-        return data
-
-    return encode_array(torch.Tensor(data),saved_model,layers)

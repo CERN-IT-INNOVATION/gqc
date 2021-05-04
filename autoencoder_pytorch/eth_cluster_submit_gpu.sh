@@ -14,5 +14,7 @@
 # $4 : The training batches.
 # $5 : The number of epochs to train.
 # $6 : A str flag to flag the file.
+# &7 : Maximum data to train.
+
 source /work/deodagiu/miniconda3/bin/activate qml_project
-python3 autoencoder_pytorch/main.py --training_file /work/deodagiu/qml_data/$1 --validation_file /work/deodagiu/qml_data/$2 --lr $3 --batch $4 --epochs $5 --file_flag $6
+python3 main.py --training_file /work/deodagiu/qml_data/$1 --validation_file /work/deodagiu/qml_data/$2 --lr $3 --batch $4 --epochs $5 --maxdat_train $6 --file_flag $7

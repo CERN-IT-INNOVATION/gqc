@@ -41,12 +41,8 @@ def split_sig_bkg(data, target):
     # Split dataset into signal and background samples using the target data.
     # The target is supposed to be 1 for every signal and 0 for every bkg.
     sig_mask   = (target == 1); bkg_mask = (target == 0)
-    zipped_sig = zip(target, sig_mask)
-    zipped_bkg = zip(target, bkg_mask)
-    data_sig = [[num for num, b in zip(lst, mask) if b]
-        for lst, mask in zipped_sig]
-    data_bkg = [[num for num, b in zip(lst, mask) if b]
-        for lst, mask in zipped_bkg]
+    data_sig = data[sig_mask, :]
+    data_bkg = data[bkg_mask, :]
 
     return data_sig, data_bkg
 
@@ -84,7 +80,7 @@ def compute_model(model, data_loader):
 
     return model_output, latent_output, input_data
 
-def mean_batch_loss(data_loader, feature_size, device):
+def mean_batch_loss(data_loader, model, feature_size, criterion, device):
     # Computes the mean batch loss for a sample and model, for each batch.
     mean_loss_batch = []
     for idx, batch_features in enumerate(data_loader):

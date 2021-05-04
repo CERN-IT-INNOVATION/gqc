@@ -6,6 +6,7 @@ import torch.nn as nn
 
 from model_vasilis import AE
 import util
+from util import compute_model
 
 default_layers = [64, 52, 44, 32, 24, 16]
 parser = argparse.ArgumentParser(formatter_class=argparse.
@@ -36,14 +37,14 @@ def main():
     test_loader  = util.to_pytorch_data(test_data, None, False)
 
     test_target   = np.load(args.testing_target)
-    test_data_sig, test_data_bkg = split_sig_bkg(test_data, test_target)
+    test_data_sig, test_data_bkg = util.split_sig_bkg(test_data, test_target)
     test_loader_sig = util.to_pytorch_data(test_data_sig, None, False)
     test_loader_bkg = util.to_pytorch_data(test_data_bkg, None, False)
 
     (args.layers).insert(0, test_data.shape[1])
 
     # Import the model... NB add a more general way of importing ae models.
-    model = load_model(AE, args.layers, args.model, device)
+    model = util.load_model(AE, args.layers, args.model, device)
     criterion = nn.MSELoss(reduction= 'mean')
 
     # Calculate the MSE and MAPE for test and validation data.
@@ -56,7 +57,7 @@ def main():
 
     # Load the signal and background latent spaces.
     output_sig, sig_latent, input_sig = compute_model(model, test_loader_sig)
-    output_bkg, bkg_latent,_input_bkg = compute_model(model, test_loader_bkg)
+    output_bkg, bkg_latent, input_bkg = compute_model(model, test_loader_bkg)
     sig_latent = sig_latent.numpy()
     bkg_latent = bkg_latent.numpy()
 
@@ -68,8 +69,11 @@ def main():
     loader_sig = util.to_pytorch_data(test_data_sig, args.batch, True)
     loader_bkg = util.to_pytorch_data(test_data_bkg, args.batch, True)
 
-    sig_bloss = util.mean_batch_loss(loader_sig, test_data.shape[1], device)
-    bkg_bloss = util.mean_batch_loss(loader_bkg, test_data.shape[1], device)
+    feature_nb = test_data.shape[1]
+    sig_batch_loss = util.mean_batch_loss(loader_sig, model, feature_nb,
+        criterion, device)
+    bkg_batch_loss = util.mean_batch_loss(loader_bkg, model, feature_nb,
+        criterion, device)
 
     mean_losses = [sig_batch_loss, bkg_batch_loss]
     batch_loss_plots(mean_losses, len(test_data), args.model)
@@ -153,7 +157,7 @@ def batch_loss_plots(losses_sig_bkg, n_test, model_path):
     colors = ['b', 'r']
     label  = ["Test on Sig.", "Test on Bkg."]
     for idx in range(len(losses_sig_bkg)):
-        plt.hist(losses_sig_bkg[idx], bins=20, density=0, color=color[idx],
+        plt.hist(losses_sig_bkg[idx], bins=20, density=0, color=colors[idx],
             alpha=0.5, ec='black', label=label[idx])
         plt.ylabel('Entries/Bin')
         plt.xlabel('MSE per Batch')

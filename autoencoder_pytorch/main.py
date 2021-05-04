@@ -17,7 +17,6 @@ seed = 100
 torch.manual_seed(seed)
 torch.autograd.set_detect_anomaly(True)
 
-
 default_layers = [64, 52, 44, 32, 24, 16]
 parser = argparse.ArgumentParser(formatter_class=argparse.
     ArgumentDefaultsHelpFormatter)
@@ -33,8 +32,8 @@ parser.add_argument('--batch', type=int, default=64,
     help='The batch size.')
 parser.add_argument('--epochs', type=int, default=85,
     help='The number of training epochs.')
-parser.add_argument('--maxdata_perc', type=float, default=1,
-    help='How much (in percentage) of the data one should use.')
+parser.add_argument('--maxdata_train', type=int, default=-1,
+    help='The maximum number of training samples to use.')
 parser.add_argument('--file_flag', type=str, default='',
     help='Flag the file in a certain way for easier labeling.')
 
@@ -43,13 +42,18 @@ if __name__ == '__main__':
     args = parser.parse_args()
     # Define torch device
     device = util.define_torch_device()
-    exit(1)
-    # Load the data.
-    train_data   = np.split(np.load(args.training_file), )
+
+    # Time how long it takes to load the data.
+    start_time = time.time()
+    train_data   = np.load(args.training_file)[:args.maxdata_train, :]
     valid_data   = np.load(args.validation_file)
     train_loader = util.to_pytorch_data(train_data, args.batch, True)
     valid_loader = util.to_pytorch_data(valid_data, args.batch, True)
 
+    end_time = time.time()
+    data_load_time = (end_time - start_time)
+
+    print("Data load time: {:.3f} s.".format(data_load_time))
     # Insert the input dimensions at the beginning of the layer list.
     (args.layers).insert(0, train_data.shape[1])
 
@@ -59,7 +63,9 @@ if __name__ == '__main__':
     criterion = nn.MSELoss(reduction='mean')
 
     print('---\nBatch size = ' + str(args.batch) + '\nLearning rate = ' +
-        str(args.lr) + '\nLayers = ' + str(model.node_number), flush=True)
+        str(args.lr) + '\nLayers = ' + str(model.node_number) +
+        '\nNevents train: ' + str(train_data.shape[0]) + '\nDevice: ' +
+        str(device), flush=True)
 
     # Print out model architecture.
     filetag, outdir = util.prepare_output(model.node_number, args.batch,

@@ -27,9 +27,9 @@ class AE(nn.Module):
         @results :: The layers arrays of the autoencoder.
         """
 
-        layers = []
+        layers = []; decoder = not encoder
         if encoder: layer_nbs = range(len(self.node_number))
-        else: layer_nbs = reversed(range(len(self.node_number)))
+        if decoder: layer_nbs = reversed(range(len(self.node_number)))
 
         for idx in layer_nbs:
             if dropout == True:
@@ -40,11 +40,11 @@ class AE(nn.Module):
             else:  layers.append(nn.Linear(self.node_number[idx],
                 self.node_number[idx-1]))
 
-            if encoder and idx == (len(self.node_number) - 2): break
-            if (not encoder) and idx == 1: break
-
-            layers.append(nn.Sigmoid())
-            layers.append(nn.ELU(True))
+            encoder_last = idx != (len(self.node_number) - 2)
+            decoder_last = idx != 1
+            if encoder and encoder_last: layers.append(nn.ELU(True)); continue
+            if decoder and decoder_last: layers.append(nn.ELU(True)); continue
+            layers.append(nn.Sigmoid()); break
 
         return layers
 

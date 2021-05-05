@@ -62,10 +62,11 @@ if __name__ == '__main__':
     optimizer = optim.Adam(model.parameters(), lr=args.lr)
     criterion = nn.MSELoss(reduction='mean')
 
-    print('---\nBatch size = ' + str(args.batch) + '\nLearning rate = ' +
-        str(args.lr) + '\nLayers = ' + str(model.node_number) +
-        '\nNevents train: ' + str(train_data.shape[0]) + '\nDevice: ' +
-        str(device), flush=True)
+    # Diagnosis print
+    # print('---\nBatch size = ' + str(args.batch) + '\nLearning rate = ' +
+    #     str(args.lr) + '\nLayers = ' + str(model.node_number) +
+    #     '\nNevents train: ' + str(train_data.shape[0]) + '\nDevice: ' +
+    #     str(device), flush=True)
 
     # Print out model architecture.
     filetag, outdir = util.prepare_output(model.node_number, args.batch,

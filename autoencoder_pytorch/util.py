@@ -97,7 +97,7 @@ def prepare_output(model_nodes, batch_size, learning_rate, flag):
     filetag = 'L' + layersTag + '_B' + str(batch_size) + '_Lr{:.0e}'.\
         format(learning_rate) + "_" + flag
 
-    outdir = './autoencoder_pytorch/trained_models/' + filetag + '/'
+    outdir = './trained_models/' + filetag + '/'
     if not os.path.exists(outdir): os.makedirs(outdir)
 
     return filetag, outdir

@@ -3,6 +3,7 @@ import numpy as np
 import argparse
 import torch
 import torch.nn as nn
+import os
 
 from model_vasilis import AE
 import util
@@ -21,7 +22,7 @@ parser.add_argument('--layers', type=int, default=default_layers, nargs='+',
     help='The layers structure.')
 parser.add_argument('--batch', type=int, default=64,
     help='The batch size.')
-parser.add_argument('--model', type=str, required=True,
+parser.add_argument('--model_path', type=str, required=True,
     help='The path to the saved model.')
 
 
@@ -29,7 +30,7 @@ def main():
     # Parse the arguments only if this is ran as a script.
     args = parser.parse_args()
     # Define torch device.
-    device = util.define_torch_device()
+    device = 'cpu'
     # Import all the useful data. For plotting, split test data into s and b.
     valid_data   = np.load(args.validation_file)
     test_data    = np.load(args.testing_file)
@@ -44,16 +45,14 @@ def main():
     (args.layers).insert(0, test_data.shape[1])
 
     # Import the model... NB add a more general way of importing ae models.
-    model = util.load_model(AE, args.layers, args.model, device)
+    model = util.load_model(AE, args.layers, args.model_path, device)
     criterion = nn.MSELoss(reduction= 'mean')
 
-    # Calculate the MSE and MAPE for test and validation data.
-    test_output, test_latent, test_input = compute_model(model, test_loader)
-    print('TEST sample MSE:', criterion(test_output, test_input).item())
-    valid_output, valid_latent, valid_input = compute_model(model,valid_loader)
-    print('VALID sample MSE:', criterion(valid_output, valid_input).item())
-    test_output, test_latent, test_input = compute_model(model, test_loader)
-    print('TEST sample MAPE:', mape(test_output, test_input).item())
+    # Compute criterion scores for data.
+    score_file = open(args.model_path + "score_file.txt", "w")
+    compute_score(model, test_loader, criterion, "TEST MSE: ", score_file)
+    compute_score(model, valid_loader, criterion, "VALID MSE: ", score_file)
+    score_file.close()
 
     # Load the signal and background latent spaces.
     output_sig, sig_latent, input_sig = compute_model(model, test_loader_sig)
@@ -62,8 +61,8 @@ def main():
     bkg_latent = bkg_latent.numpy()
 
     # Do the plots.
-    latent_space_plots(sig_latent, bkg_latent, args.model)
-    sig_bkg_plots(input_sig, input_bkg, output_sig, output_bkg, args.model)
+    latent_space_plots(sig_latent, bkg_latent, args.model_path)
+    sig_bkg_plots(input_sig, input_bkg, output_sig, output_bkg,args.model_path)
 
     # Load sig/bkg data, but this time with batch_size.
     loader_sig = util.to_pytorch_data(test_data_sig, args.batch, True)
@@ -76,29 +75,50 @@ def main():
         criterion, device)
 
     mean_losses = [sig_batch_loss, bkg_batch_loss]
-    batch_loss_plots(mean_losses, len(test_data), args.model)
+    batch_loss_plots(mean_losses, len(test_data), args.model_path)
 
-def ratio_plotter(input_data, output_data, ifeature, class_label=''):
+def compute_score(model, loader, criterion, prepend_str, score_file):
+    """
+    Compute the score for a certain model and data.
+
+    @model       :: The pytorch model object.
+    @loader      :: The pytorch data loader object for the data.
+    @criterion   :: The criterion object for the loss function.
+    @prepend_str :: Descriptive string to prepend to output.
+
+    @returns :: Writes to screen and to file the descriptive string and the
+        computed loss function score.
+    """
+    output, latent, inp = compute_model(model, loader)
+    print(prepend_str, criterion(output,inp).item())
+    score_file.write(prepend_str + "{}\n".format(criterion(output,inp).item()))
+
+
+def ratio_plotter(input_data, output_data, ifeature, color, class_label=''):
     # Plots the overlaid input and output data to see how good the
     # reconstruction really is.
-    plt.rc('xtick', labelsize=20)
-    plt.rc('ytick', labelsize=20)
-    plt.rc('axes', titlesize=22)
-    plt.rc('axes', labelsize=22)
+    plt.rc('xtick', labelsize=23)
+    plt.rc('ytick', labelsize=23)
+    plt.rc('axes', titlesize=25)
+    plt.rc('axes', labelsize=25)
     plt.rc('legend', fontsize=22)
 
     plt.hist(x=input_data, bins=60, range=(0,1), alpha=0.8, histtype='step',
-        linewidth=2.5, label=class_label, density=True)
-    plt.hist(x=output_data, bins=60, range = (0,1), alpha=0.8, histtype='step',
-        linewidth = 2.5, label='Rec. ' + class_label, density=True)
+        linewidth=2.5, label=class_label, density=True, color=color)
+    plt.hist(x=output_data, bins=60, range=(0,1), alpha=0.8, histtype='step',
+        linewidth=2.5, linestyle='dashed',
+        label='Rec. ' + class_label, density=True, color=color)
     plt.xlabel(util.varname(ifeature) + ' (normalized)')
     plt.ylabel('Density')
     plt.xlim(0, 0.4)
+    # plt.gca().set_yscale("log")
     plt.legend()
 
 def latent_space_plots(latent_data_sig, latent_data_bkg, model_path):
     # Makes the plots of the latent space data for each of the latent space
     # features, which should be 8 for the vasilis_model, for example.
+    if not os.path.exists(model_path + 'latent_plots/'):
+        os.makedirs(model_path + 'latent_plots/')
     for i in range(latent_data_sig.shape[1]):
         xmax = max(np.amax(latent_data_sig[:,i]),np.amax(latent_data_bkg[:,i]))
         xmin = min(np.amin(latent_data_sig[:,i]),np.amin(latent_data_bkg[:,i]))
@@ -111,23 +131,30 @@ def latent_space_plots(latent_data_sig, latent_data_bkg, model_path):
 
         plt.legend()
         plt.xlabel(f'Latent feature {i}')
-        plt.savefig(model_path + 'latent_plot' + str(i) + '.png')
+        plt.savefig(model_path + 'latent_plots/' + 'latent_plot'+
+            str(i) + '.png')
         plt.clf()
 
 def sig_bkg_plots(input_sig, input_bkg, output_sig, output_bkg, model_path):
     # Plot the background and the signal distributions, overlaid.
     # FIXME: Not displayed properly. Values are off and seems to be bias still
     # between sig and bkg for the MSE distributions.
-
+    if not os.path.exists(model_path + 'ratio_plots_png/'):
+        os.makedirs(model_path + 'ratio_plots_png/')
+    if not os.path.exists(model_path + 'ratio_plots_pdf/'):
+        os.makedirs(model_path + 'ratio_plots_pdf/')
     for idx in range(input_sig.numpy().shape[1]):
         plt.figure(figsize=(12,10))
 
         ratio_plotter(input_bkg.numpy()[:,idx], output_bkg.numpy()[:,idx], idx,
-            class_label='Background')
+            'gray', class_label='Background',)
         ratio_plotter(input_sig.numpy()[:,idx], output_sig.numpy()[:,idx], idx,
-            class_label='Signal')
+            'navy',class_label='Signal')
 
-        plt.savefig(model_path + 'ratio_plotter' + util.varname(idx) + '.pdf')
+        plt.savefig(model_path + 'ratio_plots_png/' + 'Ratio Plot ' +
+            util.varname(idx) + '.png')
+        plt.savefig(model_path + 'ratio_plots_pdf/' + 'Ratio Plot ' +
+            util.varname(idx) + '.pdf')
         plt.clf()
 
 def diagnosis_plots(loss_train, loss_valid, min_valid, nodes, batch_size, lr,
@@ -165,12 +192,6 @@ def batch_loss_plots(losses_sig_bkg, n_test, model_path):
 
     plt.legend()
     plt.savefig(model_path + 'test_loss_hist.png', dpi=300)
-
-def mape(output, target, epsilon=1e-4):
-    # Another type of criterion. Did not work too well.
-    # Very sensitive to epsilon, which is very bad.
-    loss = torch.mean(torch.abs((output - target)/(target + epsilon)))
-    return loss
 
 if __name__ == '__main__':
     main()

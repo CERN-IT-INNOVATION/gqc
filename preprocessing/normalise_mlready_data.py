@@ -27,7 +27,6 @@ parser.add_argument("--infile_target", type=str, required=True,
 
 args = parser.parse_args()
 
-
 def split_and_save(data, target, name):
     # Splits a given data set into training, testing, and validation samples
     # that then are saved with corresponding names in .npy files.

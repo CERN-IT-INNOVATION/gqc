@@ -1,7 +1,7 @@
 # Utility methods for dealing with all the different autoencoder things.
 import torch
 import numpy as np
-import os, warnings
+import os, warnings, time
 
 class tensor_data(torch.utils.data.Dataset):
     # Turn a dataset into a torch tensor dataset, that can then be passed
@@ -20,7 +20,7 @@ def define_torch_device():
     print("Using device: ", device, flush=True)
     return device
 
-def to_pytorch_data(data, batch_size=None, shuffle=True):
+def to_pytorch_data(data, device, batch_size=None, shuffle=True):
     """
     Convert training and validation data into pytorch ready data objects.
 
@@ -32,19 +32,38 @@ def to_pytorch_data(data, batch_size=None, shuffle=True):
     """
     if batch_size is None: batch_size = data.shape[0]
     data = tensor_data(data)
-    pytorch_loader = torch.utils.data.DataLoader(data, batch_size=batch_size,
-        shuffle=shuffle)
+    if device = 'cpu':
+        pytorch_loader = torch.utils.data.DataLoader(data,
+            batch_size=batch_size, shuffle=shuffle)
+    else: pytorch_loader = torch.utils.data.DataLoader(data,
+            batch_size=batch_size, shuffle=shuffle, pin_memory=True)
 
     return pytorch_loader
 
 def split_sig_bkg(data, target):
     # Split dataset into signal and background samples using the target data.
     # The target is supposed to be 1 for every signal and 0 for every bkg.
-    sig_mask   = (target == 1); bkg_mask = (target == 0)
+    sig_mask = (target == 1); bkg_mask = (target == 0)
     data_sig = data[sig_mask, :]
     data_bkg = data[bkg_mask, :]
 
     return data_sig, data_bkg
+
+def get_train_data(training_file,validation_file,max_data, batch_size, device):
+    # Quick method to load data into pytorch loaders.
+    start_time = time.time()
+
+    train_data = np.load(training_file)[:max_data, :]
+    valid_data = np.load(validation_file)[:int(0.1*max_data),:]
+
+    train_loader = to_pytorch_data(train_data, device, batch_size, True)
+    valid_loader = to_pytorch_data(valid_data, device, batch_size, True)
+
+    end_time = time.time()
+    data_load_time = (end_time - start_time)
+    print("\nData load time: {:.3f} s.".format(data_load_time))
+
+    return train_loader, valid_loader
 
 def load_model(model_module, layers, model_path, device):
     """
@@ -91,11 +110,11 @@ def mean_batch_loss(data_loader, model, feature_size, criterion, device):
 
     return mean_loss_batch
 
-def prepare_output(model_nodes, batch_size, learning_rate, flag):
+def prepare_output(model_nodes, batch_size, learning_rate, maxdata, flag):
     # Prepare the naming of training outputs. Do not print output size.
     layersTag = '.'.join(str(inode) for inode in model_nodes[1:])
     filetag = 'L' + layersTag + '_B' + str(batch_size) + '_Lr{:.0e}'.\
-        format(learning_rate) + "_" + flag
+        format(learning_rate) + "_" + "data{:.2e}".format(maxdata) + "_" + flag
 
     outdir = './trained_models/' + filetag + '/'
     if not os.path.exists(outdir): os.makedirs(outdir)
@@ -107,6 +126,21 @@ def save_MSE_log(filetag, train_time, min_valid, outdir):
     with open(outdir + 'mse_log.txt','a+') as mse_log:
         log_entry = filetag + f': Training time = {train_time:.2f} min, Min. Validation loss = {min_valid:.6f}\n'
         mse_log.write(log_entry)
+
+def extract_batch_from_model_path(model_path):
+    # Extracts the batch size from the path to a trained model.
+    start_idx = model_path.find("_B") + 2
+    end_idx = model_path[start_idx:].find("_")
+
+    return int(model_path[batch_idx:end_idx])
+
+def extract_layers_from_model_path(model_path):
+    # Extract the layer structure information from the path to a trained model.
+    start_idx = model_path.find("L") + 1
+    end_idx = model_path[start_idx:].find("_")
+
+    return model_path[batch_idx:end_idx]
+
 
 def varname(index):
     # Gets the name of what variable is currently considered based on the index
@@ -123,19 +157,17 @@ def varname(index):
         var = index % jet_nvars
         varstring = "Jet " + str(jet) + " " + jet_feats[var]
         return varstring
-
     index -= jet_nvars * num_jets;
-
-    if (index < met_nvars):
-        var = index % met_nvars;
-        varstring = "MET " + met_feats[var];
-        return varstring
-
-    index -= met_nvars;
 
     if (index < lep_nvars):
         var = index % lep_nvars
         varstring = "Lepton " + lep_feats[var]
         return varstring;
+    index -= lep_nvars;
+
+    if (index < met_nvars):
+        var = index % met_nvars;
+        varstring = "MET " + met_feats[var];
+        return varstring
 
     return None

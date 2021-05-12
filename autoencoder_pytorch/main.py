@@ -3,19 +3,11 @@
 # classifiers to perform on near-term quantum computers.
 
 import time, argparse
-import matplotlib.pyplot as plt
 import numpy as np
-import torch, torchvision
-import torch.nn as nn
-import torch.optim as optim
 
 import model_vasilis
 import plotting
 import util
-
-seed = 100
-torch.manual_seed(seed)
-torch.autograd.set_detect_anomaly(True)
 
 default_layers = [64, 52, 44, 32, 24, 16]
 parser = argparse.ArgumentParser(formatter_class=argparse.
@@ -24,7 +16,7 @@ parser.add_argument("--training_file", type=str,
     help="The path to the training data.")
 parser.add_argument("--validation_file", type=str,
     help="The path to the validation data.")
-parser.add_argument('--lr',type=float,default=2e-03,
+parser.add_argument('--lr', type=float, default=2e-03,
     help='The learning rate.')
 parser.add_argument('--layers', type=int, default=default_layers, nargs='+',
     help='The layers structure.')
@@ -38,53 +30,34 @@ parser.add_argument('--file_flag', type=str, default='',
     help='Flag the file in a certain way for easier labeling.')
 
 if __name__ == '__main__':
-    # Only parse args if ran as main script.
     args = parser.parse_args()
-    # Define torch device
+    # Define torch device.
     device = util.define_torch_device()
 
-    # Time how long it takes to load the data.
-    start_time = time.time()
-    train_data   = np.load(args.training_file)[:args.maxdata_train, :]
-    valid_data   = np.load(args.validation_file)
-    train_loader = util.to_pytorch_data(train_data, args.batch, True)
-    valid_loader = util.to_pytorch_data(valid_data, args.batch, True)
+    # Load the data.
+    train_loader, valid_loader = util.get_train_data(args.training_file,
+        args.validation_file, args.maxdata_train, args.batch, device)
 
-    end_time = time.time()
-    data_load_time = (end_time - start_time)
-
-    print("Data load time: {:.3f} s.".format(data_load_time))
-    # Insert the input dimensions at the beginning of the layer list.
-    (args.layers).insert(0, train_data.shape[1])
-
-    # Define model, optimizer, and mean squared loss criterion.
-    model = model_vasilis.AE(node_number=args.layers).to(device)
-    optimizer = optim.Adam(model.parameters(), lr=args.lr)
-    criterion = nn.MSELoss(reduction='mean')
-
-    # Diagnosis print
-    # print('---\nBatch size = ' + str(args.batch) + '\nLearning rate = ' +
-    #     str(args.lr) + '\nLayers = ' + str(model.node_number) +
-    #     '\nNevents train: ' + str(train_data.shape[0]) + '\nDevice: ' +
-    #     str(device), flush=True)
+    # Define the model.
+    (args.layers).insert(0, np.load(args.training_file).shape[1])
+    model = model_vasilis.AE(node_number=args.layers, lr=args.lr).to(device)
 
     # Print out model architecture.
     filetag, outdir = util.prepare_output(model.node_number, args.batch,
-        args.lr, args.file_flag)
+        args.lr, args.maxdata_train, args.file_flag)
     with open(outdir + 'model_architecture.txt', 'w') as model_architecture:
        print(model, file=model_architecture)
 
-    # Start timer.
+    # Train the model.
     start_time = time.time()
-
     loss_train, loss_valid, min_valid = model_vasilis.train(train_loader,
-        valid_loader, model, criterion, optimizer, args.epochs, device, outdir)
-
-    # Stop timer.
+        valid_loader, model, device, args.epochs, outdir)
+    print(min_valid)
     end_time = time.time()
-    train_time = (end_time - start_time)/60
 
+    train_time = (end_time - start_time)/60
     print("Training time: {:.2e} mins.".format(train_time), flush=True)
+
     plotting.diagnosis_plots(loss_train, loss_valid, min_valid,
         model.node_number, args.batch, args.lr, args.epochs, outdir)
     util.save_MSE_log(filetag, train_time, min_valid, outdir)

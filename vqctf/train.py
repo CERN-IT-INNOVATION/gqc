@@ -2,6 +2,7 @@ import pennylane as qml
 import numpy as np
 import tensorflow as tf
 from tensorflow import keras
+from tensorflow.keras import layers
 from vqcroc import *
 
 import os
@@ -28,9 +29,17 @@ def get_accuracy(model, data, real):
 
 def create_model(spec):
 	params = 0
+	spec_qc = [spec[0]]
+	layer_seq = []
 	for i in range(1, len(spec)):
 		is_vf = False
+		is_qc = True
 		name = spec[i][0]
+
+		if (name == "elu"):
+			is_qc = False
+			layer_seq.append(layers.Dense(spec[i][1], activation = 'elu'))
+
 		if (name == "2local"):
 			is_vf = True
 		elif (name == "tree"):
@@ -40,10 +49,13 @@ def create_model(spec):
 		
 		if (is_vf):
 			params += spec[i][2] - spec[i][1]
+		if (is_qc):
+			spec_qc.append(spec[i])
 	
 	wshape = {"theta": params}
-	qlayer = qml.qnn.KerasLayer(get_circuit(spec), wshape, output_dim=1)
-	model = tf.keras.models.Sequential([qlayer])
+	qlayer = qml.qnn.KerasLayer(get_circuit(spec_qc), wshape, output_dim=1)
+	layer_seq.append(qlayer)
+	model = tf.keras.models.Sequential(layer_seq)
 	return model
 
 

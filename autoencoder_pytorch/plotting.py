@@ -137,13 +137,13 @@ def ratio_plotter(input_data, output_data, ifeature, color, class_label=''):
 
     plt.hist(x=input_data, bins=60, range=(0,1), alpha=0.8, histtype='step',
         linewidth=2.5, label=class_label, density=True, color=color)
-    plt.hist(x=output_data, bins=60, range=(0,1), alpha=0.8, histtype='step',
-        linewidth=2.5, linestyle='dashed',
-        label='Rec. ' + class_label, density=True, color=color)
+    # plt.hist(x=output_data, bins=60, range=(0,1), alpha=0.8, histtype='step',
+    #     linewidth=2.5, linestyle='dashed',
+    #     label='Rec. ' + class_label, density=True, color=color)
     plt.xlabel(util.varname(ifeature) + ' (normalized)')
     plt.ylabel('Density')
-    plt.xlim(0, 0.4)
-    # plt.gca().set_yscale("log")
+    plt.xlim(0, 1)
+    plt.gca().set_yscale("log")
     plt.legend()
 
 def latent_space_plots(latent_data_sig, latent_data_bkg, model_path):
@@ -169,8 +169,6 @@ def latent_space_plots(latent_data_sig, latent_data_bkg, model_path):
 
 def sig_bkg_plots(input_sig, input_bkg, output_sig, output_bkg, model_path):
     # Plot the background and the signal distributions, overlaid.
-    # FIXME: Not displayed properly. Values are off and seems to be bias still
-    # between sig and bkg for the MSE distributions.
     if not os.path.exists(model_path + 'ratio_plots/'):
         os.makedirs(model_path + 'ratio_plots/')
     for idx in range(input_sig.numpy().shape[1]):

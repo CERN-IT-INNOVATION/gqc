@@ -47,6 +47,8 @@ def main():
     bkg, y_bkg = make_flat_numpy_array(data_bkg, False)
 
     # Save to .npy arrays.
+    np.save(os.path.join(args.outdir, "x_data_sig"), sig)
+    np.save(os.path.join(args.outdir, "x_data_bkg"), bkg)
     np.save(os.path.join(args.outdir, "x_data_raw"),
         np.concatenate((sig, bkg), axis=0))
     np.save(os.path.join(args.outdir, "y_data_raw"),
@@ -116,8 +118,8 @@ def lep_formatting(data, flats):
     number_lep_feats = len(lep_feats)
     lepsa = data[["leps_%s_%d" % (feat,lep) for lep in range(nleps)
         for feat in lep_feats]].values
-    if flats[1].size == 0:   flats[1] = lepsa
-    else:                    flats[1] = np.concatenate((flats[1], lepsa))
+    if flats[2].size == 0:   flats[2] = lepsa
+    else:                    flats[2] = np.concatenate((flats[2], lepsa))
     lepsa = lepsa.reshape(-1, nleps, number_lep_feats)
     print('Lepton formatting done. Shape of the proc lept array:', lepsa.shape)
 
@@ -139,8 +141,8 @@ def met_formatting(data, flats):
     data["met_py"] = data["met_" + met_feats[1]] * \
         np.sin(data["met_"+met_feats[0]])
     meta = data[["met_%s" % feat for feat in met_feats]].values
-    if flats[2].size == 0:  flats[2] = meta
-    else:                   flats[2] = np.concatenate((flats[2], meta))
+    if flats[1].size == 0:  flats[1] = meta
+    else:                   flats[1] = np.concatenate((flats[1], meta))
     print('Metadata formatting done. Shape of the proc met array:', meta.shape)
 
     return flats
@@ -170,8 +172,8 @@ def make_flat_numpy_array(data, is_signal=True):
     Take the loaded .h5 datasets and save the important features chunk by
     chunk. The flats array elements are as follows:
     [0] - The jets features.
-    [1] - The lepton features.
-    [2] - The meta features.
+    [2] - The lepton features.
+    [1] - The meta features.
 
     @data      :: The .h5 imported data.
     @is_signal :: Bool of whether the data is signal (True) or background.

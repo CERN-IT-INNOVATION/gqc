@@ -23,14 +23,12 @@ parser.add_argument('--lr', type=float, nargs=2,
     help='The learning rate range [min max].')
 parser.add_argument('--layers', type=int, default=default_layers, nargs='+',
     help='The layers structure.')
-parser.add_argument('--batch', type=int, nargs=2,
-    help='The batch size range [min max].')
-parser.add_argument('--epochs', type=int, nargs=2,
-    help='The number of training epochs[min max].')
+parser.add_argument('--batch', type=int, nargs="+",
+    help='The batch options, e.g., [128 256 512].')
+parser.add_argument('--epochs', type=int,
+    help='The number of training epochs.')
 parser.add_argument('--maxdata_train', type=int, default=-1,
     help='The maximum number of training samples to use.')
-parser.add_argument('--file_flag', type=str, default='',
-    help='Flag the file in a certain way for easier labeling.')
 
 def optuna_objective(trial):
     """
@@ -42,8 +40,7 @@ def optuna_objective(trial):
 
     # Define optuna parameters.
     lr     = trial.suggest_loguniform('lr', args.lr[0], args.lr[1])
-    batch  = trial.suggest_int('batch', args.batch[0], args.batch[1])
-    epochs = trial.suggest_int('epochs', args.epochs[0], args.epochs[1])
+    batch  = trial.suggest_int('batch', *args.batch)
 
     # Load the data.
     train_loader, valid_loader = util.get_train_data(args.training_file,
@@ -56,14 +53,12 @@ def optuna_objective(trial):
     # Train model.
     start_time = time.time()
     loss_train, loss_valid, min_valid = model_vasilis.train(train_loader,
-        valid_loader, model, device, epochs, None)
+        valid_loader, model, device, args.epochs, None)
     end_time = time.time()
 
     train_time = (end_time - start_time)/60
     print("Training time: {:.2e} mins.".format(train_time), flush=True)
 
-    plotting.diagnosis_plots(loss_train, loss_valid, min_valid,
-        model.node_number, args.batch, args.lr, args.epochs, outdir)
     return min_valid
 
 if __name__ == '__main__':
@@ -71,7 +66,7 @@ if __name__ == '__main__':
     sampler = optuna.samplers.TPESampler()
     study = optuna.create_study(sampler=sampler, direction='minimize')
 
-    study.optimize(optuna_objective, n_trials=20)
+    study.optimize(optuna_objective, n_trials=10)
 
     comp_trials= study.get_trials(deepcopy=False, states=[TrialState.COMPLETE])
     print("Study statistics: ")

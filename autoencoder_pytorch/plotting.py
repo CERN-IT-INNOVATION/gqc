@@ -5,6 +5,8 @@ import torch
 import torch.nn as nn
 import os
 
+from sklearn.preprocessing import MinMaxScaler
+
 from model_vasilis import AE
 import util
 from util import compute_model
@@ -20,33 +22,42 @@ parser.add_argument("--testing_target", type=str,
     help="The path to the test target numpy file.")
 parser.add_argument('--layers', type=int, default=default_layers, nargs='+',
     help='The layers structure.')
+parser.add_argument('--lr', type=float,
+    help='The learning rate of the model.')
 parser.add_argument('--batch', type=int, default=64,
     help='The batch size.')
+parser.add_argument('--maxdata_train', type=int, default=1150000,
+    help='The maximum number of training samples to use.')
 parser.add_argument('--model_path', type=str, required=True,
     help='The path to the saved model.')
 
-
 def main():
-    # Parse the arguments only if this is ran as a script.
     args = parser.parse_args()
-    # Define torch device.
     device = 'cpu'
-    # Import all the useful data. For plotting, split test data into s and b.
-    valid_data   = np.load(args.validation_file)
-    test_data    = np.load(args.testing_file)
-    valid_loader = util.to_pytorch_data(valid_data, None, False)
-    test_loader  = util.to_pytorch_data(test_data, None, False)
 
-    test_target   = np.load(args.testing_target)
-    test_data_sig, test_data_bkg = util.split_sig_bkg(test_data, test_target)
-    test_loader_sig = util.to_pytorch_data(test_data_sig, None, False)
-    test_loader_bkg = util.to_pytorch_data(test_data_bkg, None, False)
+    # Import data. For plotting, split test data into s and b.
 
+    max_data = int(0.1*args.maxdata_train/0.8)
+    valid_data   = np.load(args.validation_file)[:max_data,:]
+    test_data    = np.load(args.testing_file)[:max_data,:]
+    valid_loader = util.to_pytorch_data(valid_data, device, None, False)
+    test_loader  = util.to_pytorch_data(test_data, device, None, False)
+
+    test_data   = np.load(args.testing_file)
+    test_target = np.load(args.testing_target)
+    data_sig, data_bkg = util.split_sig_bkg(test_data, test_target, max_data)
+
+    # If want exact data that Vasilis uses, uncomment this one line  and
+    # comment previous three lines.
+    # data_sig, data_bkg = vasilis_reprod_data()
+
+    test_loader_sig = util.to_pytorch_data(data_sig, device, None, False)
+    test_loader_bkg = util.to_pytorch_data(data_bkg, device, None, False)
+
+    # Import the model.
     (args.layers).insert(0, test_data.shape[1])
-
-    # Import the model... NB add a more general way of importing ae models.
-    model = util.load_model(AE, args.layers, args.model_path, device)
-    criterion = nn.MSELoss(reduction= 'mean')
+    model = util.load_model(AE, args.layers, args.lr, args.model_path, device)
+    criterion = model.criterion()
 
     # Compute criterion scores for data.
     score_file = open(args.model_path + "score_file.txt", "w")
@@ -65,8 +76,8 @@ def main():
     sig_bkg_plots(input_sig, input_bkg, output_sig, output_bkg,args.model_path)
 
     # Load sig/bkg data, but this time with batch_size.
-    loader_sig = util.to_pytorch_data(test_data_sig, args.batch, True)
-    loader_bkg = util.to_pytorch_data(test_data_bkg, args.batch, True)
+    loader_sig = util.to_pytorch_data(data_sig, device, args.batch, True)
+    loader_bkg = util.to_pytorch_data(data_bkg, device, args.batch, True)
 
     feature_nb = test_data.shape[1]
     sig_batch_loss = util.mean_batch_loss(loader_sig, model, feature_nb,
@@ -76,6 +87,27 @@ def main():
 
     mean_losses = [sig_batch_loss, bkg_batch_loss]
     batch_loss_plots(mean_losses, len(test_data), args.model_path)
+
+def vasilis_reprod_data():
+    # Reproduces the way Vasilis normalizes data such that it leads to
+    # identical plots.
+
+    data_sig = np.load('/work/deodagiu/qml_data/input_ae/x_data_sig.npy')
+    data_bkg = np.load('/work/deodagiu/qml_data/input_ae/x_data_bkg.npy')
+
+    ntot = 360000
+    data_sig = data_sig[:360000, :]
+    data_bkg = data_bkg[:360000, :]
+    all_data = np.vstack((data_sig, data_bkg))
+    norm_data = MinMaxScaler().fit_transform(all_data)
+    data_sig = norm_data[:360000, :]
+    data_bkg = norm_data[360000:, :]
+
+    ntrain, nvalid, ntest = int(0.8*ntot), int(0.1*ntot), int(0.1*ntot)
+    data_sig = data_sig[ntrain+nvalid:ntot, :]
+    data_bkg = data_bkg[ntrain+nvalid:ntot, :]
+
+    return data_sig, data_bkg
 
 def compute_score(model, loader, criterion, prepend_str, score_file):
     """
@@ -132,17 +164,15 @@ def latent_space_plots(latent_data_sig, latent_data_bkg, model_path):
         plt.legend()
         plt.xlabel(f'Latent feature {i}')
         plt.savefig(model_path + 'latent_plots/' + 'latent_plot'+
-            str(i) + '.png')
+            str(i) + '.pdf')
         plt.clf()
 
 def sig_bkg_plots(input_sig, input_bkg, output_sig, output_bkg, model_path):
     # Plot the background and the signal distributions, overlaid.
     # FIXME: Not displayed properly. Values are off and seems to be bias still
     # between sig and bkg for the MSE distributions.
-    if not os.path.exists(model_path + 'ratio_plots_png/'):
-        os.makedirs(model_path + 'ratio_plots_png/')
-    if not os.path.exists(model_path + 'ratio_plots_pdf/'):
-        os.makedirs(model_path + 'ratio_plots_pdf/')
+    if not os.path.exists(model_path + 'ratio_plots/'):
+        os.makedirs(model_path + 'ratio_plots/')
     for idx in range(input_sig.numpy().shape[1]):
         plt.figure(figsize=(12,10))
 
@@ -151,9 +181,7 @@ def sig_bkg_plots(input_sig, input_bkg, output_sig, output_bkg, model_path):
         ratio_plotter(input_sig.numpy()[:,idx], output_sig.numpy()[:,idx], idx,
             'navy',class_label='Signal')
 
-        plt.savefig(model_path + 'ratio_plots_png/' + 'Ratio Plot ' +
-            util.varname(idx) + '.png')
-        plt.savefig(model_path + 'ratio_plots_pdf/' + 'Ratio Plot ' +
+        plt.savefig(model_path + 'ratio_plots/' + 'Ratio Plot ' +
             util.varname(idx) + '.pdf')
         plt.clf()
 
@@ -169,7 +197,7 @@ def diagnosis_plots(loss_train, loss_valid, min_valid, nodes, batch_size, lr,
     plt.title("B=" + str(batch_size) + ", lr=" + str(lr) + ", L=" +
         str(nodes) + ', min={:.6f}'.format(min_valid))
     plt.legend()
-    plt.savefig(outdir + 'loss_epochs.png')
+    plt.savefig(outdir + 'loss_epochs.pdf')
 
 def batch_loss_plots(losses_sig_bkg, n_test, model_path):
     """
@@ -191,7 +219,7 @@ def batch_loss_plots(losses_sig_bkg, n_test, model_path):
         plt.title('MSE per batch, Ntest={}.'.format(n_test))
 
     plt.legend()
-    plt.savefig(model_path + 'test_loss_hist.png', dpi=300)
+    plt.savefig(model_path + 'test_loss_hist.pdf', dpi=300)
 
 if __name__ == '__main__':
     main()

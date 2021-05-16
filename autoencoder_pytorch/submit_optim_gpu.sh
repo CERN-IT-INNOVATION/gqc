@@ -7,20 +7,54 @@
 #SBATCH --gres=gpu:1
 #SBATCH -o ./logs/ae_optim_gpu_%j.log
 
+usage() { echo "Usage: $0 [-t <training_file_path>] [-v <validation_file_path>] [-l <learning_rate>] [-b <batch_size>] [-e <number_of_epochs>] [-s <training_dataset_size>]" 1>&2; exit 1; }
+
+while getopts ":t:v:l:b:e:s:" o; do
+    case "${o}" in
+    t)
+        t=${OPTARG}
+        ;;
+    v)
+        v=${OPTARG}
+        ;;
+    l)
+        set -f
+        IFS=' '
+        l=(${OPTARG})
+        ;;
+    b)
+        set -f
+        IFS=' '
+        b=(${OPTARG})
+        ;;
+    e)
+        e=${OPTARG}
+        ;;
+    s)
+        s=${OPTARG}
+        ;;
+    *)
+        usage
+        ;;
+    esac
+done
+shift $((OPTIND-1))
+
+if [ -z "${t}" ] || [ -z "${v}" ] || [ -z "${l}" ] || [ -z "${b}" ] || [ -z "${e}" ] || [ -z "${s}" ]; then
+    usage
+fi
+
 echo "--------------------------------------- "
 echo "The hyperparameters of this run are:"
 echo " "
-echo "Input training file: $1"
-echo "Input validation file: $2"
-echo "Learning rate min: $3"
-echo "Learning rate max: $4"
-echo "Batch size min: $5"
-echo "Batch size max: $6"
-echo "Number of Epochs min: $7"
-echo "Number of Epochs max: $8"
-echo "Training data set size, i.e., events #: $9"
+echo "Input training file: ${t}"
+echo "Input validation file: ${v}"
+echo "Learning rate min and max: ${l[@]}"
+echo "Batch sizes: ${b[@]}"
+echo "Number of Epochs: ${e}"
+echo "Training data set size, i.e., events #: ${s}"
 echo " "
 echo "--------------------------------------- "
 
 source /work/deodagiu/miniconda3/bin/activate qml_project
-python3 hyperparam_optimizer.py --training_file $1 --validation_file $2 --lr $3 $4 --batch $5 $6 --epochs $7 $8 --maxdata_train $9
+python3 hyperparam_optimizer.py --training_file /work/deodagiu/qml_data/${t} --validation_file /work/deodagiu/qml_data/${v} --lr ${l[@]}  --batch ${b[@]} --epochs ${e} --maxdata_train ${s}

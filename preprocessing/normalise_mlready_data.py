@@ -33,27 +33,32 @@ def split_and_save(data, target, name):
     print("Splitting data into training and testing, then saving...")
     x_train, x_test, y_train, y_test = train_test_split(data, target,
         test_size=0.1, shuffle=True)
-    x_train, x_vali, y_train, y_vali = train_test_split(x_train, y_train,
+    x_train, x_valid, y_train, y_valid = train_test_split(x_train, y_train,
         test_size=0.111111, shuffle=True)
 
     base_filename_y = os.path.splitext(args.infile_target)[0]
 
     np.save(name + "_train", x_train)
     np.save(name + "_test", x_test)
-    np.save(name + "_vali", x_vali)
+    np.save(name + "_valid", x_vali)
     np.save(base_filename_y + "_train", y_train)
     np.save(base_filename_y + "_test", y_test)
-    np.save(base_filename_y + "_vali", y_vali)
+    np.save(base_filename_y + "_valid", y_valid)
 
+def apply_normalization(norm_method, norm_name, data, target, base_fn):
+
+    data_minmax = norm_method().fit_transform(data)
+    np.save(base_filename + "_" + norm_name, data_minmax)
+    split_and_save(data_minmax, target, base_filename + "_minmax_norm")
 if __name__ == "__main__":
-    print('Normalizing: ' + args.infile_data)
+    print('Normalizing the data file: ' + args.infile_data)
     print('Target imported: ' + args.infile_target)
 
-    data = np.load(args.infile_data)
+    data   = np.load(args.infile_data)
     target = np.load(args.infile_target)
     base_filename = os.path.splitext(args.infile_data)[0].replace('_raw', '')
 
-    print("\nMinMax normalisation in progress...")
-    data_minmax = MinMaxScaler().fit_transform(data)
-    np.save(base_filename + "_minmax_norm", data_minmax)
-    split_and_save(data_minmax, target, base_filename + "_minmax_norm")
+    print("\nApplying MinMax normalization...")
+    apply_normalization(MinMaxScaler, "minmax_norm", data, target, base_fn)
+    print("\nApplying Standard normalization...")
+    apply_normalization(StandardScaler, "std_norm", data, target, base_fn)

@@ -136,7 +136,7 @@ def train(epochs, lrate, batch_size, spec, ntrain, encoder, name):
 	auc_test = info_test[2]
 	auc_test_std = info_test[3]
 	get_plot({name + "_valid": info_val}, ntrain, folder = '/' + name)
-	get_plot({name + "_test": info_test}, ntrain, folder = '/' + name)
+#	get_plot({name + "_test": info_test}, ntrain, folder = '/' + name)
 
 
 	## Logging time!
@@ -146,7 +146,7 @@ def train(epochs, lrate, batch_size, spec, ntrain, encoder, name):
 	f.write(f"train/valid {ntrain} / {nvalid}\n")
 	f.write("Elapsed time: " + str(end_time - start_time) + "s " + str((end_time - start_time)/3600) + "h\n")
 	f.write("Valid AUC: " + str(auc_valid) + "+/-" + str(auc_valid_std) + "\n")
-	f.write("Test AUC: " + str(auc_test) + "+/-" + str(auc_test_std) + "\n")
+#	f.write("Test AUC: " + str(auc_test) + "+/-" + str(auc_test_std) + "\n")
 	f.write("\n\n")
 	f.close();
 

@@ -40,7 +40,7 @@ def main():
     # Load .h5 data. Create the output directory.
     data_sig = load_files(args.infile_prefix + "Sig.h5")
     data_bkg = load_files(args.infile_prefix + "Bkg.h5")
-    os.makedirs(args.outdir)
+    if not os.path.exists(args.outdir): os.makedirs(args.outdir)
 
     # Preprocess the data and create flat arrays.
     sig, y_sig = make_flat_numpy_array(data_sig)
@@ -49,10 +49,6 @@ def main():
     # Save to .npy arrays.
     np.save(os.path.join(args.outdir, "x_data_sig"), sig)
     np.save(os.path.join(args.outdir, "x_data_bkg"), bkg)
-    np.save(os.path.join(args.outdir, "x_data_raw"),
-        np.concatenate((sig, bkg), axis=0))
-    np.save(os.path.join(args.outdir, "y_data_raw"),
-        np.concatenate((y_sig, y_bkg), axis=0))
 
 def read_single_file(path):
     # Load a single .h5 file with chunksize 10000.

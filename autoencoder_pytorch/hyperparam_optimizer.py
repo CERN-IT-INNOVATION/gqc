@@ -35,12 +35,12 @@ def optuna_objective(trial):
     Wrapper of the normal training such that it agrees with what optuna
     is trying to do.
     """
-    args = parser.parse_args()
+    args   = parser.parse_args()
     device = util.define_torch_device()
 
     # Define optuna parameters.
-    lr     = trial.suggest_loguniform('lr', args.lr[0], args.lr[1])
-    batch  = trial.suggest_int('batch', *args.batch)
+    lr     = trial.suggest_loguniform('lr', *args.lr)
+    batch  = trial.suggest_categorical('batch', args.batch)
 
     # Load the data.
     train_loader, valid_loader = util.get_train_data(args.training_file,

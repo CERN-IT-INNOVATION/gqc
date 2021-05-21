@@ -19,10 +19,10 @@ def define_torch_device():
     with warnings.catch_warnings(record=True) as w:
         warnings.simplefilter("always")
         device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
-        if len(w): print("\033[93m GPU not available. \033[0m")
+        if len(w): print("\033[93mGPU not available. \033[0m")
 
 
-    print("\033[92m Using device: \033[0m", device, flush=True)
+    print("\033[92mUsing device:\033[0m", device, flush=True)
     return device
 
 def to_pytorch_data(data, device, batch_size=None, shuffle=True):
@@ -45,26 +45,21 @@ def to_pytorch_data(data, device, batch_size=None, shuffle=True):
 
     return pytorch_loader
 
-def split_sig_bkg(data, target, sample_size=0):
+def split_sig_bkg(data, target):
     # Split dataset into signal and background samples using the target data.
     # The target is supposed to be 1 for every signal and 0 for every bkg.
-    sample_size = int(sample_size/2)
     sig_mask = (target == 1); bkg_mask = (target == 0)
     data_sig = data[sig_mask, :]
     data_bkg = data[bkg_mask, :]
 
-    if sample_size != 0:
-        data_sig = data_sig[:sample_size, :]
-        data_bkg = data_bkg[:sample_size, :]
-
     return data_sig, data_bkg
 
-def get_train_data(training_file,validation_file,max_data, batch_size, device):
+def get_train_data(training_file, validation_file, batch_size, device):
     # Quick method to load data into pytorch loaders.
     start_time = time.time()
 
-    train_data = np.load(training_file)[:max_data, :]
-    valid_data = np.load(validation_file)[:int(0.1*max_data/0.8),:]
+    train_data = np.load(training_file)
+    valid_data = np.load(validation_file)
     print("\n----------------")
     print("Training data size: {:.2e}".format(train_data.shape[0]))
     print("Validation data size: {:.2e}".format(valid_data.shape[0]))
@@ -176,15 +171,15 @@ def extract_layers_from_model_path(model_path):
 
     return model_path[batch_idx:end_idx]
 
-
 def varname(index):
     # Gets the name of what variable is currently considered based on the index
     # in the data.
-    jet_feats=["$p_t$","$eta$","$phi$","Energy","$p_x$","$p_y$","$p_z$","btag"]
+    jet_feats=["$p_t$","$\\eta$","$\\phi$","Energy","$p_x$","$p_y$","$p_z$",
+        "btag"]
     jet_nvars=len(jet_feats); num_jets = 7
-    met_feats=["$phi$","$p_t$","$p_x$","$p_y$"]
+    met_feats=["$\\phi$","$p_t$","$p_x$","$p_y$"]
     met_nvars=len(met_feats)
-    lep_feats=["$p_t$","$eta$","$phi$","Energy","$p_x$","$p_y$","$p_z$"]
+    lep_feats=["$p_t$","$\\eta$","$\\phi$","Energy","$p_x$","$p_y$","$p_z$"]
     lep_nvars=len(lep_feats)
 
     if (index < jet_nvars * num_jets):

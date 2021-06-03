@@ -22,7 +22,7 @@ def define_torch_device():
         if len(w): print("\033[93mGPU not available. \033[0m")
 
 
-    print("\033[92mUsing device:\033[0m", device, flush=True)
+    print("\033[92mUsing device:\033[0m", device)
     return device
 
 def to_pytorch_data(data, device, batch_size=None, shuffle=True):
@@ -65,7 +65,7 @@ def get_train_data(training_file, validation_file, batch_size, device):
     print("Validation data size: {:.2e}".format(valid_data.shape[0]))
 
     train_loader = to_pytorch_data(train_data, device, batch_size, True)
-    valid_loader = to_pytorch_data(valid_data, device, batch_size, True)
+    valid_loader = to_pytorch_data(valid_data, device, None, True)
 
     end_time = time.time()
     data_load_time = (end_time - start_time)
@@ -106,7 +106,7 @@ def load_model(model_module, layers, lr, model_path, device):
 
     @returns :: The pytorch model object as trained in the training file.
     """
-    model = model_module(node_number=layers, lr=lr).to(device)
+    model = model_module(nodes=layers, device=device, lr=lr).to(device)
     model.load_state_dict(torch.load(model_path + 'best_model.pt',
         map_location=torch.device('cpu')))
     model.eval()

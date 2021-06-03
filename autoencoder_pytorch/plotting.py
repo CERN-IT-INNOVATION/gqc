@@ -1,3 +1,5 @@
+# Plot different things given a model, such as the overlaid reconstruction
+# and input variables overlaid.
 import matplotlib.pyplot as plt
 import numpy as np
 import argparse, os
@@ -6,8 +8,10 @@ import torch.nn as nn
 
 from sklearn.preprocessing import MinMaxScaler
 
-import model_vasilis
-import model_vasilis_tanh
+import model_vasilis as basic_nn
+import model_vasilis_tanh as tanh_nn
+import model_vasilis_improved_loss as new_loss
+
 import util
 from util import compute_model
 
@@ -42,8 +46,7 @@ def main():
 
     # Import the model.
     (layers).insert(0, test_data.shape[1])
-    model = util.load_model(model_vasilis_improved.AE, layers, lr,
-        args.model_path, device)
+    model = util.load_model(tanh_nn.AE, layers, lr, args.model_path, device)
     criterion = model.criterion()
 
     # Compute criterion scores for data.
@@ -98,27 +101,6 @@ def import_hyperparams(model_path):
     print("Learning Rate: ", lr)
 
     return layers, batch, lr
-
-def vasilis_reprod_data():
-    # Reproduces the way Vasilis normalizes data such that it leads to
-    # identical plots.
-
-    data_sig = np.load('/work/deodagiu/qml_data/input_ae/x_data_sig.npy')
-    data_bkg = np.load('/work/deodagiu/qml_data/input_ae/x_data_bkg.npy')
-
-    ntot = 360000
-    data_sig = data_sig[:360000, :]
-    data_bkg = data_bkg[:360000, :]
-    all_data = np.vstack((data_sig, data_bkg))
-    norm_data = MinMaxScaler().fit_transform(all_data)
-    data_sig = norm_data[:360000, :]
-    data_bkg = norm_data[360000:, :]
-
-    ntrain, nvalid, ntest = int(0.8*ntot), int(0.1*ntot), int(0.1*ntot)
-    data_sig = data_sig[ntrain+nvalid:ntot, :]
-    data_bkg = data_bkg[ntrain+nvalid:ntot, :]
-
-    return data_sig, data_bkg
 
 def compute_score(model, loader, criterion, prepend_str, score_file):
     """

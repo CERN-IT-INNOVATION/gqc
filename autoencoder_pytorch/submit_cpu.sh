@@ -49,4 +49,6 @@ echo " "
 echo "--------------------------------------- "
 
 source /work/deodagiu/miniconda3/bin/activate qml_project
-python3 main.py --training_file /work/deodagiu/qml_data/${t} --validation_file /work/deodagiu/qml_data/${v} --lr ${l} --batch ${b} --epochs ${e} --file_flag ${f}
+export PYTHONUNBUFFERED=TRUE
+python3 main.py --train_file /work/deodagiu/qml_data/${t} --valid_file /work/deodagiu/qml_data/${v} --lr ${l} --batch ${b} --epochs ${e} --file_flag ${f}
+export PYTHONUNBUFFERED=FALSE

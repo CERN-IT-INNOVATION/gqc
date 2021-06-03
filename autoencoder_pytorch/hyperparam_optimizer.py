@@ -15,9 +15,9 @@ import plotting
 default_layers = [64, 52, 44, 32, 24, 16]
 parser = argparse.ArgumentParser(formatter_class=argparse.
     ArgumentDefaultsHelpFormatter)
-parser.add_argument("--training_file", type=str,
+parser.add_argument("--train_file", type=str,
     help="The path to the training data.")
-parser.add_argument("--validation_file", type=str,
+parser.add_argument("--valid_file", type=str,
     help="The path to the validation data.")
 parser.add_argument('--lr', type=float, nargs=2,
     help='The learning rate range [min max].')
@@ -57,7 +57,7 @@ def optuna_objective(trial):
     end_time = time.time()
 
     train_time = (end_time - start_time)/60
-    print("Training time: {:.2e} mins.".format(train_time), flush=True)
+    print("Training time: {:.2e} mins.".format(train_time))
 
     return min_valid
 

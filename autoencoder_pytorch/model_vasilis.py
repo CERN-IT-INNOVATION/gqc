@@ -14,46 +14,41 @@ torch.autograd.profiler.profile(enabled=False)
 class AE(nn.Module):
     # The definition of the model that Vasilis used for the paper.
     # NB: the input layer is included in the node number.
-    def __init__(self, node_number, lr, dropout=False, **kwargs):
+    def __init__(self, nodes, lr, device, **kwargs):
         super(AE, self).__init__()
         self.lr = lr
-        self.node_number = node_number
+        self.nodes  = nodes
+        self.device = device
 
-        self.encoder_layers = self.construct_layers(True, dropout)
+        self.encoder_layers = self.construct_encoder()
         self.encoder = nn.Sequential(*self.encoder_layers)
 
-        self.decoder_layers = self.construct_layers(False, dropout)
+        self.decoder_layers = self.construct_decoder()
         self.decoder = nn.Sequential(*self.decoder_layers)
 
-    def construct_layers(self, encoder, dropout=False):
+    def construct_encoder(self):
         """
-        Construct the layers of the autoencoder module, wheter decoder
-        or encoder.
-
-        @encoder :: Bool, true if encoder, false if decoder.
-        @dropout :: Drop any node in a layer with 20% probability.
-
-        @results :: The layers arrays of the autoencoder.
+        Construct the encoder layers.
         """
-
-        layers = []; decoder = not encoder
-        if encoder: layer_nbs = range(len(self.node_number))
-        if decoder: layer_nbs = reversed(range(len(self.node_number)))
-
+        layers = []
+        layer_nbs = range(len(self.nodes))
         for idx in layer_nbs:
-            if dropout == True:
-                if idx != 0: prob=0.2; layers.append(nn.Dropout(p=prob))
+            layers.append(nn.Linear(self.nodes[idx], self.nodes[idx+1]))
+            if idx == len(self.nodes) - 2: layers.append(nn.Sigmoid()); break
+            layers.append(nn.ELU(True))
 
-            if encoder: layers.append(nn.Linear(self.node_number[idx],
-                self.node_number[idx+1]))
-            else:  layers.append(nn.Linear(self.node_number[idx],
-                self.node_number[idx-1]))
+        return layers
 
-            encoder_last = idx != (len(self.node_number) - 2)
-            decoder_last = idx != 1
-            if encoder and encoder_last: layers.append(nn.ELU(True)); continue
-            if decoder and decoder_last: layers.append(nn.ELU(True)); continue
-            layers.append(nn.Sigmoid()); break
+    def construct_decoder(self):
+        """
+        Construct the decoder layers.
+        """
+        layers = []
+        layer_nbs = reversed(range(len(self.nodes)))
+        for idx in layer_nbs:
+            layers.append(nn.Linear(self.nodes[idx], self.nodes[idx-1]))
+            if idx == 1: layers.append(nn.Sigmoid()); break
+            layers.append(nn.ELU(True)) # change
 
         return layers
 
@@ -63,57 +58,65 @@ class AE(nn.Module):
         reconstructed = self.decoder(latent)
         return reconstructed, latent
 
+    def get_dev(self):   return self.device
     def criterion(self): return nn.MSELoss(reduction='mean')
     def optimizer(self): return optim.Adam(self.parameters(), lr=self.lr)
 
-def eval_valid_loss(model, valid_loader, criterion, min_valid, outdir, device):
-    # Evaluate the model using the validation data. Compute the loss.
-    # If the new loss is a minimum, save this as the best model.
+    def eval_criterion(self, init_feats, recons_out):
+        # Evaluate the loss function and return its value.
+        criterion = self.criterion()
+        loss_recons = criterion(recons_out, init_feats)
+
+        return loss_recons
+
+def eval_valid(model, valid_loader, min_valid, outdir):
+    # Evaluate the validation loss for the model and save if got new minimum.
     valid_data_iter = iter(valid_loader)
-    valid_data = valid_data_iter.next().to(device)
+    valid_data = valid_data_iter.next().to(model.get_dev())
     model.eval()
 
     model_output,_ = model(valid_data.float())
-    valid_loss = criterion(model_output, valid_data).item()
+    valid_loss = model.eval_criterion(model_output, valid_data).item()
     if valid_loss < min_valid:
         min_valid = valid_loss
-        if outdir is not None:
-            print('New min of loss: {:.2e}'.format(min_valid), flush=True)
-            torch.save(model.state_dict(), outdir + 'best_model.pt')
+
+    if outdir is not None and min_valid == valid_loss:
+        print('\033[92mNew min loss: {:.2e}\033[0m'.format(min_valid))
+        torch.save(model.state_dict(), outdir + 'best_model.pt')
 
     return valid_loss, min_valid
 
-def eval_train_loss(model, batch_features, criterion, optimizer, device):
+def eval_train(model, batch_feats, optimizer):
     # Evaluate the training loss.
-    feature_size   = batch_features.shape[1]
-    batch_features = batch_features.view(-1, feature_size).to(device)
-    model_output,_ = model(batch_features.float())
-    train_loss = criterion(model_output, batch_features.float())
+    feature_size  = batch_feats.shape[1]
+    init_feats    = batch_feats.view(-1, feature_size).to(model.get_dev())
+    recons_out,_  = model(init_feats.float())
+
+    train_loss = model.eval_criterion(init_feats.float(), recons_out)
     optimizer.zero_grad()
     train_loss.backward()
     optimizer.step()
 
-    return train_loss, optimizer
+    return train_loss
 
-def train(train_loader, valid_loader, model, device, epochs, outdir):
-    # Train the autoencoder that was implemented above.
-    print('Training the Vasilis model...', flush=True)
+def train(train_loader, valid_loader, model, epochs, outdir):
+    # Training method for the autoencoder that was defined above.
+    print('Training the new loss model...')
     loss_training = []; loss_validation = []; min_valid = 99999
     optimizer = model.optimizer()
-    criterion = model.criterion()
 
     for epoch in range(epochs):
         model.train()
-        for i, batch_features in enumerate(train_loader):
-            train_loss, optimizer = eval_train_loss(model, batch_features,
-                criterion, optimizer, device)
-        valid_loss, min_valid = eval_valid_loss(model, valid_loader, criterion,
-            min_valid, outdir, device)
+        for i, batch_feats in enumerate(train_loader):
+            train_loss = eval_train(model, batch_feats, optimizer)
+        valid_loss, min_valid = eval_valid(model, valid_loader, min_valid,
+            outdir)
+
         loss_validation.append(valid_loss)
         loss_training.append(train_loss.item())
         print("Epoch : {}/{}, Training loss (last batch) = {:.8f}".
-               format(epoch + 1, epochs, train_loss.item()), flush=True)
+               format(epoch + 1, epochs, train_loss.item()))
         print("Epoch : {}/{}, Validation loss = {:.8f}".
-               format(epoch + 1, epochs, valid_loss), flush=True)
+               format(epoch + 1, epochs, valid_loss))
 
     return loss_training, loss_validation, min_valid

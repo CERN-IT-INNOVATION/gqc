@@ -5,17 +5,18 @@
 import time, argparse
 import numpy as np
 
-import model_vasilis
-import model_vasilis_tanh
+import model_vasilis as basic_nn
+import model_vasilis_tanh as tanh_nn
+import model_vasilis_improved_loss as new_loss_nn
 import plotting
 import util
 
 default_layers = [64, 52, 44, 32, 24, 16]
 parser = argparse.ArgumentParser(formatter_class=argparse.
     ArgumentDefaultsHelpFormatter)
-parser.add_argument("--training_file", type=str,
+parser.add_argument("--train_file", type=str,
     help="The path to the training data.")
-parser.add_argument("--validation_file", type=str,
+parser.add_argument("--valid_file", type=str,
     help="The path to the validation data.")
 parser.add_argument('--lr', type=float, default=2e-03,
     help='The learning rate.')
@@ -33,28 +34,28 @@ if __name__ == '__main__':
     device = util.define_torch_device()
 
     # Load the data.
-    train_loader, valid_loader = util.get_train_data(args.training_file,
-        args.validation_file, args.batch, device)
+    train_loader, valid_loader = \
+    util.get_train_data(args.train_file, args.valid_file, args.batch, device)
 
     # Define the model.
     (args.layers).insert(0, len(train_loader.dataset[1]))
-    model = model_vasilis_improved.AE(node_number=args.layers, lr=args.lr).to(device)
+    model = relu_nn.AE(nodes=args.layers,lr=args.lr,device=device).to(device)
 
     # Print out model architecture.
-    filetag, outdir = util.prepare_output(model.node_number, args.batch,
-        args.lr, len(train_loader.dataset), args.file_flag)
+    filetag, outdir = util.prepare_output(model.nodes, args.batch, args.lr,
+        len(train_loader.dataset), args.file_flag)
     with open(outdir + 'model_architecture.txt', 'w') as model_architecture:
        print(model, file=model_architecture)
 
     # Train the model.
     start_time = time.time()
-    loss_train, loss_valid, min_valid = model_vasilis_improved.train(
-        train_loader, valid_loader, model, device, args.epochs, outdir)
+    loss_train, loss_valid, min_valid = relu_nn.train(
+        train_loader, valid_loader, model, args.epochs, outdir)
     end_time = time.time()
-
     train_time = (end_time - start_time)/60
-    print("Training time: {:.2e} mins.".format(train_time), flush=True)
 
-    plotting.diagnosis_plots(loss_train, loss_valid, min_valid,
-        model.node_number, args.batch, args.lr, args.epochs, outdir)
+    print("Training time: {:.2e} mins.".format(train_time))
+
+    plotting.diagnosis_plots(loss_train, loss_valid, min_valid, model.nodes,
+        args.batch, args.lr, args.epochs, outdir)
     util.save_MSE_log(filetag, train_time, min_valid, outdir)

@@ -47,8 +47,8 @@ class AE(nn.Module):
         layer_nbs = reversed(range(len(self.nodes)))
         for idx in layer_nbs:
             layers.append(nn.Linear(self.nodes[idx], self.nodes[idx-1]))
-            # if idx == 1: layers.append(nn.Tanh()); break
-            if idx == 1: break
+            if idx == 1: layers.append(nn.Tanh()); break
+            # if idx == 1: break
             layers.append(nn.ELU(True))
 
         return layers
@@ -63,10 +63,10 @@ class AE(nn.Module):
     def criterion(self): return nn.MSELoss(reduction='mean')
     def optimizer(self): return optim.Adam(self.parameters(), lr=self.lr)
 
-    def eval_criterion(self, init_feats, recons_out):
+    def eval_criterion(self, init_feats, model_output):
         # Evaluate the loss function and return its value.
         criterion = self.criterion()
-        loss_recons = criterion(recons_out, init_feats)
+        loss_recons = criterion(model_output, init_feats)
 
         return loss_recons
 
@@ -91,9 +91,9 @@ def eval_train(model, batch_feats, optimizer):
     # Evaluate the training loss.
     feature_size  = batch_feats.shape[1]
     init_feats    = batch_feats.view(-1, feature_size).to(model.get_dev())
-    recons_out,_  = model(init_feats.float())
+    model_output,_  = model(init_feats.float())
 
-    train_loss = model.eval_criterion(init_feats.float(), recons_out)
+    train_loss = model.eval_criterion(init_feats.float(), model_output)
     optimizer.zero_grad()
     train_loss.backward()
     optimizer.step()

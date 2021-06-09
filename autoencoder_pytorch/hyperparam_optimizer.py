@@ -8,7 +8,7 @@ import numpy as np
 import torch.nn as nn
 import torch.optim as optim
 
-import model_vasilis
+import model_vasilis as basic_nn
 import util
 import plotting
 
@@ -43,20 +43,20 @@ def optuna_objective(trial):
     batch  = trial.suggest_categorical('batch', args.batch)
 
     # Load the data.
-    train_loader, valid_loader = util.get_train_data(args.training_file,
-        args.validation_file, args.maxdata_train, batch, device)
+    train_loader, valid_loader = \
+    util.get_train_data(args.train_file, args.valid_file, batch, device)
 
     # Define model.
-    (args.layers).insert(0, np.load(args.training_file).shape[1])
-    model = model_vasilis.AE(node_number=args.layers, lr=lr).to(device)
+    (args.layers).insert(0, np.load(args.train_file).shape[1])
+    model = basic_nn.AE(nodes=args.layers,lr=args.lr,device=device).to(device)
 
     # Train model.
     start_time = time.time()
     loss_train, loss_valid, min_valid = model_vasilis.train(train_loader,
         valid_loader, model, device, args.epochs, None)
     end_time = time.time()
-
     train_time = (end_time - start_time)/60
+
     print("Training time: {:.2e} mins.".format(train_time))
 
     return min_valid

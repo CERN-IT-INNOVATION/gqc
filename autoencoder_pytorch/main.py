@@ -39,7 +39,7 @@ if __name__ == '__main__':
 
     # Define the model.
     (args.layers).insert(0, len(train_loader.dataset[1]))
-    model = relu_nn.AE(nodes=args.layers,lr=args.lr,device=device).to(device)
+    model = tanh_nn.AE(nodes=args.layers,lr=args.lr,device=device).to(device)
 
     # Print out model architecture.
     filetag, outdir = util.prepare_output(model.nodes, args.batch, args.lr,
@@ -49,7 +49,7 @@ if __name__ == '__main__':
 
     # Train the model.
     start_time = time.time()
-    loss_train, loss_valid, min_valid = relu_nn.train(
+    loss_train, loss_valid, min_valid = tanh_nn.train(
         train_loader, valid_loader, model, args.epochs, outdir)
     end_time = time.time()
     train_time = (end_time - start_time)/60

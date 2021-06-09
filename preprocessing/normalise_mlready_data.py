@@ -196,6 +196,8 @@ if __name__ == "__main__":
 
     print("\n\033[92mApplying minmax normalization...\033[0m")
     apply_norm(MinMaxScaler(), "minmax_norm", all_data, all_targ, args.maxdata)
+    print("\n\033[92mApplying maxabs normalization...\033[0m")
+    apply_norm(MaxAbsScaler(), "maxabs_norm", all_data, all_targ, args.maxdata)
     print("\n\033[92mApplying standard normalization...\033[0m")
     apply_norm(StandardScaler(), "std_norm", all_data, all_targ, args.maxdata)
     print("\n\033[92mApplying quantile normalization...\033[0m")
@@ -204,6 +206,11 @@ if __name__ == "__main__":
     print("\n\033[92mApplying quantile gauss normalization...\033[0m")
     apply_norm(QuantileTransformer(output_distribution='normal'),"qgauss_norm",
         all_data, all_targ, args.maxdata)
+    print("\n\033[92mApplying robust  normalization...\033[0m")
+    apply_norm(RobustScaler(), "robust_norm", all_data, all_targ, args.maxdata)
+    print("\n\033[92mApplying power  normalization...\033[0m")
+    apply_norm(PowerTransformer(), "power_norm", all_data, all_targ,
+        args.maxdata)
 
     print("\n\033[92mApplying optimal normalization...\033[0m")
     apply_optimal_norm(all_data, all_targ, args.maxdata)

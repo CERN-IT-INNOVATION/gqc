@@ -1,0 +1,7 @@
+data/
+*.npy
+*.h5
+*.root
+Tests_qiskit/
+__pycache__
+

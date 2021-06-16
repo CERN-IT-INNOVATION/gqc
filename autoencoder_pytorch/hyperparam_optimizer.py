@@ -1,4 +1,4 @@
-# Uses the optuna library to optimize the hyperparameters for a given NN.
+# Uses the optuna library to optimize the hyperparameters for a given AE.
 import argparse, os, time
 
 import optuna
@@ -8,7 +8,7 @@ import numpy as np
 import torch.nn as nn
 import torch.optim as optim
 
-import model_vasilis as basic_nn
+import vanilla_ae
 import util
 import plotting
 
@@ -30,6 +30,35 @@ parser.add_argument('--epochs', type=int,
 parser.add_argument('--maxdata_train', type=int, default=-1,
     help='The maximum number of training samples to use.')
 
+
+def optuna_train(train_loader, valid_loader, model, epochs, trial):
+    # Training method for the autoencoder that was defined above.
+    print('Training the model...')
+    loss_training = []; loss_validation = []; min_valid = 99999
+    optimizer = model.optimizer()
+
+    for epoch in range(epochs):
+        model.train()
+        for i, batch_feats in enumerate(train_loader):
+            train_loss = vanilla_ae.eval_train(model, batch_feats, optimizer)
+
+        valid_loss, min_valid = \
+        vanilla_ae.eval_valid(model, valid_loader, min_valid, None)
+
+        loss_validation.append(valid_loss)
+        loss_training.append(train_loss.item())
+
+        trial.report(valid_loss, epoch)
+        if trial.should_prune(): raise optuna.TrialPruned()
+        if min_valid > 0.05: raise optuna.TrialPruned()
+
+        print("Epoch : {}/{}, Training loss (last batch) = {:.8f}".
+               format(epoch + 1, epochs, train_loss.item()))
+        print("Epoch : {}/{}, Validation loss = {:.8f}".
+               format(epoch + 1, epochs, valid_loss))
+
+    return loss_training, loss_validation, min_valid
+
 def optuna_objective(trial):
     """
     Wrapper of the normal training such that it agrees with what optuna
@@ -43,17 +72,26 @@ def optuna_objective(trial):
     batch  = trial.suggest_categorical('batch', args.batch)
 
     # Load the data.
-    train_loader, valid_loader = \
-    util.get_train_data(args.train_file, args.valid_file, batch, device)
+    train_data = np.load(args.train_file)
+    valid_data = np.load(args.valid_file)
+    print("\n----------------")
+    print("Training data size: {:.2e}".format(train_data.shape[0]))
+    print("Validation data size: {:.2e}".format(valid_data.shape[0]))
+    print("----------------\n")
+    train_loader = util.to_pytorch_data(train_data, device, batch, True)
+    valid_loader = util.to_pytorch_data(valid_data, device, None, True)
+
+    (args.layers).insert(0, len(train_loader.dataset[1]))
 
     # Define model.
     (args.layers).insert(0, np.load(args.train_file).shape[1])
-    model = basic_nn.AE(nodes=args.layers,lr=args.lr,device=device).to(device)
+    model = vanilla_ae.AE(nodes=args.layers, lr=lr, device=device,
+        en_activ=nn.Tanh(), dec_activ=nn.Tanh()).to(device)
 
     # Train model.
     start_time = time.time()
-    loss_train, loss_valid, min_valid = model_vasilis.train(train_loader,
-        valid_loader, model, device, args.epochs, None)
+    loss_train, loss_valid, min_valid = optuna_train(train_loader,
+        valid_loader, model, args.epochs, trial)
     end_time = time.time()
     train_time = (end_time - start_time)/60
 
@@ -64,11 +102,12 @@ def optuna_objective(trial):
 if __name__ == '__main__':
     # Start the optuna study.
     sampler = optuna.samplers.TPESampler()
-    study = optuna.create_study(sampler=sampler, direction='minimize')
+    study = optuna.create_study(sampler=sampler, direction='minimize',
+        pruner=optuna.pruners.HyperbandPruner())
 
-    study.optimize(optuna_objective, n_trials=10)
+    study.optimize(optuna_objective, n_trials=50)
 
-    comp_trials= study.get_trials(deepcopy=False, states=[TrialState.COMPLETE])
+    comp_trials= study.trials(deepcopy=False, states=[TrialState.COMPLETE])
     print("Study statistics: ")
     print("  Number of finished trials: ", len(study.trials))
     print("  Number of complete trials: ", len(comp_trials))

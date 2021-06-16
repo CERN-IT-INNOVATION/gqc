@@ -70,7 +70,7 @@ def load_files(path):
     return data
 
 def map_jet_values(data):
-    # Map the jet values from being 0-10 to being 0 when there are no jets
+    # Map the jet btag from being 0-10 to being 0 when there are no jets
     # and being one when there are any jets.
     for idx in range(10):
         data["jets_btag_" + str(idx)] = (data['jets_btag_{0}'.format(idx)]>1)
@@ -84,7 +84,7 @@ def jet_formatting(data, flats):
     Formatting the jets features.
 
     @data  :: The pandas hdf data file, already loaded.
-    @flats :: Array containing the values of different features, flatly.
+    @flats :: Array containing the values of different features, 2D flatly.
 
     @returns :: The updated flats array.
     """
@@ -105,7 +105,7 @@ def lep_formatting(data, flats):
     Formatting the lepton features.
 
     @data  :: The pandas hdf data file, already loaded.
-    @flats :: Array containing the values of different features, flatly.
+    @flats :: Array containing the values of different features, 2D flatly.
 
     @returns :: The updated flats array.
     """
@@ -145,7 +145,7 @@ def met_formatting(data, flats):
 
 def make_flat_features(flats, is_signal=True):
     """
-    Make the flats object constructed earlier into a flat array, and generate
+    Make the flats object constructed earlier into a flat 2D array, and generate
     vector of 1s or 0s depending on the type of data (signal or bkg).
 
     @flats     :: The flats array as constructed in make_flat_numpy_array.
@@ -166,7 +166,7 @@ def make_flat_features(flats, is_signal=True):
 def make_flat_numpy_array(data, is_signal=True):
     """
     Take the loaded .h5 datasets and save the important features chunk by
-    chunk. The flats array elements are as follows:
+    chunk. The flats 2D array elements are as follows:
     [0] - The jets features.
     [2] - The lepton features.
     [1] - The meta features.

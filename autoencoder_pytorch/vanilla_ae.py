@@ -1,4 +1,8 @@
-# The autoencoder used in the paper.
+# The autoencoder architecture that Vasilis started with. Reduces the number
+# of features from 67 down to 16 by using a combination of linear and ELU
+# layers. The loss function of the autoencoder is the MSE between the
+# histograms reconstructed by the decoder and the original variables.
+
 import numpy as np
 import torch
 import torch.nn as nn
@@ -14,19 +18,21 @@ torch.autograd.profiler.profile(enabled=False)
 class AE(nn.Module):
     # The definition of the model that Vasilis used for the paper.
     # NB: the input layer is included in the node number.
-    def __init__(self, nodes, lr, device, **kwargs):
+    def __init__(self, nodes, lr, device, en_activ=None, dec_activ=None,
+        **kwargs):
+
         super(AE, self).__init__()
         self.lr = lr
         self.nodes  = nodes
         self.device = device
 
-        self.encoder_layers = self.construct_encoder()
+        self.encoder_layers = self.construct_encoder(en_activ)
         self.encoder = nn.Sequential(*self.encoder_layers)
 
-        self.decoder_layers = self.construct_decoder()
+        self.decoder_layers = self.construct_decoder(dec_activ)
         self.decoder = nn.Sequential(*self.decoder_layers)
 
-    def construct_encoder(self):
+    def construct_encoder(self, en_activ):
         """
         Construct the encoder layers.
         """
@@ -34,12 +40,13 @@ class AE(nn.Module):
         layer_nbs = range(len(self.nodes))
         for idx in layer_nbs:
             layers.append(nn.Linear(self.nodes[idx], self.nodes[idx+1]))
-            if idx == len(self.nodes) - 2: layers.append(nn.Sigmoid()); break
+            if idx == len(self.nodes) - 2 and en_activ is None: break
+            if idx == len(self.nodes) - 2: layers.append(en_activ); break
             layers.append(nn.ELU(True))
 
         return layers
 
-    def construct_decoder(self):
+    def construct_decoder(self, dec_activ):
         """
         Construct the decoder layers.
         """
@@ -47,8 +54,9 @@ class AE(nn.Module):
         layer_nbs = reversed(range(len(self.nodes)))
         for idx in layer_nbs:
             layers.append(nn.Linear(self.nodes[idx], self.nodes[idx-1]))
-            if idx == 1: layers.append(nn.Sigmoid()); break
-            layers.append(nn.ELU(True)) # change
+            if idx == 1 and dec_activ is None: break
+            if idx == 1 and dec_activ: layers.append(dec_activ); break
+            layers.append(nn.ELU(True))
 
         return layers
 
@@ -62,10 +70,10 @@ class AE(nn.Module):
     def criterion(self): return nn.MSELoss(reduction='mean')
     def optimizer(self): return optim.Adam(self.parameters(), lr=self.lr)
 
-    def eval_criterion(self, init_feats, recons_out):
+    def eval_criterion(self, init_feats, model_output):
         # Evaluate the loss function and return its value.
         criterion = self.criterion()
-        loss_recons = criterion(recons_out, init_feats)
+        loss_recons = criterion(model_output, init_feats)
 
         return loss_recons
 
@@ -90,9 +98,9 @@ def eval_train(model, batch_feats, optimizer):
     # Evaluate the training loss.
     feature_size  = batch_feats.shape[1]
     init_feats    = batch_feats.view(-1, feature_size).to(model.get_dev())
-    recons_out,_  = model(init_feats.float())
+    model_output,_  = model(init_feats.float())
 
-    train_loss = model.eval_criterion(init_feats.float(), recons_out)
+    train_loss = model.eval_criterion(init_feats.float(), model_output)
     optimizer.zero_grad()
     train_loss.backward()
     optimizer.step()
@@ -101,7 +109,7 @@ def eval_train(model, batch_feats, optimizer):
 
 def train(train_loader, valid_loader, model, epochs, outdir):
     # Training method for the autoencoder that was defined above.
-    print('Training the new loss model...')
+    print('Training the model...')
     loss_training = []; loss_validation = []; min_valid = 99999
     optimizer = model.optimizer()
 

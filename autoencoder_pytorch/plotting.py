@@ -1,5 +1,5 @@
-# Plot different things given a model, such as the overlaid reconstruction
-# and input variables overlaid.
+# Plot the different things with respect to a trained autoencoder model
+# such as the epochs vs loss plot.
 import matplotlib.pyplot as plt
 import numpy as np
 import argparse, os
@@ -8,9 +8,7 @@ import torch.nn as nn
 
 from sklearn.preprocessing import MinMaxScaler
 
-import model_vasilis as basic_nn
-import model_vasilis_tanh as tanh_nn
-import model_vasilis_improved_loss as new_loss
+import vanilla_ae
 
 import util
 from util import compute_model
@@ -30,7 +28,7 @@ def main():
     args = parser.parse_args()
     device = 'cpu'
 
-    # Import the hyperparameters and the data.
+    # Import the hyperparameters used in training and the data.
     layers, batch, lr = import_hyperparams(args.model_path)
     valid_data   = np.load(args.valid_file)
     test_data    = np.load(args.test_file)
@@ -46,14 +44,14 @@ def main():
 
     # Import the model.
     (layers).insert(0, test_data.shape[1])
-    model = util.load_model(tanh_nn.AE, layers, lr, args.model_path, device)
+    model = util.load_model(vanila_ae.AE, layers, lr, args.model_path, device,
+        en_activ=nn.Tanh(), dec_activ=nn.Tanh())
     criterion = model.criterion()
 
     # Compute criterion scores for data.
-    compute_save_scores(args.model_path, model, criterion, valid_loader,
-        test_loader)
+    comput_losses(model, criterion, valid_loader, test_loader)
 
-    # Load the signal and background latent spaces.
+    # Compute the signal and background latent spaces.
     output_sig, sig_latent, input_sig = compute_model(model, test_loader_sig)
     output_bkg, bkg_latent, input_bkg = compute_model(model, test_loader_bkg)
     sig_latent = sig_latent.numpy()
@@ -63,26 +61,13 @@ def main():
     latent_space_plots(sig_latent, bkg_latent, args.model_path)
     sig_bkg_plots(input_sig, input_bkg, output_sig, output_bkg,args.model_path)
 
-    # Load sig/bkg data, but this time with batch_size.
-    loader_sig = util.to_pytorch_data(data_sig, device, batch, True)
-    loader_bkg = util.to_pytorch_data(data_bkg, device, batch, True)
-
-    feature_nb = test_data.shape[1]
-    sig_batch_loss = util.mean_batch_loss(loader_sig, model, feature_nb,
-        criterion, device)
-    bkg_batch_loss = util.mean_batch_loss(loader_bkg, model, feature_nb,
-        criterion, device)
-
-    mean_losses = [sig_batch_loss, bkg_batch_loss]
-    batch_loss_plots(mean_losses, len(test_data), args.model_path)
 
 def import_hyperparams(model_path):
     """
     Imports the hyperparameters of a given model from the model path given by
-    the user.
+    the user of the autoencoder that was trained.
 
-    @model_path :: Path to the trained model folder of the autoencoder that
-        you are plotting for.
+    @model_path :: String of path to the autoencoder folder.
 
     @returns :: Hyperparameters of the autoencoder.
     """
@@ -96,41 +81,25 @@ def import_hyperparams(model_path):
 
     print("\nImported model hyperparameters:")
     print("--------------------------------")
-    print("Layers: ", layers)
-    print("Batch: ", batch)
-    print("Learning Rate: ", lr)
+    print(f"Layers: {layers}")
+    print(f"Batch: {batch}")
+    print(f"Learning Rate: {lr}")
 
     return layers, batch, lr
 
-def compute_score(model, loader, criterion, prepend_str, score_file):
-    """
-    Compute the score for a certain model and data.
-
-    @model       :: The pytorch model object.
-    @loader      :: The pytorch data loader object for the data.
-    @criterion   :: The criterion object for the loss function.
-    @prepend_str :: Descriptive string to prepend to output.
-
-    @returns :: Writes to screen and to file the descriptive string and the
-        computed loss function score.
-    """
-    output, latent, inp = compute_model(model, loader)
-    print(prepend_str, criterion(output,inp).item())
-    score_file.write(prepend_str + "{}\n".format(criterion(output,inp).item()))
-
-def compute_save_scores(save_path, model, criterion, valid_data, test_data):
+def compute_losses(model, criterion, valid_data, test_data):
     # Computes the scores of the model on the test and train datasets and
     # saves the results to a file.
+    test_output, _, test_input = compute_model(model, test_data)
+    valid_output, _, valid_input = compute_model(model, valid_data)
+
     print('\n----------------------------------')
-    score_file = open(save_path + "score_file.txt", "w")
-    compute_score(model, test_data, criterion, "TEST MSE:", score_file)
-    compute_score(model, valid_data, criterion, "VALID MSE:", score_file)
-    score_file.close()
+    print(f"TEST MSE: {criterion(output,inp).item()}")
+    print(f"VALID MSE: {criterion(output,inp).item()}")
     print('----------------------------------\n')
 
 def ratio_plotter(input_data, output_data, ifeature, color, class_label=''):
-    # Plots the overlaid input and output data to see how good the
-    # reconstruction really is.
+    # Plots two overlaid histograms.
     plt.rc('xtick', labelsize=23); plt.rc('ytick', labelsize=23)
     plt.rc('axes', titlesize=25); plt.rc('axes', labelsize=25)
     plt.rc('legend', fontsize=22)
@@ -148,11 +117,10 @@ def ratio_plotter(input_data, output_data, ifeature, color, class_label=''):
     plt.legend()
 
 def latent_space_plots(latent_data_sig, latent_data_bkg, model_path):
-    # Makes the plots of the latent space data for each of the latent space
-    # features, which should be 8 for the vasilis_model, for example.
+    # Makes the plots of the latent space data produced by the encoder.
     storage_folder_path = model_path + 'latent_plots/'
-    if not os.path.exists(storage_folder_path):
-        os.makedirs(storage_folder_path)
+    if not os.path.exists(storage_folder_path): os.makedirs(storage_folder_path)
+
     for i in range(latent_data_sig.shape[1]):
         xmax = max(np.amax(latent_data_sig[:,i]),np.amax(latent_data_bkg[:,i]))
         xmin = min(np.amin(latent_data_sig[:,i]),np.amin(latent_data_bkg[:,i]))
@@ -169,14 +137,14 @@ def latent_space_plots(latent_data_sig, latent_data_bkg, model_path):
         plt.savefig(storage_folder_path + 'Latent Feature '+ str(i) + '.pdf')
         plt.close()
 
-    print("\033[92mLatent plots were saved to {}.\033[0m"
-        .format(storage_folder_path))
+    print(f"\033[92mLatent plots were saved to {storage_folder_path}.\033[0m")
 
 def sig_bkg_plots(input_sig, input_bkg, output_sig, output_bkg, model_path):
-    # Plot the background and the signal distributions, overlaid.
+    # Plot the background and the signal distributions for the input data and
+    # the reconstructed data, overlaid.
     storage_folder_path = model_path + 'ratio_plots/'
-    if not os.path.exists(storage_folder_path):
-        os.makedirs(storage_folder_path)
+    if not os.path.exists(storage_folder_path): os.makedirs(storage_folder_path)
+
     for idx in range(input_sig.numpy().shape[1]):
         plt.figure(figsize=(12,10))
 
@@ -189,12 +157,12 @@ def sig_bkg_plots(input_sig, input_bkg, output_sig, output_bkg, model_path):
             util.varname(idx) + '.pdf')
         plt.close()
 
-    print("\033[92mRatio plots were saved to {}.\033[0m"
-        .format(storage_folder_path))
+    print(f"\033[92mRatio plots were saved to {storage_folder_path}.\033[0m")
 
-def diagnosis_plots(loss_train, loss_valid, min_valid, nodes, batch_size, lr,
+def loss_plot(loss_train, loss_valid, min_valid, nodes, batch_size, lr,
     epochs, outdir):
-    # Quick plot to see if what we trained is of any good.
+    # Plot the epochs vs loss for the loss of the last batch of the training
+    # and also the loss computed on the validation data. No test data is used.
     plt.plot(list(range(epochs)), loss_train, color='gray',
         label='Training Loss (last batch)')
     plt.plot(list(range(epochs)), loss_valid, color='navy',
@@ -207,28 +175,6 @@ def diagnosis_plots(loss_train, loss_valid, min_valid, nodes, batch_size, lr,
     plt.savefig(outdir + 'loss_epochs.pdf'); plt.close()
 
     print("\033[92mLoss vs epochs plot saved to {}.\033[0m".format(outdir))
-
-def batch_loss_plots(losses_sig_bkg, n_test, model_path):
-    """
-    Makes plot of the mean batch loss for the signal and background samples,
-    overlays them and saves the final result.
-
-    @losses_sig_bkg :: Array with two elements: mean batch losses array for
-        the signal sample and the same for the bkg sample.
-    @n_test         :: Number of test data events.
-    @model_path     :: The path to the saved model.
-    """
-    colors = ['b', 'r']
-    label  = ["Test on Sig.", "Test on Bkg."]
-    for idx in range(len(losses_sig_bkg)):
-        plt.hist(losses_sig_bkg[idx], bins=20, density=0, color=colors[idx],
-            alpha=0.5, ec='black', label=label[idx])
-        plt.ylabel('Entries/Bin')
-        plt.xlabel('MSE per Batch')
-        plt.title('MSE per batch, Ntest={}.'.format(n_test))
-
-    plt.legend()
-    plt.savefig(model_path + 'test_loss_hist.pdf', dpi=300)
 
 if __name__ == '__main__':
     main()

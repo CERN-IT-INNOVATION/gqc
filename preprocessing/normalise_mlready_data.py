@@ -156,13 +156,14 @@ def plot_roc_auc(data, target, norm_name):
     """
     Compute the roc curve of a given 2D dataset of features.
 
-    @data   :: 2D array, each column is a feature and each row an event.
-    @target :: 1D array, each element is 0 or 1 corresponding to bkg or sig.
+    @data      :: 2D array, each column is a feature and each row an event.
+    @target    :: 1D array, each element is 0 or 1 corresponding to bkg or sig.
+    @norm_name :: String of the name of the normalization.
 
     @returns :: Prints and saves the the roc curve along with an indication
         of the AUC on top of it.
     """
-    print("Plotting the ROC curves for this normalization...")
+    print(f"Plotting the ROC curves for {norm_name} normalization...")
     save_dir = os.path.dirname(args.data_sig) + "/"
     roc_auc_plot_dir = save_dir + 'roc_' + norm_name + '_plots/'
 

@@ -43,7 +43,7 @@ if __name__ == '__main__':
     print(f"Training data size: {train_data.shape[0]:.2e}")
     print(f"Validation data size: {valid_data.shape[0]:.2e}")
     print("----------------\n")
-    train_loader = util.to_pytorch_data(train_data, device, batch_size, True)
+    train_loader = util.to_pytorch_data(train_data, device, args.batch, True)
     valid_loader = util.to_pytorch_data(valid_data, device, None, True)
     (args.layers).insert(0, len(train_loader.dataset[1]))
 

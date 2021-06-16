@@ -55,5 +55,5 @@ echo "--------------------------------------- "
 
 source /work/deodagiu/miniconda3/bin/activate qml_project
 export PYTHONUNBUFFERED=TRUE
-python3 hyperparam_optimizer.py --train_file /work/deodagiu/qml_data/${t} --valid_file /work/deodagiu/qml_data/${v} --lr ${l[@]}  --batch ${b[@]} --epochs ${e}
+python3 hyperparam_optimizer.py --train_file /work/deodagiu/qml_data/input_ae/${t} --valid_file /work/deodagiu/qml_data/input_ae/${v} --lr ${l[@]}  --batch ${b[@]} --epochs ${e}
 export PYTHONUNBUFFERED=FALSE

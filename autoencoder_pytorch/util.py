@@ -119,9 +119,9 @@ def prepare_output(model, batch_size, learning_rate, maxdata, flag):
         format(learning_rate) + "_" + f"data{maxdata:.2e}" + "_" + flag
 
     outdir = './trained_models/' + file_tag + '/'
+    if not os.path.exists(outdir): os.makedirs(outdir)
     with open(outdir + 'model_architecture.txt', 'w') as model_architecture:
        print(model, file=model_architecture)
-    if not os.path.exists(outdir): os.makedirs(outdir)
 
     return outdir
 

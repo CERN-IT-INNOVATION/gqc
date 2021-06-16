@@ -5,24 +5,24 @@ import numpy as np
 import argparse, os
 import torch
 import torch.nn as nn
-
-from sklearn.preprocessing import MinMaxScaler
+from sklearn import metrics
 
 import vanilla_ae
-
 import util
 from util import compute_model
 
 parser = argparse.ArgumentParser(formatter_class=argparse.
     ArgumentDefaultsHelpFormatter)
+parser.add_argument("--data_folder", type=str,
+    help="The folder where the data is stored on the system..")
 parser.add_argument("--valid_file", type=str,
-    help="The path to the validation data.")
+    help="The name of the validation file.")
 parser.add_argument("--test_file", type=str,
-    help="The path to the test data.")
+    help="The name of the test file.")
 parser.add_argument("--test_target", type=str,
-    help="The path to the test target numpy file.")
+    help="The name of the test target.")
 parser.add_argument('--model_path', type=str, required=True,
-    help='The path to the saved model.')
+    help="The path to the saved model.")
 
 def main():
     args = parser.parse_args()
@@ -30,13 +30,13 @@ def main():
 
     # Import the hyperparameters used in training and the data.
     layers, batch, lr = import_hyperparams(args.model_path)
-    valid_data   = np.load(args.valid_file)
-    test_data    = np.load(args.test_file)
+    valid_data   = np.load(os.path.join(args.data_folder, args.valid_file))
+    test_data    = np.load(os.path.join(args.data_folder, args.test_file))
     valid_loader = util.to_pytorch_data(valid_data, device, None, False)
     test_loader  = util.to_pytorch_data(test_data, device, None, False)
 
-    test_data   = np.load(args.test_file)
-    test_target = np.load(args.test_target)
+    test_data   = np.load(os.path.join(args.data_folder, args.test_file))
+    test_target = np.load(os.path.join(args.data_folder, args.test_target))
     data_sig, data_bkg = util.split_sig_bkg(test_data, test_target)
 
     test_loader_sig = util.to_pytorch_data(data_sig, device, None, False)
@@ -44,21 +44,26 @@ def main():
 
     # Import the model.
     (layers).insert(0, test_data.shape[1])
-    model = util.load_model(vanila_ae.AE, layers, lr, args.model_path, device,
+    model = util.load_model(vanilla_ae.AE, layers, lr, args.model_path, device,
         en_activ=nn.Tanh(), dec_activ=nn.Tanh())
     criterion = model.criterion()
 
     # Compute criterion scores for data.
-    comput_losses(model, criterion, valid_loader, test_loader)
+    compute_losses(model, criterion, valid_loader, test_loader)
 
-    # Compute the signal and background latent spaces.
+    # Compute the signal and background latent spaces and decoded data.
     output_sig, sig_latent, input_sig = compute_model(model, test_loader_sig)
     output_bkg, bkg_latent, input_bkg = compute_model(model, test_loader_bkg)
     sig_latent = sig_latent.numpy()
     bkg_latent = bkg_latent.numpy()
 
+    latent_sig_bkg = np.vstack((sig_latent, bkg_latent))
+    target_sig_bkg = \
+    np.concatenate((np.ones(sig_latent.shape[0]),np.zeros(bkg_latent.shape[0])))
+
     # Do the plots.
     latent_space_plots(sig_latent, bkg_latent, args.model_path)
+    latent_roc_plots(latent_sig_bkg, target_sig_bkg, args.model_path)
     sig_bkg_plots(input_sig, input_bkg, output_sig, output_bkg,args.model_path)
 
 
@@ -94,8 +99,8 @@ def compute_losses(model, criterion, valid_data, test_data):
     valid_output, _, valid_input = compute_model(model, valid_data)
 
     print('\n----------------------------------')
-    print(f"TEST MSE: {criterion(output,inp).item()}")
-    print(f"VALID MSE: {criterion(output,inp).item()}")
+    print(f"TEST MSE: {criterion(test_output, test_input).item()}")
+    print(f"VALID MSE: {criterion(valid_output, valid_input).item()}")
     print('----------------------------------\n')
 
 def ratio_plotter(input_data, output_data, ifeature, color, class_label=''):
@@ -138,6 +143,45 @@ def latent_space_plots(latent_data_sig, latent_data_bkg, model_path):
         plt.close()
 
     print(f"\033[92mLatent plots were saved to {storage_folder_path}.\033[0m")
+
+def latent_roc_plots(data, target, model_path):
+    """
+    Compute the roc curve of a given 2D dataset of features.
+
+    @data   :: 2D array, each column is a feature and each row an event.
+    @target :: 1D array, each element is 0 or 1 corresponding to bkg or sig.
+
+    @returns :: Saves the the roc curves of all the feats along with an
+    indication of the AUC on top of it.
+    """
+    roc_auc_plot_dir = model_path + 'latent_roc_plots/'
+    if not os.path.exists(roc_auc_plot_dir): os.makedirs(roc_auc_plot_dir)
+
+    plt.rc('xtick', labelsize=23); plt.rc('ytick', labelsize=23)
+    plt.rc('axes', titlesize=25); plt.rc('axes', labelsize=25)
+    plt.rc('legend', fontsize=22)
+
+    auc_sum = 0.
+    for feature in range(data.shape[1]):
+        fpr, tpr, thresholds = metrics.roc_curve(target, data[:, feature])
+        auc = metrics.roc_auc_score(target, data[:, feature])
+
+        fig = plt.figure(figsize=(12, 10))
+        plt.title(f"Latent feature {feature}")
+        plt.plot(fpr, tpr, label=f"AUC: {auc}", color='navy')
+        plt.plot([0, 1], [0, 1], ls="--", color='gray')
+
+        plt.xlim([0.0, 1.0]); plt.ylim([0.0, 1.0])
+        plt.legend()
+
+        auc_sum += auc
+        fig.savefig(roc_auc_plot_dir + f"Latent feature {feature}.png")
+        plt.close()
+
+    with open(roc_auc_plot_dir + 'auc_sum.txt', 'w') as auc_sum_file:
+        auc_sum_file.write(f"{auc_sum:.3f}")
+
+    print(f"\033[92mLatent roc plots were saved to {roc_auc_plot_dir}.\033[0m")
 
 def sig_bkg_plots(input_sig, input_bkg, output_sig, output_bkg, model_path):
     # Plot the background and the signal distributions for the input data and

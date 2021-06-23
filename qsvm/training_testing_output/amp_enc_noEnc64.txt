@@ -1,0 +1,8 @@
+Validation Accuracy mean = 0.6340, std = 0.0357,for k=5 validation datasets
+5-folds Total Runtime = 9163.06148481369 s.
+-------------------------------------------
+
+Validation Accuracy mean = 0.6297, std = 0.0165,for k=5 validation datasets
+5-folds Total Runtime = 603.8714717547099 min.
+-------------------------------------------
+

@@ -17,10 +17,10 @@ pd.options.mode.chained_assignment = None  # default='warn'
 
 
 parser = argparse.ArgumentParser()
-parser.add_argument("--infile", type=str, required=True, action="store",
-    help="The input folder/data file.")
-parser.add_argument("--outdir", type=str, action="store",
-    default="data/", help="The output directory.")
+parser.add_argument("--infile_prefix", type=str, required=True, action="store",
+    help="The prefix of .h5 files (which should have Sig.h5 or Bkg.h5 after).")
+parser.add_argument("--outdir", type=str, action="store", default="data/",
+    help="The output directory.")
 parser.add_argument("--datatype", type=str, required=True,
     choices=["cms_0l","cms_1l","cms_2l","delphes_1l","delphes_2l","delphes_had"
              "mass_1l", "class_2016_1l", "class_2016_2l", "cms_2017_1l",
@@ -38,19 +38,17 @@ def main():
     globals()['njets'] = 7
 
     # Load .h5 data. Create the output directory.
-    data_sig = load_files(args.infile + "Sig.h5")
-    data_bkg = load_files(args.infile + "Bkg.h5")
-    os.makedirs(args.outdir)
+    data_sig = load_files(args.infile_prefix + "Sig.h5")
+    data_bkg = load_files(args.infile_prefix + "Bkg.h5")
+    if not os.path.exists(args.outdir): os.makedirs(args.outdir)
 
     # Preprocess the data and create flat arrays.
     sig, y_sig = make_flat_numpy_array(data_sig)
     bkg, y_bkg = make_flat_numpy_array(data_bkg, False)
 
     # Save to .npy arrays.
-    np.save(os.path.join(args.outdir, "x_data_raw"),
-        np.concatenate((sig, bkg), axis=0))
-    np.save(os.path.join(args.outdir, "y_data_raw"),
-        np.concatenate((y_sig, y_bkg), axis=0))
+    np.save(os.path.join(args.outdir, "x_data_sig"), sig)
+    np.save(os.path.join(args.outdir, "x_data_bkg"), bkg)
 
 def read_single_file(path):
     # Load a single .h5 file with chunksize 10000.
@@ -72,7 +70,7 @@ def load_files(path):
     return data
 
 def map_jet_values(data):
-    # Map the jet values from being 0-10 to being 0 when there are no jets
+    # Map the jet btag from being 0-10 to being 0 when there are no jets
     # and being one when there are any jets.
     for idx in range(10):
         data["jets_btag_" + str(idx)] = (data['jets_btag_{0}'.format(idx)]>1)
@@ -86,7 +84,7 @@ def jet_formatting(data, flats):
     Formatting the jets features.
 
     @data  :: The pandas hdf data file, already loaded.
-    @flats :: Array containing the values of different features, flatly.
+    @flats :: Array containing the values of different features, 2D flatly.
 
     @returns :: The updated flats array.
     """
@@ -107,7 +105,7 @@ def lep_formatting(data, flats):
     Formatting the lepton features.
 
     @data  :: The pandas hdf data file, already loaded.
-    @flats :: Array containing the values of different features, flatly.
+    @flats :: Array containing the values of different features, 2D flatly.
 
     @returns :: The updated flats array.
     """
@@ -116,8 +114,8 @@ def lep_formatting(data, flats):
     number_lep_feats = len(lep_feats)
     lepsa = data[["leps_%s_%d" % (feat,lep) for lep in range(nleps)
         for feat in lep_feats]].values
-    if flats[1].size == 0:   flats[1] = lepsa
-    else:                    flats[1] = np.concatenate((flats[1], lepsa))
+    if flats[2].size == 0:   flats[2] = lepsa
+    else:                    flats[2] = np.concatenate((flats[2], lepsa))
     lepsa = lepsa.reshape(-1, nleps, number_lep_feats)
     print('Lepton formatting done. Shape of the proc lept array:', lepsa.shape)
 
@@ -139,15 +137,15 @@ def met_formatting(data, flats):
     data["met_py"] = data["met_" + met_feats[1]] * \
         np.sin(data["met_"+met_feats[0]])
     meta = data[["met_%s" % feat for feat in met_feats]].values
-    if flats[2].size == 0:  flats[2] = meta
-    else:                   flats[2] = np.concatenate((flats[2], meta))
+    if flats[1].size == 0:  flats[1] = meta
+    else:                   flats[1] = np.concatenate((flats[1], meta))
     print('Metadata formatting done. Shape of the proc met array:', meta.shape)
 
     return flats
 
 def make_flat_features(flats, is_signal=True):
     """
-    Make the flats object constructed earlier into a flat array, and generate
+    Make the flats object constructed earlier into a flat 2D array, and generate
     vector of 1s or 0s depending on the type of data (signal or bkg).
 
     @flats     :: The flats array as constructed in make_flat_numpy_array.
@@ -168,10 +166,10 @@ def make_flat_features(flats, is_signal=True):
 def make_flat_numpy_array(data, is_signal=True):
     """
     Take the loaded .h5 datasets and save the important features chunk by
-    chunk. The flats array elements are as follows:
+    chunk. The flats 2D array elements are as follows:
     [0] - The jets features.
-    [1] - The lepton features.
-    [2] - The meta features.
+    [2] - The lepton features.
+    [1] - The meta features.
 
     @data      :: The .h5 imported data.
     @is_signal :: Bool of whether the data is signal (True) or background.

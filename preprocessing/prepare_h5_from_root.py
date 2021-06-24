@@ -29,7 +29,6 @@ def main():
         data_frame['jets_btag_{0}'.format(i)]>1 for i in range(10))
     recompute_bbnMatch(data_frame)
 
-    # Why call the same stuff as above again? Maybe meant make_m2?
     for ilep in range(2):  construct_four_momentum(data_frame, 'leps', ilep)
     for ijet in range(10): construct_four_momentum(data_frame, 'jets', ijet)
 
@@ -70,7 +69,7 @@ def construct_four_momentum(data, ptype, idx):
     data frame. Works with pointers so you don't need to return anything.
 
     @data  :: Imported data frame object.
-    @ptype :: Type of particle we are dealing with, lepton or jet (quarks).
+    @ptype :: Str type of particle we are dealing with, lepton or jet (quarks).
     @idx   :: The identifier index of the particle.
     """
     idx  = "" if idx is None else "_%d" % idx
@@ -90,7 +89,7 @@ def construct_invariant_mass(data, ptype1, idx1, ptype2, idx2):
     data frame. Works with pointers so you don't need to return anything.
 
     @data  :: Imported data frame object.
-    @ptype :: Type of particle we are dealing with, lepton or jet (quarks).
+    @ptype :: Str type of particle we are dealing with, lepton or jet (quarks).
     @idx   :: The identifier index of the particle.
     """
     im = ""
@@ -109,7 +108,8 @@ def construct_invariant_mass(data, ptype1, idx1, ptype2, idx2):
     data["%s_%s_m2%s" % (ptype1,ptype2,im)] = en*en - px*px - py*py - pz*pz
 
 def recompute_bbnMatch(data_frame):
-    # Re-compute bbnMatch for reasons???
+    # Recompute the bjet tag flags to go from 0 to 10 depending on how confi
+    # the algorithm is that this is actually a bjet.
     if "bb_nMatch" in list(data_frame):
         data_frame.drop(['bb_nMatch'], axis=1)
         print("Deleted pre-defined bb_nMatch.")

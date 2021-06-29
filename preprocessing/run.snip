@@ -1,2 +1,2 @@
-python3 prepare_mlready_data.py --infile data/data --outdir data --datatype delphes_1l
-python3 normalise_mlready_data.py --infile data/x_data_raw.npy
+python3 normalise_mlready_data.py --data_sig ../../qml_data/input_ae/x_data_sig.npy --data_bkg ../../qml_data/input_ae/x_data_bkg.npy --maxdata 720000
+python3 prepare_mlready_data.py --infile_prefix ../../qml_data/data --outdir ../../qml_data/input_ae --datatype delphes_1l

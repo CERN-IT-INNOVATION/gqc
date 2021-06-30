@@ -28,8 +28,8 @@ def get_accuracy(model, data, real):
 
 
 def create_model(spec):
-	params = 0
-	spec_qc = [spec[0]]
+	params = 0 # Keeps track of the number of parameters used in the variational forms (needed).
+	spec_qc = [spec[0]] #
 	layer_seq = []
 	for i in range(1, len(spec)):
 		is_vf = False
@@ -53,14 +53,24 @@ def create_model(spec):
 			spec_qc.append(spec[i])
 	
 	wshape = {"theta": params}
+	# When defining the quantum layer, get_circuit is called with a "quantum spec".
+	# This is spec without the details of the classical layers in the model.
 	qlayer = qml.qnn.KerasLayer(get_circuit(spec_qc), wshape, output_dim=1)
 	layer_seq.append(qlayer)
 	model = tf.keras.models.Sequential(layer_seq)
 	return model
 
 
+# The names of all the variables are self-explanatory except spec.
+# Spec is an array that defines the architecture of the model:
+# 	First element can be either:
+# 		- The number of qubits.
+# 		- An array [number of qubits, observable used] 
+#	The remaining elements specify the elements of the architecture in sequential order.
+#	See create_model()-->circuit/get_circuit() for details.
 def train(epochs, lrate, batch_size, spec, ntrain, encoder, name):
 
+	# Get the data and define some variables.
 	nvalid = 100	
 	qd = qdata(encoder, ntrain, nvalid, use_complex = True)
 	
@@ -70,16 +80,19 @@ def train(epochs, lrate, batch_size, spec, ntrain, encoder, name):
 	validation_data = qd.validation
 	validation_labels = qd.validation_nlabels 
 
+	# Create the keras model and set things up for training.
 	model = create_model(spec)
 	opt = tf.keras.optimizers.Adam(learning_rate = lrate)
 	model.compile(opt, loss=tf.keras.losses.BinaryCrossentropy())
 
 	earlystop = tf.keras.callbacks.EarlyStopping(monitor="val_loss", patience=5, verbose=1, restore_best_weights=True)
 
+	# Train! (And keep track of time).
 	start_time = time.time()
 	history = model.fit(train_data, train_labels, epochs = epochs, shuffle = True, validation_data = (validation_data, validation_labels), verbose = True, batch_size = batch_size, callbacks = [earlystop])
 	end_time = time.time()
 
+	# Process the output.
 	epused = len(history.history['loss'])
 
 	if not (os.path.isdir("vqctf/out")):

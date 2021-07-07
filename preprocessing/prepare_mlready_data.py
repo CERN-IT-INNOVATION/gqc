@@ -117,7 +117,7 @@ def lep_formatting(data, flats):
     if flats[2].size == 0:   flats[2] = lepsa
     else:                    flats[2] = np.concatenate((flats[2], lepsa))
     lepsa = lepsa.reshape(-1, nleps, number_lep_feats)
-    print('Lepton formatting done. Shape of the proc lept array:', lepsa.shape)
+    print('Lepton formatting done. Shape of the processed lept array:', lepsa.shape)
 
     return flats
 
@@ -130,7 +130,7 @@ def met_formatting(data, flats):
 
     @returns :: The updated flats array.
     """
-    print('Formatting metadata features...')
+    print('Formatting missing energy features...')
 
     data["met_px"] = data["met_" + met_feats[1]] * \
         np.cos(data["met_"+met_feats[0]])
@@ -139,7 +139,7 @@ def met_formatting(data, flats):
     meta = data[["met_%s" % feat for feat in met_feats]].values
     if flats[1].size == 0:  flats[1] = meta
     else:                   flats[1] = np.concatenate((flats[1], meta))
-    print('Metadata formatting done. Shape of the proc met array:', meta.shape)
+    print('Missing energy formatting done. Shape of the processed met array:', meta.shape)
 
     return flats
 

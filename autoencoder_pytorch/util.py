@@ -115,8 +115,8 @@ def prepare_output(model, batch_size, learning_rate, maxdata, flag):
     # Create the folder for the output of the model training.
     # Save the model architecture to a text file inside that folder.
     layers_tag = '.'.join(str(inode) for inode in model.nodes[1:])
-    file_tag   = 'L' + layers_tag + '_B' + str(batch_size) + '_Lr{:.0e}'.\
-        format(learning_rate) + "_" + f"data{maxdata:.2e}" + "_" + flag
+    file_tag   = 'L' + layers_tag + '_B' + str(batch_size) + \
+        f'_Lr{learning_rate:.0e}' + "_" + f"data{maxdata:.2e}" + "_" + flag
 
     outdir = './trained_models/' + file_tag + '/'
     if not os.path.exists(outdir): os.makedirs(outdir)

@@ -11,8 +11,8 @@ import os
 
 import torch.nn as nn
 
-import vanilla_ae
-import classifier_ae
+import ae_vanilla
+# import ae_calassifier
 import plotting
 import util
 
@@ -37,10 +37,12 @@ parser.add_argument('--file_flag', type=str, default='',
     help='Flag the file in a certain way for easier labeling.')
 
 def main():
-    args = parser.parse_args()
-    device = util.define_torch_device()
+    args               = parser.parse_args()
+    device             = util.define_torch_device()
+    encoder_activation = nn.Sigmoid()
+    decoder_activation = nn.Sigmoid()
 
-    # Load the data.
+    # Load the data, both input and target.
     train_data = np.load(os.path.join(args.data_folder, args.train_file))
     valid_data = np.load(os.path.join(args.data_folder, args.valid_file))
     train_target_file = "y" + args.train_file[1:]
@@ -56,11 +58,13 @@ def main():
     print("----------------\n")
 
     # Define the model and prepare the output folder.
-    (args.layers).insert(0, len(train_loader.dataset[1]))
+    nfeatures = len(train_loader.dataset[1])
+    nevents   = len(train_loader.dataset)
+    (args.layers).insert(0, nfeatures)
+
     model = choose_ae_model("vanilla", device, args.layers, args.lr,
-        nn.Sigmoid(), nn.Sigmoid(), None, None, None)
-    outdir = util.prepare_output(model, args.batch, args.lr,
-        len(train_loader.dataset), args.file_flag)
+        encoder_activation, decoder_activation)
+    outdir = util.prep_out(model, args.batch, args.lr, nevents, args.file_flag)
 
     # Train and time it.
     start_time = time.time()
@@ -80,9 +84,9 @@ def choose_ae_model(user_choice, device, layers, lr, en_activ=nn.Tanh(),
     recon_weight=0.5, class_weight=0.5):
 
     switcher = {
-        "vanilla":   lambda : vanilla_ae_model(device, layers, lr, en_activ,
+        "vanilla":   lambda : ae_vanilla_model(device, layers, lr, en_activ,
             dec_activ),
-        "classifer": lambda : classifier_ae_model(device, layers, lr, en_activ,
+        "classifer": lambda : ae_classifier_model(device, layers, lr, en_activ,
             dec_activ, class_layers, recon_weight, class_weight)
     }
 
@@ -91,15 +95,15 @@ def choose_ae_model(user_choice, device, layers, lr, en_activ=nn.Tanh(),
 
     return model
 
-def vanilla_ae_model(device, layers, lr, en_activ, dec_activ):
+def ae_vanilla_model(device, layers, lr, en_activ, dec_activ):
 
-    return vanilla_ae.AE(nodes=layers, lr=lr, device=device, en_activ=en_activ,
+    return ae_vanilla.AE(nodes=layers, lr=lr, device=device, en_activ=en_activ,
         dec_activ=dec_activ).to(device)
 
-def classifier_ae_model(device, layers, lr, en_activ, dec_activ, class_layers,
+def ae_classifier_model(device, layers, lr, en_activ, dec_activ, class_layers,
     recon_weight, class_weight):
 
-    return classifier_ae.AE(nodes=layers,lr=lr,device=device,en_activ=en_activ,
+    return ae_classifier.AE(nodes=layers,lr=lr,device=device,en_activ=en_activ,
         dec_activ=dec_activ).to(device)
 
 if __name__ == '__main__':

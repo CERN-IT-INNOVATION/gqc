@@ -111,7 +111,7 @@ def compute_model(model, data_loader):
 
     return model_output, latent_output, input_data
 
-def prepare_output(model, batch_size, learning_rate, maxdata, flag):
+def prep_out(model, batch_size, learning_rate, maxdata, flag):
     # Create the folder for the output of the model training.
     # Save the model architecture to a text file inside that folder.
     layers_tag = '.'.join(str(inode) for inode in model.nodes[1:])

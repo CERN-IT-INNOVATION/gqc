@@ -7,7 +7,7 @@ import torch
 import torch.nn as nn
 from sklearn import metrics
 
-import vanilla_ae
+import ae_vanilla
 import util
 from util import compute_model
 
@@ -44,7 +44,7 @@ def main():
 
     # Import the model.
     (layers).insert(0, test_data.shape[1])
-    model = util.load_model(vanilla_ae.AE, layers, lr, args.model_path, device,
+    model = util.load_model(ae_vanilla.AE, layers, lr, args.model_path, device,
         en_activ=nn.Tanh(), dec_activ=nn.Tanh())
     criterion = model.criterion()
 

@@ -53,8 +53,8 @@ def main():
     print("\n\033[92mApplying quantile normalization...\033[0m")
     apply_norm(QuantileTransformer(), fnn("quant",args.maxdata), all_data, all_targ)
 
-    print("\n\033[92mApplying optimal normalization...\033[0m")
-    apply_optimal_norm(all_data, all_targ, args.maxdata)
+    print("\n\033[92mApplying personalized normalization...\033[0m")
+    apply_personalized_norm(all_data, all_targ, args.maxdata)
 
 def fnn(norm, maxdata):
     # Format the name of a normalization.
@@ -77,7 +77,7 @@ def apply_norm(norm_method, norm_name, data, target):
     plot_sig_bkg(data_norm[sig_mask, :], data_norm[bkg_mask, :], norm_name)
     split_and_save(data_norm, target, norm_name)
 
-def apply_optimal_norm(data, target, maxdata):
+def apply_personalized_norm(data, target, maxdata):
     """
     Apply normalization to data that was constructed by applying a specific
     type of normalization to each feature individually.
@@ -85,7 +85,7 @@ def apply_optimal_norm(data, target, maxdata):
     @data    :: 2D numpy array containing the features.
     @target  :: 1D numpy array that is 0 for each bkg event and 1 for sig.
     """
-    norm_name = f"optimal_robust_maxabs_norm_{maxdata:.2e}"
+    norm_name = f"personalized_robust_maxabs_norm_{maxdata:.2e}"
     if check_norm_exists(norm_name): return
     data_norm = data
     for jet_nb in range(8): data_norm = normalize_jet(data_norm, jet_nb)

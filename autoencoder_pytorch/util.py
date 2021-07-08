@@ -2,6 +2,9 @@
 import torch
 import numpy as np
 import os, warnings, time
+import ae_vanilla
+import ae_classifier
+import torch.nn as nn
 
 class tensor_data(torch.utils.data.Dataset):
     # Turn a dataset into a torch tensor dataset, that can then be passed
@@ -12,6 +15,30 @@ class tensor_data(torch.utils.data.Dataset):
         return len(self.x)
     def __getitem__(self, index):
         return self.x[index]
+
+def choose_ae_model(user_choice, device, layers, lr, en_activ=nn.Tanh(),
+    dec_activ=nn.Tanh(), class_layers=[256, 256, 128, 64, 32, 1],
+    recon_weight=0.5, class_weight=0.5):
+    # Picks and loads one of the implemented autencoder models.
+    switcher = {
+        "vanilla":   lambda : ae_vanilla_model(device, layers, lr, en_activ,
+            dec_activ),
+        "classifer": lambda : ae_classifier_model(device, layers, lr, en_activ,
+            dec_activ, class_layers, recon_weight, class_weight)
+    }
+
+    func   = switcher.get(user_choice, lambda : "Invalid type of AE given!")
+    model = func()
+
+    return model
+
+def ae_vanilla_model(device, layers, lr, en_activ, dec_activ):
+    return ae_vanilla.AE(layers, lr, device, en_activ, dec_activ).to(device)
+
+def ae_classifier_model(device, layers, lr, en_activ, dec_activ, class_layers,
+    recon_weight, class_weight):
+    return ae_classifier.AE(layers, lr, device, en_activ, dec_activ,
+        class_layers, recon_weight, class_weight).to(device)
 
 def define_torch_device():
     # Use gpu for training if available. Alert the user if not and then use cpu.
@@ -56,23 +83,16 @@ def split_sig_bkg(data, target):
 
     return data_sig, data_bkg
 
-def load_model(model_module, layers, lr, model_path, device,en_activ,dec_activ):
+def load_model(model_module, model_path):
     """
     Loads a model that was trained previously.
 
     @model_module :: The class of the model imported a the top.
-    @layers       :: Array of ints describing the layer structure of the model.
-    @lr           :: Float of the learning rate of the model.
     @model_path   :: String of the path to where the trained model was saved.
-    @device       :: String of the device that was used in training, cpu or gpu.
-    @en_activ     :: Pytorch obj specifying the last activ layer of the enc.
-    @dec_activ    :: Pytorch obj specifying the last activ layer of the dec.
 
     @returns :: The pytorch object of the trained autoencoder model, ready to
         use for encoding/decoding data.
     """
-    model = model_module(nodes=layers, device=device, lr=lr,
-        dec_activ=dec_activ, en_activ=en_activ).to(device)
     model.load_state_dict(torch.load(model_path + 'best_model.pt',
         map_location=torch.device('cpu')))
     model.eval()
@@ -121,6 +141,7 @@ def prep_out(model, batch_size, learning_rate, maxdata, flag):
     outdir = './trained_models/' + file_tag + '/'
     if not os.path.exists(outdir): os.makedirs(outdir)
     with open(outdir + 'model_architecture.txt', 'w') as model_architecture:
+       print(model, file=model_architecture)
        print(model, file=model_architecture)
 
     return outdir

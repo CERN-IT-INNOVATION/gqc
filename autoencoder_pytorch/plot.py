@@ -8,6 +8,7 @@ import torch.nn as nn
 from sklearn import metrics
 
 import ae_vanilla
+import ae_classifier
 import util
 from util import compute_model
 
@@ -25,8 +26,11 @@ parser.add_argument('--model_path', type=str, required=True,
     help="The path to the saved model.")
 
 def main():
-    args = parser.parse_args()
+    args   = parser.parse_args()
     device = 'cpu'
+    encoder_activation = nn.Sigmoid()
+    decoder_activation = nn.Sigmoid()
+
 
     # Import the hyperparameters used in training and the data.
     layers, batch, lr = import_hyperparams(args.model_path)
@@ -44,9 +48,10 @@ def main():
 
     # Import the model.
     (layers).insert(0, test_data.shape[1])
-    model = util.load_model(ae_vanilla.AE, layers, lr, args.model_path, device,
-        en_activ=nn.Tanh(), dec_activ=nn.Tanh())
-    criterion = model.criterion()
+    model = util.choose_ae_model("vanilla", device, layers, lr,
+        encoder_activation, decoder_activation)
+    model     = util.load_model(model, args.model_path)
+    criterion = model.criterion
 
     # Compute criterion scores for data.
     compute_losses(model, criterion, valid_loader, test_loader)

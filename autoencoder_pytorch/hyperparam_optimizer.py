@@ -8,9 +8,8 @@ import numpy as np
 import torch.nn as nn
 import torch.optim as optim
 
-import vanilla_ae
+import ae_vanilla
 import util
-import plotting
 
 default_layers = [64, 52, 44, 32, 24, 16]
 parser = argparse.ArgumentParser(formatter_class=argparse.
@@ -40,10 +39,10 @@ def optuna_train(train_loader, valid_loader, model, epochs, trial):
     for epoch in range(epochs):
         model.train()
         for i, batch_feats in enumerate(train_loader):
-            train_loss = vanilla_ae.eval_train(model, batch_feats, optimizer)
+            train_loss = ae_vanilla.eval_train(model, batch_feats, optimizer)
 
         valid_loss, min_valid = \
-        vanilla_ae.eval_valid(model, valid_loader, min_valid, None)
+        ae_vanilla.eval_valid(model, valid_loader, min_valid, None)
 
         loss_validation.append(valid_loss)
         loss_training.append(train_loss.item())
@@ -85,7 +84,7 @@ def optuna_objective(trial):
 
     # Define model.
     (args.layers).insert(0, np.load(args.train_file).shape[1])
-    model = vanilla_ae.AE(nodes=args.layers, lr=lr, device=device,
+    model = ae_vanilla.AE(nodes=args.layers, lr=lr, device=device,
         en_activ=nn.Tanh(), dec_activ=nn.Tanh()).to(device)
 
     # Train model.

@@ -48,20 +48,20 @@ class BDT():
 
 class FFWD(nn.Module):
     # FFWD DNN implementation.
-    def __init__(self, layers, lr=2e-3, device, lr_decay = 0.04,
-        loss=nn.BCELoss(), epochs=100, batch_size=128):
+    def __init__(self, layers, device, loss_func=nn.BCELoss(), lr=2e-3,
+        lr_decay=0.04, epochs=85, batch_size=128):
 
         super(FFWD, self).__init__()
 
-        self.device = device
-        self.loss = loss
-        self.lr = lr
-        self.lr_decay = lr_decay
-        self.epochs = epochs
-        self.batch_size = batch_size
+        self.device         = device
+        self.loss_func      = loss_func
+        self.lr             = lr
+        self.lr_decay       = lr_decay
+        self.epochs         = epochs
+        self.batch_size     = batch_size
 
         dnn_layers = construct_dnn(layers)
-        self.ffwd = nn.Sequential(*dnn_layers)
+        self.ffwd  = nn.Sequential(*dnn_layers)
 
     def construct_dnn(layers):
 
@@ -82,49 +82,42 @@ class FFWD(nn.Module):
         x = self.ffwd(x)
         return x
 
-    def train(self, loss, optimizer, epochs, data):
+    def train(self, optimizer, data):
 
         self.ffwd.train()
-        for epoch in range(1, epochs + 1):
+        for epoch in range(1, self.epochs + 1):
             loss_epoch = 0
-            tot_batches = len(data)
             for data_batch in data:
                 x, y = data_batch
                 x = x.to(self.device); y = y.to(self.device)
 
                 optimizer.zero_grad()
-                output = self.ffwd(x)
-                loss_value = loss(output, y)
+                dnn_output = self.ffwd(x)
+                loss_value = self.loss_func(dnn_output, y)
                 loss_epoch += loss_value.item()
 
                 loss_value.backward()
                 optimizer.step()
                 print("\033[92mBatch processed in DNN.\033[0m")
 
-
-            loss_epoch = loss_epoch/float(tot_batches)
-            print(f"Epoch: {epoch} \t Loss: {loss_epoch:.4g}")
+        return loss_epoch/len(data)
 
     def fit(self, x_train, y_train):
 
-        tensor_x = torch.Tensor(x_train)
-        tensor_y = torch.Tensor(y_train)
-        dataset = torch.utils.data.TensorDataset(tensor_x, tensor_y)
-
-        ffwd = self.ffwd.to(self.device)
-        print(ffwd)
-
-        loss = nn.BCELoss()
-        print(f"Learning rate: {lr}, Learning rate decay: {lr_decay}")
-        optimizer = optim.Adagrad(ffwd.parameters(), lr=self.lr,
-            lr_decay=self.lr_decay)
-        print(ffwd.parameters())
-
+        tensor_x    = torch.Tensor(x_train)
+        tensor_y    = torch.Tensor(y_train)
+        dataset     = torch.utils.data.TensorDataset(tensor_x, tensor_y)
         data_loader = torch.utils.data.DataLoader(dataset,
             batch_size=self.batch_size, shuffle=True)
+
+        ffwd      = self.ffwd.to(self.device)
+        optimizer = optim.Adagrad(ffwd.parameters(), lr=self.lr,
+            lr_decay=self.lr_decay)
+
         print("\033[92mTraining the DNN...\033[0m")
-        self.train(loss=loss, optimizer=optimizer, epochs=self.epochs,
-            data=data_loader)
+        loss = self.train(optimizer, data_loader)
+
+        return loss
 
     @torch.no_grad()
     def predict(self, x_test):

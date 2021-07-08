@@ -57,8 +57,8 @@ def main():
 
     # Define the model and prepare the output folder.
     (args.layers).insert(0, len(train_loader.dataset[1]))
-    model = choose_ae_model("vanilla", device, args.layers, args.lr, nn.Tanh(),
-        nn.Tanh(), None, None, None)
+    model = choose_ae_model("vanilla", device, args.layers, args.lr,
+        nn.Sigmoid(), nn.Sigmoid(), None, None, None)
     outdir = util.prepare_output(model, args.batch, args.lr,
         len(train_loader.dataset), args.file_flag)
 

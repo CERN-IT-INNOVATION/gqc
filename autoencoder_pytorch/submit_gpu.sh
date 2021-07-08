@@ -1,4 +1,5 @@
 #!/bin/sh
+mkdir -p ./logs
 #SBATCH --job-name=ae_train
 #SBATCH --account=gpu_gres
 #SBATCH --partition=gpu

@@ -16,12 +16,11 @@ torch.autograd.set_detect_anomaly(False)
 torch.autograd.profiler.profile(enabled=False)
 
 class AE(nn.Module):
-    def __init__(self, nodes, lr, device, en_activ=None, dec_activ=None,
-        **kwargs):
+    def __init__(self, device, layers, lr, en_activ=None, dec_activ=None):
 
         super(AE, self).__init__()
         self.lr             = lr
-        self.nodes          = nodes
+        self.layers         = layers
         self.device         = device
         self.criterion      = nn.MSELoss(reduction='mean')
 
@@ -36,11 +35,11 @@ class AE(nn.Module):
         Construct the encoder layers.
         """
         layers = []
-        layer_nbs = range(len(self.nodes))
+        layer_nbs = range(len(self.layers))
         for idx in layer_nbs:
-            layers.append(nn.Linear(self.nodes[idx], self.nodes[idx+1]))
-            if idx == len(self.nodes) - 2 and en_activ is None: break
-            if idx == len(self.nodes) - 2: layers.append(en_activ); break
+            layers.append(nn.Linear(self.layers[idx], self.layers[idx+1]))
+            if idx == len(self.layers) - 2 and en_activ is None: break
+            if idx == len(self.layers) - 2: layers.append(en_activ); break
             layers.append(nn.ELU(True))
 
         return layers
@@ -50,9 +49,9 @@ class AE(nn.Module):
         Construct the decoder layers.
         """
         layers = []
-        layer_nbs = reversed(range(len(self.nodes)))
+        layer_nbs = reversed(range(len(self.layers)))
         for idx in layer_nbs:
-            layers.append(nn.Linear(self.nodes[idx], self.nodes[idx-1]))
+            layers.append(nn.Linear(self.layers[idx], self.layers[idx-1]))
             if idx == 1 and dec_activ is None: break
             if idx == 1 and dec_activ: layers.append(dec_activ); break
             layers.append(nn.ELU(True))
@@ -102,10 +101,13 @@ class AE(nn.Module):
 
         return train_loss
 
-    def train_model(self, train_loader, valid_loader, epochs, outdir):
+    def train_model(self, train_loader, valid_loader, train_target,
+        valid_target, epochs, outdir):
 
         print('\033[96mTraining the vanilla AE model...\033[0m')
-        all_train_loss = []; all_valid_loss = []; min_valid = 99999
+        all_train_loss = []
+        all_valid_loss = []
+        min_valid = 99999
         optimizer = self.optimizer()
 
         for epoch in range(epochs):

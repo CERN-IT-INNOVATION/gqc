@@ -48,7 +48,7 @@ class BDT():
 
 class FFWD(nn.Module):
     # FFWD DNN implementation.
-    def __init__(self, layers, device, loss_func=nn.BCELoss(), lr=2e-3,
+    def __init__(self, device, layers, loss_func=nn.BCELoss(), lr=2e-3,
         lr_decay=0.04, epochs=85, batch_size=128):
 
         super(FFWD, self).__init__()
@@ -60,19 +60,20 @@ class FFWD(nn.Module):
         self.epochs         = epochs
         self.batch_size     = batch_size
 
-        dnn_layers = construct_dnn(layers)
+        dnn_layers = self.construct_dnn(layers)
         self.ffwd  = nn.Sequential(*dnn_layers)
 
+    @staticmethod
     def construct_dnn(layers):
 
         dnn_layers = []
         dnn_layers.append(nn.BatchNorm1d(layers[0]))
 
         for idx in range(len(layers)):
-            dnn_layers.append(nn.Linear(layers[i], layers[i+1]))
+            dnn_layers.append(nn.Linear(layers[idx], layers[idx+1]))
             if idx == len(layers) - 2: dnn_layers.append(nn.Sigmoid()); break
 
-            dnn_layers.append(nn.BatchNorm1d(layers[i+1]))
+            dnn_layers.append(nn.BatchNorm1d(layers[idx+1]))
             dnn_layers.append(nn.Dropout(0.5))
             dnn_layers.append(nn.LeakyReLU(0.2))
 

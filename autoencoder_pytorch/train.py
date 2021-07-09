@@ -62,7 +62,7 @@ def main():
     nevents   = len(train_loader.dataset)
     (args.layers).insert(0, nfeatures)
 
-    model = util.choose_ae_model("vanilla", device, args.layers, args.lr,
+    model = util.choose_ae_model("classifier", device, args.layers, args.lr,
         encoder_activation, decoder_activation)
     outdir = util.prep_out(model, args.batch, args.lr, nevents, args.file_flag)
 
@@ -70,7 +70,8 @@ def main():
     start_time = time.time()
 
     loss_train, loss_valid, min_valid = \
-        model.train_model(train_loader, valid_loader, args.epochs, outdir)
+        model.train_model(train_loader, valid_loader, train_target,
+            valid_target, args.epochs, outdir)
 
     end_time = time.time()
     train_time = (end_time - start_time)/60

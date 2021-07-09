@@ -23,21 +23,20 @@ def choose_ae_model(user_choice, device, layers, lr, en_activ=nn.Tanh(),
     switcher = {
         "vanilla":   lambda : ae_vanilla_model(device, layers, lr, en_activ,
             dec_activ),
-        "classifer": lambda : ae_classifier_model(device, layers, lr, en_activ,
+        "classifier": lambda : ae_classifier_model(device, layers, lr, en_activ,
             dec_activ, class_layers, recon_weight, class_weight)
     }
-
     func   = switcher.get(user_choice, lambda : "Invalid type of AE given!")
     model = func()
 
     return model
 
 def ae_vanilla_model(device, layers, lr, en_activ, dec_activ):
-    return ae_vanilla.AE(layers, lr, device, en_activ, dec_activ).to(device)
+    return ae_vanilla.AE(device, layers, lr, en_activ, dec_activ).to(device)
 
 def ae_classifier_model(device, layers, lr, en_activ, dec_activ, class_layers,
     recon_weight, class_weight):
-    return ae_classifier.AE(layers, lr, device, en_activ, dec_activ,
+    return ae_classifier.AE(device, layers, lr, en_activ, dec_activ,
         class_layers, recon_weight, class_weight).to(device)
 
 def define_torch_device():
@@ -134,7 +133,7 @@ def compute_model(model, data_loader):
 def prep_out(model, batch_size, learning_rate, maxdata, flag):
     # Create the folder for the output of the model training.
     # Save the model architecture to a text file inside that folder.
-    layers_tag = '.'.join(str(inode) for inode in model.nodes[1:])
+    layers_tag = '.'.join(str(inode) for inode in model.layers[1:])
     file_tag   = 'L' + layers_tag + '_B' + str(batch_size) + \
         f'_Lr{learning_rate:.0e}' + "_" + f"data{maxdata:.2e}" + "_" + flag
 

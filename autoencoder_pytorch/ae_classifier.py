@@ -16,20 +16,20 @@ torch.autograd.set_detect_anomaly(False)
 torch.autograd.profiler.profile(enabled=False)
 
 class AE(nn.Module):
-    def __init__(self, nodes, lr, device, en_activ, dec_activ, class_layers,
+    def __init__(self, device, layers, lr, en_activ, dec_activ, class_layers,
         recon_weight, class_weight, **kwargs):
 
         super(AE, self).__init__()
         self.lr                  = lr
-        self.nodes               = nodes
+        self.layers              = layers
         self.device              = device
         self.recon_loss_function = nn.MSELoss(reduction='mean')
         self.class_loss_function = nn.BCELoss()
         self.recon_weight        = recon_weight
         self.class_weight        = class_weight
 
-        class_layers    = class_layers.insert(0, nodes[0])
-        self.classifier = FFWD(class_layers, device)
+        (class_layers).insert(0, layers[0])
+        self.classifier = FFWD(device, class_layers)
 
         self.encoder_layers = self.construct_encoder(en_activ)
         self.encoder        = nn.Sequential(*self.encoder_layers)
@@ -42,11 +42,11 @@ class AE(nn.Module):
         Construct the encoder layers.
         """
         layers = []
-        layer_nbs = range(len(self.nodes))
+        layer_nbs = range(len(self.layers))
         for idx in layer_nbs:
-            layers.append(nn.Linear(self.nodes[idx], self.nodes[idx+1]))
-            if idx == len(self.nodes) - 2 and en_activ is None: break
-            if idx == len(self.nodes) - 2: layers.append(en_activ); break
+            layers.append(nn.Linear(self.layers[idx], self.layers[idx+1]))
+            if idx == len(self.layers) - 2 and en_activ is None: break
+            if idx == len(self.layers) - 2: layers.append(en_activ); break
             layers.append(nn.ELU(True))
 
         return layers
@@ -56,9 +56,9 @@ class AE(nn.Module):
         Construct the decoder layers.
         """
         layers = []
-        layer_nbs = reversed(range(len(self.nodes)))
+        layer_nbs = reversed(range(len(self.layers)))
         for idx in layer_nbs:
-            layers.append(nn.Linear(self.nodes[idx], self.nodes[idx-1]))
+            layers.append(nn.Linear(self.layers[idx], self.layers[idx-1]))
             if idx == 1 and dec_activ is None: break
             if idx == 1 and dec_activ: layers.append(dec_activ); break
             layers.append(nn.ELU(True))

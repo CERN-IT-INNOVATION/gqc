@@ -1,30 +1,22 @@
 # Utility methods for dealing with all the different autoencoder business.
 import torch
-import numpy as np
-import os, warnings, time
-import ae_vanilla
-import ae_classifier
 import torch.nn as nn
 
-class tensor_data(torch.utils.data.Dataset):
-    # Turn a dataset into a torch tensor dataset, that can then be passed
-    # to a ML algorithm for training. Very needed to cast to GPU.
-    def __init__(self, x):
-        self.x = torch.Tensor(x)
-    def __len__(self):
-        return len(self.x)
-    def __getitem__(self, index):
-        return self.x[index]
+import numpy as np
+import os, warnings, time
+
+import ae_vanilla
+import ae_classifier
 
 def choose_ae_model(user_choice, device, layers, lr, en_activ=nn.Tanh(),
     dec_activ=nn.Tanh(), class_layers=[256, 256, 128, 64, 32, 1],
-    recon_weight=0.5, class_weight=0.5):
+    loss_weight=0.5):
     # Picks and loads one of the implemented autencoder models.
     switcher = {
         "vanilla":   lambda : ae_vanilla_model(device, layers, lr, en_activ,
             dec_activ),
         "classifier": lambda : ae_classifier_model(device, layers, lr, en_activ,
-            dec_activ, class_layers, recon_weight, class_weight)
+            dec_activ, class_layers, loss_weight)
     }
     func   = switcher.get(user_choice, lambda : "Invalid type of AE given!")
     model = func()
@@ -35,9 +27,9 @@ def ae_vanilla_model(device, layers, lr, en_activ, dec_activ):
     return ae_vanilla.AE(device, layers, lr, en_activ, dec_activ).to(device)
 
 def ae_classifier_model(device, layers, lr, en_activ, dec_activ, class_layers,
-    recon_weight, class_weight):
+    loss_weight):
     return ae_classifier.AE(device, layers, lr, en_activ, dec_activ,
-        class_layers, recon_weight, class_weight).to(device)
+        class_layers, loss_weight).to(device)
 
 def define_torch_device():
     # Use gpu for training if available. Alert the user if not and then use cpu.
@@ -51,12 +43,13 @@ def define_torch_device():
     print("\033[92mUsing device:\033[0m", device)
     return device
 
-def to_pytorch_data(data, device, batch_size=None, shuffle=True):
+def to_pytorch_data(data, target, device, batch_size=None, shuffle=True):
     """
     Convert numpy arrays of training/validation/testing data into pytroch
     objects ready to be used in training the autoencoder.
 
     @data       :: 2D numpy array of the data to be converted.
+    @target     :: 1D numpy array of the target dataset.
     @device     :: String if the training is done on cpu or gpu.
     @batch_size :: Int of the batch size used in training.
     @shuffle    :: Bool of whether to shuffle the data or not.
@@ -64,11 +57,15 @@ def to_pytorch_data(data, device, batch_size=None, shuffle=True):
     @returns :: Pytorch objects to be passed to the autoencoder for training.
     """
     if batch_size is None: batch_size = data.shape[0]
-    data = tensor_data(data)
+    data    = torch.Tensor(data)
+    target  = torch.Tensor(target)
+    dataset = torch.utils.data.TensorDataset(data, target)
+
     if device == 'cpu':
-        pytorch_loader = torch.utils.data.DataLoader(data,
+        pytorch_loader = torch.utils.data.DataLoader(dataset,
             batch_size=batch_size, shuffle=shuffle)
-    else: pytorch_loader = torch.utils.data.DataLoader(data,
+    else:
+        pytorch_loader = torch.utils.data.DataLoader(dataset,
             batch_size=batch_size, shuffle=shuffle, pin_memory=True)
 
     return pytorch_loader
@@ -140,7 +137,6 @@ def prep_out(model, batch_size, learning_rate, maxdata, flag):
     outdir = './trained_models/' + file_tag + '/'
     if not os.path.exists(outdir): os.makedirs(outdir)
     with open(outdir + 'model_architecture.txt', 'w') as model_architecture:
-       print(model, file=model_architecture)
        print(model, file=model_architecture)
 
     return outdir

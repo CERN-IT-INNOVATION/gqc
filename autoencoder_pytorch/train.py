@@ -39,8 +39,10 @@ parser.add_argument('--file_flag', type=str, default='',
 def main():
     args               = parser.parse_args()
     device             = util.define_torch_device()
+    ae_type            = "classifier"
     encoder_activation = nn.Tanh()
     decoder_activation = nn.Tanh()
+
 
     # Load the data, both input and target.
     train_data = np.load(os.path.join(args.data_folder, args.train_file))
@@ -49,8 +51,12 @@ def main():
     valid_target_file = "y" + args.valid_file[1:]
     train_target = np.load(os.path.join(args.data_folder, train_target_file))
     valid_target = np.load(os.path.join(args.data_folder, valid_target_file))
-    train_loader = util.to_pytorch_data(train_data, device, args.batch, True)
-    valid_loader = util.to_pytorch_data(valid_data, device, None, True)
+
+    train_loader = \
+        util.to_pytorch_data(train_data, train_target, device, args.batch, True)
+    valid_loader = \
+        util.to_pytorch_data(valid_data, valid_target, device, None, True)
+
     print("\n----------------")
     print("\033[92mData loading complete:\033[0m")
     print(f"Training data size: {train_data.shape[0]:.2e}")
@@ -58,11 +64,11 @@ def main():
     print("----------------\n")
 
     # Define the model and prepare the output folder.
-    nfeatures = len(train_loader.dataset[1])
-    nevents   = len(train_loader.dataset)
+    nevents   = train_data.shape[0]
+    nfeatures = train_data.shape[1]
     (args.layers).insert(0, nfeatures)
 
-    model = util.choose_ae_model("classifier", device, args.layers, args.lr,
+    model = util.choose_ae_model(ae_type, device, args.layers, args.lr,
         encoder_activation, decoder_activation)
     outdir = util.prep_out(model, args.batch, args.lr, nevents, args.file_flag)
 
@@ -70,14 +76,13 @@ def main():
     start_time = time.time()
 
     loss_train, loss_valid, min_valid = \
-        model.train_model(train_loader, valid_loader, train_target,
-            valid_target, args.epochs, outdir)
+        model.train_autoencoder(train_loader, valid_loader, args.epochs, outdir)
 
     end_time = time.time()
     train_time = (end_time - start_time)/60
     print(f"Training time: {train_time:.2e} mins.")
 
-    plot.loss_plot(loss_train, loss_valid, min_valid, model.nodes,
+    plot.loss_plot(loss_train, loss_valid, min_valid, model.layers,
         args.batch, model.lr, args.epochs, outdir)
 
 if __name__ == '__main__':

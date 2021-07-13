@@ -7,7 +7,7 @@ import numpy as np
 import torch
 import torch.nn as nn
 import torch.optim as optim
-from classifiers import FFWD
+
 seed = 100
 torch.manual_seed(seed)
 
@@ -17,138 +17,162 @@ torch.autograd.profiler.profile(enabled=False)
 
 class AE(nn.Module):
     def __init__(self, device, layers, lr, en_activ, dec_activ, class_layers,
-        recon_weight, class_weight, **kwargs):
+        loss_weight, **kwargs):
 
         super(AE, self).__init__()
         self.lr                  = lr
         self.layers              = layers
+        self.class_layers        = class_layers
         self.device              = device
         self.recon_loss_function = nn.MSELoss(reduction='mean')
         self.class_loss_function = nn.BCELoss()
-        self.recon_weight        = recon_weight
-        self.class_weight        = class_weight
+        self.loss_weight         = loss_weight
 
-        (class_layers).insert(0, layers[0])
-        self.classifier = FFWD(device, class_layers)
+        self.best_valid_loss   = 9999
+        self.all_train_loss    = []
+        self.all_valid_loss    = []
+        self.valid_recon_loss  = []
+        self.valid_class_loss  = []
 
-        self.encoder_layers = self.construct_encoder(en_activ)
-        self.encoder        = nn.Sequential(*self.encoder_layers)
+        encoder_layers = self.construct_encoder(layers, en_activ)
+        self.encoder   = nn.Sequential(*encoder_layers)
 
-        self.decoder_layers = self.construct_decoder(dec_activ)
-        self.decoder        = nn.Sequential(*self.decoder_layers)
+        (class_layers).insert(0, layers[-1])
+        class_layers    = self.construct_classifier(class_layers)
+        self.classifier = nn.Sequential(*class_layers)
 
-    def construct_encoder(self, en_activ):
+        decoder_layers = self.construct_decoder(layers, dec_activ)
+        self.decoder   = nn.Sequential(*decoder_layers)
+
+        self.optimizer = optim.Adam(self.parameters(), lr=lr)
+
+    @staticmethod
+    def construct_encoder(layers, en_activ):
         """
         Construct the encoder layers.
         """
-        layers = []
-        layer_nbs = range(len(self.layers))
+        enc_layers = []
+        layer_nbs = range(len(layers))
         for idx in layer_nbs:
-            layers.append(nn.Linear(self.layers[idx], self.layers[idx+1]))
-            if idx == len(self.layers) - 2 and en_activ is None: break
-            if idx == len(self.layers) - 2: layers.append(en_activ); break
-            layers.append(nn.ELU(True))
+            enc_layers.append(nn.Linear(layers[idx], layers[idx+1]))
+            if idx == len(layers) - 2 and en_activ is None: break
+            if idx == len(layers) - 2: enc_layers.append(en_activ); break
+            enc_layers.append(nn.ELU(True))
 
-        return layers
+        return enc_layers
 
-    def construct_decoder(self, dec_activ):
+    @staticmethod
+    def construct_classifier(layers):
+
+        dnn_layers = []
+        dnn_layers.append(nn.BatchNorm1d(layers[0]))
+
+        for idx in range(len(layers)):
+            dnn_layers.append(nn.Linear(layers[idx], layers[idx+1]))
+            if idx == len(layers) - 2: dnn_layers.append(nn.Sigmoid()); break
+
+            dnn_layers.append(nn.BatchNorm1d(layers[idx+1]))
+            dnn_layers.append(nn.Dropout(0.5))
+            dnn_layers.append(nn.LeakyReLU(0.2))
+
+        return dnn_layers
+
+    @staticmethod
+    def construct_decoder(layers, dec_activ):
         """
         Construct the decoder layers.
         """
-        layers = []
-        layer_nbs = reversed(range(len(self.layers)))
+        dec_layers = []
+        layer_nbs = reversed(range(len(layers)))
         for idx in layer_nbs:
-            layers.append(nn.Linear(self.layers[idx], self.layers[idx-1]))
+            dec_layers.append(nn.Linear(layers[idx], layers[idx-1]))
             if idx == 1 and dec_activ is None: break
-            if idx == 1 and dec_activ: layers.append(dec_activ); break
-            layers.append(nn.ELU(True))
+            if idx == 1 and dec_activ: dec_layers.append(dec_activ); break
+            dec_layers.append(nn.ELU(True))
 
-        return layers
+        return dec_layers
 
     def forward(self, x):
-        # Need to define it even if you do not use it.
-        latent = self.encoder(x)
+        latent        = self.encoder(x)
+        class_output  = self.classifier(latent)
         reconstructed = self.decoder(latent)
-        return reconstructed, latent
-
-    def optimizer(self): return optim.Adam(self.parameters(), lr=self.lr)
-
-    def recon_loss(self, init_feats, model_output):
-        return self.recon_loss_function(model_output, init_feats)
-
-    def class_loss(self, x_train, y_train):
-        return self.classifier.fit(x_train, y_train)
+        return latent, class_output, reconstructed
 
     def total_loss(self, recon_loss, class_loss):
-        return self.recon_weight*recon_loss + self.class_weight*class_loss
+        return (1 - self.loss_weight)*recon_loss + self.loss_weight*class_loss
 
-    def valid(self, valid_loader, valid_target, min_valid, outdir):
+    @torch.no_grad()
+    def valid(self, valid_loader, outdir):
         # Evaluate the validation loss for the model and save if new minimum.
 
-        valid_data_iter = iter(valid_loader)
-        valid_data      = valid_data_iter.next().to(self.device)
+        x_data_valid, y_data_valid = iter(valid_loader).next()
+        x_data_valid = x_data_valid.to(self.device)
+        y_data_valid = y_data_valid.to(self.device)
         self.eval()
 
-        model_output, latent_output = self(valid_data.float())
-        recon_loss = self.recon_loss(valid_data.float(), model_output)
-        class_loss = self.class_loss(latent_output.numpy(), valid_target)
+        latent, classif, recon = self.forward(x_data_valid.float())
+
+        recon_loss = self.recon_loss_function(x_data_valid.float(), recon)
+        class_loss = self.class_loss_function(classif.flatten(), y_data_valid)
         valid_loss = self.total_loss(recon_loss, class_loss)
 
-        if valid_loss < min_valid: min_valid = valid_loss
+        if valid_loss < self.best_valid_loss: self.best_valid_loss = valid_loss
 
-        if outdir is not None and min_valid == valid_loss:
-            print('\033[92mNew min loss: {:.2e}\033[0m'.format(min_valid))
+        if outdir is not None and self.best_valid_loss == valid_loss:
+            print(f'\033[92mNew min loss: {self.best_valid_loss:.2e}\033[0m')
             torch.save(self.state_dict(), outdir + 'best_model.pt')
 
-        return valid_loss, min_valid
+        self.all_valid_loss.append(valid_loss)
+        self.valid_recon_loss.append(recon_loss)
+        self.valid_class_loss.append(class_loss)
 
-    def train_batch(self, x_batch, y_batch, optimizer):
+    def print_losses(self, epoch, epochs):
+        print(f"Epoch : {epoch + 1}/{epochs}, "
+                  f"Train loss (last batch) = {self.all_train_loss[epoch]:.8f}")
+        print(f"Epoch : {epoch + 1}/{epochs}, "
+                  f"Valid loss = {self.all_valid_loss[epoch]:.8f}")
+        print(f"Epoch : {epoch + 1}/{epochs}, "
+                  f"Valid recon loss = {self.valid_recon_loss[epoch]:.8f}")
+        print(f"Epoch : {epoch + 1}/{epochs}, "
+                  f"Valid class loss = {self.valid_class_loss[epoch]:.8f}")
+
+    def train_batch(self, x_batch, y_batch):
         # Train the model on a batch and evaluate the different kinds of losses.
         # Propagate this backwards for minimum train_loss.
 
         feature_size = x_batch.shape[1]
         init_feats   = x_batch.view(-1, feature_size).to(self.device)
-        model_output, latent_output = self(init_feats.float())
+        y_batch      = y_batch.to(self.device)
+        latent, classif, recon = self.forward(init_feats.float())
 
-        recon_loss = self.recon_loss(init_feats.float(), model_output)
-        class_loss = self.class_loss(latent_output.numpy(), y_batch)
-        train_loss = self.total_loss(recon_loss, class_loss)
-        optimizer.zero_grad()
-        train_loss.backward()
-        optimizer.step()
+        recon_loss = self.recon_loss_function(init_feats.float(), recon)
+        class_loss = self.class_loss_function(classif.flatten(), y_batch)
 
-        return train_loss
-
-    def train_all_batches(self, train_loader, train_target, optimizer):
-
-        for idx, x_batch in enumerate(train_loader):
-            y_batch = train_target[idx*len(x_batch):(idx+1)*len(x_batch)]
-            batch_train_loss = self.train_batch(x_batch, y_batch, optimizer)
+        batch_train_loss = self.total_loss(recon_loss, class_loss)
+        self.optimizer.zero_grad()
+        batch_train_loss.backward()
+        self.optimizer.step()
 
         return batch_train_loss
 
-    def train_model(self, train_loader, valid_loader, train_target,
-        valid_target, epochs, outdir):
+    def train_all_batches(self, train_loader):
+
+        for batch in train_loader:
+            x_batch, y_batch      = batch
+            last_batch_train_loss = self.train_batch(x_batch, y_batch)
+
+        self.all_train_loss.append(last_batch_train_loss.item())
+
+    def train_autoencoder(self, train_loader, valid_loader, epochs, outdir):
 
         print('\033[96mTraining the classifier AE model...\033[0m')
-        all_train_loss = []
-        all_valid_loss = []
-        min_valid      = 99999
-        optimizer      = self.optimizer()
 
         for epoch in range(epochs):
             self.train()
-            last_batch_train_loss = \
-                self.train_all_batches(train_loader, train_target, optimizer)
-            valid_loss, min_valid = \
-                self.valid(valid_loader, valid_target, min_valid, outdir)
 
-            all_valid_loss.append(valid_loss)
-            all_train_loss.append(batch_train_loss.item())
+            self.train_all_batches(train_loader)
+            self.valid(valid_loader, outdir)
 
-            print(f"Epoch : {epoch + 1}/{epochs}, "
-                  f"Training loss (last batch) = {batch_train_loss.item():.8f}")
-            print(f"Epoch : {epoch + 1}/{epochs}, "
-                  f"Validation loss = {valid_loss:.8f}")
+            self.print_losses(epoch, epochs)
 
-        return all_train_loss, all_valid_loss, min_valid
+        return self.all_train_loss, self.all_valid_loss, self.best_valid_loss

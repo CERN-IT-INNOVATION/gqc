@@ -7,10 +7,7 @@ import torch
 import torch.nn as nn
 from sklearn import metrics
 
-import ae_vanilla
-import ae_classifier
 import util
-from util import compute_model
 
 parser = argparse.ArgumentParser(formatter_class=argparse.
     ArgumentDefaultsHelpFormatter)
@@ -20,47 +17,43 @@ parser.add_argument("--valid_file", type=str,
     help="The name of the validation file.")
 parser.add_argument("--test_file", type=str,
     help="The name of the test file.")
-parser.add_argument("--test_target", type=str,
-    help="The name of the test target.")
 parser.add_argument('--model_path', type=str, required=True,
     help="The path to the saved model.")
 
 def main():
-    args   = parser.parse_args()
-    device = 'cpu'
-    encoder_activation = nn.Sigmoid()
-    decoder_activation = nn.Sigmoid()
+    args               = parser.parse_args()
+    device             = 'cpu'
+    ae_type            = "vanilla"
+    encoder_activation = nn.Tanh()
+    decoder_activation = nn.Tanh()
 
-
-    # Import the hyperparameters used in training and the data.
+    # Import the hyperparameters used in training and load the data.
     layers, batch, lr = import_hyperparams(args.model_path)
+    valid_target_file = "y" + args.valid_file[1:]
+    test_target_file  = "y" + args.test_file[1:]
+
     valid_data   = np.load(os.path.join(args.data_folder, args.valid_file))
     test_data    = np.load(os.path.join(args.data_folder, args.test_file))
-    valid_loader = util.to_pytorch_data(valid_data, device, None, False)
-    test_loader  = util.to_pytorch_data(test_data, device, None, False)
+    valid_target = np.load(os.path.join(args.data_folder, valid_target_file))
+    test_target  = np.load(os.path.join(args.data_folder, test_target_file))
 
-    test_data   = np.load(os.path.join(args.data_folder, args.test_file))
-    test_target = np.load(os.path.join(args.data_folder, args.test_target))
-    data_sig, data_bkg = util.split_sig_bkg(test_data, test_target)
-
-    test_loader_sig = util.to_pytorch_data(data_sig, device, None, False)
-    test_loader_bkg = util.to_pytorch_data(data_bkg, device, None, False)
+    test_sig, test_bkg = util.split_sig_bkg(test_data, test_target)
 
     # Import the model.
     (layers).insert(0, test_data.shape[1])
-    model = util.choose_ae_model("vanilla", device, layers, lr,
+    model = util.choose_ae_model(ae_type, device, layers, lr,
         encoder_activation, decoder_activation)
-    model     = util.load_model(model, args.model_path)
-    criterion = model.criterion
+    model = util.load_model(model, args.model_path)
 
-    # Compute criterion scores for data.
-    compute_losses(model, criterion, valid_loader, test_loader)
+    # Compute loss function results for the test and validation datasets.
+    print('\n----------------------------------')
+    print(f"VALID MSE: {model.compute_loss(valid_data).item()}")
+    print(f"TEST MSE: {model.compute_loss(test_data).item()}")
+    print('----------------------------------\n')
 
     # Compute the signal and background latent spaces and decoded data.
-    output_sig, sig_latent, input_sig = compute_model(model, test_loader_sig)
-    output_bkg, bkg_latent, input_bkg = compute_model(model, test_loader_bkg)
-    sig_latent = sig_latent.numpy()
-    bkg_latent = bkg_latent.numpy()
+    sig_latent, sig_recon = model.predict(test_sig)
+    bkg_latent, bkg_recon = model.predict(test_bkg)
 
     latent_sig_bkg = np.vstack((sig_latent, bkg_latent))
     target_sig_bkg = \
@@ -73,14 +66,9 @@ def main():
 
 
 def import_hyperparams(model_path):
-    """
-    Imports the hyperparameters of a given model from the model path given by
-    the user of the autoencoder that was trained.
+    # Import the hyperparameters given the path to the model, since the name
+    # of the model folder has the layers, batch, and learning rate in it.
 
-    @model_path :: String of path to the autoencoder folder.
-
-    @returns :: Hyperparameters of the autoencoder.
-    """
     hyperparams = max(model_path.split('/'), key=len)
     layers  = hyperparams[hyperparams.find('L')+1:hyperparams.find('_')]
     layers  = [int(nb) for nb in layers.split(".")]
@@ -97,34 +85,24 @@ def import_hyperparams(model_path):
 
     return layers, batch, lr
 
-def compute_losses(model, criterion, valid_data, test_data):
-    # Computes the scores of the model on the test and train datasets and
-    # saves the results to a file.
-    test_output, _, test_input = compute_model(model, test_data)
-    valid_output, _, valid_input = compute_model(model, valid_data)
+def sig_bkg_plots(input_sig, input_bkg, output_sig, output_bkg, model_path):
+    # Plot the background and the signal distributions for the input data and
+    # the reconstructed data, overlaid.
+    plots_folder = model_path + 'ratio_plots/'
+    if not os.path.exists(plots_folder): os.makedirs(plots_folder)
 
-    print('\n----------------------------------')
-    print(f"TEST MSE: {criterion(test_output, test_input).item()}")
-    print(f"VALID MSE: {criterion(valid_output, valid_input).item()}")
-    print('----------------------------------\n')
+    for idx in range(input_sig.numpy().shape[1]):
+        plt.figure(figsize=(12,10))
 
-def ratio_plotter(input_data, output_data, ifeature, color, class_label=''):
-    # Plots two overlaid histograms.
-    plt.rc('xtick', labelsize=23); plt.rc('ytick', labelsize=23)
-    plt.rc('axes', titlesize=25); plt.rc('axes', labelsize=25)
-    plt.rc('legend', fontsize=22)
+        ratio_plotter(input_bkg.numpy()[:,idx], output_bkg.numpy()[:,idx], idx,
+            'gray', class_label='Background')
+        ratio_plotter(input_sig.numpy()[:,idx], output_sig.numpy()[:,idx], idx,
+            'navy', class_label='Signal')
 
-    prange = (np.amin(input_data, axis=0), np.amax(input_data, axis=0))
-    plt.hist(x=input_data, bins=60, range=prange, alpha=0.8, histtype='step',
-        linewidth=2.5, label=class_label, density=True, color=color)
-    plt.hist(x=output_data, bins=60, range=prange, alpha=0.8, histtype='step',
-        linewidth=2.5, label='Rec. ' + class_label, linestyle='dashed',
-        density=True, color=color)
+        plt.savefig(plots_folder + 'Ratio Plot ' + util.varname(idx) + '.pdf')
+        plt.close()
 
-    plt.xlabel(util.varname(ifeature) + ' (normalized)'); plt.ylabel('Density')
-    plt.xlim(*prange)
-    plt.gca().set_yscale("log")
-    plt.legend()
+    print(f"\033[92mRatio plots were saved to {plots_folder}.\033[0m")
 
 def latent_space_plots(latent_data_sig, latent_data_bkg, model_path):
     # Makes the plots of the latent space data produced by the encoder.
@@ -150,17 +128,9 @@ def latent_space_plots(latent_data_sig, latent_data_bkg, model_path):
     print(f"\033[92mLatent plots were saved to {storage_folder_path}.\033[0m")
 
 def latent_roc_plots(data, target, model_path):
-    """
-    Compute the roc curve of a given 2D dataset of features.
-
-    @data   :: 2D array, each column is a feature and each row an event.
-    @target :: 1D array, each element is 0 or 1 corresponding to bkg or sig.
-
-    @returns :: Saves the the roc curves of all the feats along with an
-    indication of the AUC on top of it.
-    """
-    roc_auc_plot_dir = model_path + 'latent_roc_plots/'
-    if not os.path.exists(roc_auc_plot_dir): os.makedirs(roc_auc_plot_dir)
+    # Plot the roc curves of the latent space distributions.
+    plots_folder = model_path + 'latent_roc_plots/'
+    if not os.path.exists(plots_folder): os.makedirs(plots_folder)
 
     plt.rc('xtick', labelsize=23); plt.rc('ytick', labelsize=23)
     plt.rc('axes', titlesize=25); plt.rc('axes', labelsize=25)
@@ -180,50 +150,47 @@ def latent_roc_plots(data, target, model_path):
         plt.legend()
 
         auc_sum += auc
-        fig.savefig(roc_auc_plot_dir + f"Latent feature {feature}.png")
+        fig.savefig(plots_folder + f"Latent feature {feature}.png")
         plt.close()
 
-    with open(roc_auc_plot_dir + 'auc_sum.txt', 'w') as auc_sum_file:
+    with open(plots_folder + 'auc_sum.txt', 'w') as auc_sum_file:
         auc_sum_file.write(f"{auc_sum:.3f}")
 
-    print(f"\033[92mLatent roc plots were saved to {roc_auc_plot_dir}.\033[0m")
+    print(f"\033[92mLatent roc plots were saved to {plots_folder}.\033[0m")
 
-def sig_bkg_plots(input_sig, input_bkg, output_sig, output_bkg, model_path):
-    # Plot the background and the signal distributions for the input data and
-    # the reconstructed data, overlaid.
-    storage_folder_path = model_path + 'ratio_plots/'
-    if not os.path.exists(storage_folder_path): os.makedirs(storage_folder_path)
+def ratio_plotter(input_data, output_data, ifeature, color, class_label=''):
+    # Plots two overlaid histograms.
+    plt.rc('xtick', labelsize=23); plt.rc('ytick', labelsize=23)
+    plt.rc('axes', titlesize=25); plt.rc('axes', labelsize=25)
+    plt.rc('legend', fontsize=22)
 
-    for idx in range(input_sig.numpy().shape[1]):
-        plt.figure(figsize=(12,10))
+    prange = (np.amin(input_data, axis=0), np.amax(input_data, axis=0))
+    plt.hist(x=input_data, bins=60, range=prange, alpha=0.8, histtype='step',
+        linewidth=2.5, label=class_label, density=True, color=color)
+    plt.hist(x=output_data, bins=60, range=prange, alpha=0.8, histtype='step',
+        linewidth=2.5, label='Rec. ' + class_label, linestyle='dashed',
+        density=True, color=color)
 
-        ratio_plotter(input_bkg.numpy()[:,idx], output_bkg.numpy()[:,idx], idx,
-            'gray', class_label='Background')
-        ratio_plotter(input_sig.numpy()[:,idx], output_sig.numpy()[:,idx], idx,
-            'navy', class_label='Signal')
+    plt.xlabel(util.varname(ifeature) + ' (normalized)'); plt.ylabel('Density')
+    plt.xlim(*prange)
+    plt.gca().set_yscale("log")
+    plt.legend()
 
-        plt.savefig(storage_folder_path + 'Ratio Plot ' +
-            util.varname(idx) + '.pdf')
-        plt.close()
+def loss_plot(loss_train, loss_valid, min_valid, epochs, outdir):
+    # Plots the loss for each epoch for the training and validation data.
 
-    print(f"\033[92mRatio plots were saved to {storage_folder_path}.\033[0m")
+    plt.plot(list(range(epochs)), loss_train, color="gray",
+        label="Training Loss (last batch)")
+    plt.plot(list(range(epochs)), loss_valid, color="navy",
+        label="Validation Loss (1 per epoch)")
+    plt.xlabel("Epochs"); plt.ylabel("Loss")
 
-def loss_plot(loss_train, loss_valid, min_valid, nodes, batch_size, lr,
-    epochs, outdir):
-    # Plot the epochs vs loss for the loss of the last batch of the training
-    # and also the loss computed on the validation data. No test data is used.
-    plt.plot(list(range(epochs)), loss_train, color='gray',
-        label='Training Loss (last batch)')
-    plt.plot(list(range(epochs)), loss_valid, color='navy',
-        label='Validation Loss (1 per epoch)')
-    plt.xlabel("epochs"); plt.ylabel("MSE")
-    plt.title("B=" + str(batch_size) + ", lr=" + str(lr) + ", L=" +
-        str(nodes) + ', min={:.6f}'.format(min_valid))
+    plt.title(f"min={min_valid:.6f}")
 
     plt.legend()
-    plt.savefig(outdir + 'loss_epochs.pdf'); plt.close()
+    plt.savefig(outdir + "loss_epochs.pdf"); plt.close()
 
-    print("\033[92mLoss vs epochs plot saved to {}.\033[0m".format(outdir))
+    print(f"\033[92mLoss vs epochs plot saved to {outdir}.\033[0m")
 
 if __name__ == '__main__':
     main()

@@ -8,7 +8,6 @@ import numpy as np
 import torch.nn as nn
 import torch.optim as optim
 
-import ae_vanilla
 import util
 
 default_layers = [64, 52, 44, 32, 24, 16]
@@ -26,75 +25,68 @@ parser.add_argument('--batch', type=int, nargs="+",
     help='The batch options, e.g., [128 256 512].')
 parser.add_argument('--epochs', type=int,
     help='The number of training epochs.')
-parser.add_argument('--maxdata_train', type=int, default=-1,
-    help='The maximum number of training samples to use.')
-
 
 def optuna_train(train_loader, valid_loader, model, epochs, trial):
     # Training method for the autoencoder that was defined above.
-    print('Training the model...')
-    loss_training = []; loss_validation = []; min_valid = 99999
-    optimizer = model.optimizer()
+    print('\033[96mTraining the AE model...\033[0m')
 
     for epoch in range(epochs):
         model.train()
-        for i, batch_feats in enumerate(train_loader):
-            train_loss = ae_vanilla.eval_train(model, batch_feats, optimizer)
 
-        valid_loss, min_valid = \
-        ae_vanilla.eval_valid(model, valid_loader, min_valid, None)
+        model.train_all_batches(train_loader)
+        model.valid(valid_loader, outdir)
 
-        loss_validation.append(valid_loss)
-        loss_training.append(train_loss.item())
+        model.print_losses(epoch, epochs)
 
-        trial.report(valid_loss, epoch)
-        if trial.should_prune(): raise optuna.TrialPruned()
-        if min_valid > 0.05: raise optuna.TrialPruned()
+        trial.report(model.all_valid_loss[epoch], epoch)
+        if trial.should_prune():         raise optuna.TrialPruned()
+        if model.best_valid_loss > 0.09: raise optuna.TrialPruned()
 
-        print("Epoch : {}/{}, Training loss (last batch) = {:.8f}".
-               format(epoch + 1, epochs, train_loss.item()))
-        print("Epoch : {}/{}, Validation loss = {:.8f}".
-               format(epoch + 1, epochs, valid_loss))
-
-    return loss_training, loss_validation, min_valid
+    return model.best_valid_loss
 
 def optuna_objective(trial):
     """
     Wrapper of the normal training such that it agrees with what optuna
     is trying to do.
     """
-    args   = parser.parse_args()
-    device = util.define_torch_device()
+    args               = parser.parse_args()
+    device             = util.define_torch_device()
+    ae_type            = "vanilla"
+    encoder_activation = nn.Tanh()
+    decoder_activation = nn.Tanh()
 
-    # Define optuna parameters.
-    lr     = trial.suggest_loguniform('lr', *args.lr)
-    batch  = trial.suggest_categorical('batch', args.batch)
+    # Define parameters to be optimized by optuna.
+    lr    = trial.suggest_loguniform('lr', *args.lr)
+    batch = trial.suggest_categorical('batch', args.batch)
 
-    # Load the data.
-    train_data = np.load(args.train_file)
-    valid_data = np.load(args.valid_file)
+    # Load the data, both input and target.
+    train_data = np.load(os.path.join(args.data_folder, args.train_file))
+    valid_data = np.load(os.path.join(args.data_folder, args.valid_file))
+    train_target_file = "y" + args.train_file[1:]
+    valid_target_file = "y" + args.valid_file[1:]
+    train_target = np.load(os.path.join(args.data_folder, train_target_file))
+    valid_target = np.load(os.path.join(args.data_folder, valid_target_file))
+
+    train_loader = \
+        util.to_pytorch_data(train_data, train_target, device, batch, True)
+    valid_loader = \
+        util.to_pytorch_data(valid_data, valid_target, device, None, True)
+
     print("\n----------------")
-    print("Training data size: {:.2e}".format(train_data.shape[0]))
-    print("Validation data size: {:.2e}".format(valid_data.shape[0]))
+    print("\033[92mData loading complete:\033[0m")
+    print(f"Training data size: {train_data.shape[0]:.2e}")
+    print(f"Validation data size: {valid_data.shape[0]:.2e}")
     print("----------------\n")
-    train_loader = util.to_pytorch_data(train_data, device, batch, True)
-    valid_loader = util.to_pytorch_data(valid_data, device, None, True)
 
-    (args.layers).insert(0, len(train_loader.dataset[1]))
+    # Define the model and prepare the output folder.
+    nfeatures = train_data.shape[1]
+    (args.layers).insert(0, nfeatures)
 
-    # Define model.
-    (args.layers).insert(0, np.load(args.train_file).shape[1])
-    model = ae_vanilla.AE(nodes=args.layers, lr=lr, device=device,
-        en_activ=nn.Tanh(), dec_activ=nn.Tanh()).to(device)
+    model = util.choose_ae_model(ae_type, device, args.layers, lr,
+        encoder_activation, decoder_activation)
 
-    # Train model.
-    start_time = time.time()
-    loss_train, loss_valid, min_valid = optuna_train(train_loader,
-        valid_loader, model, args.epochs, trial)
-    end_time = time.time()
-    train_time = (end_time - start_time)/60
-
-    print("Training time: {:.2e} mins.".format(train_time))
+    min_valid = \
+        optuna_train(train_loader, valid_loader, model, args.epochs, trial)
 
     return min_valid
 

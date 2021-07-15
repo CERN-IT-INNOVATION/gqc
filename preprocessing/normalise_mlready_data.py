@@ -66,7 +66,7 @@ def apply_norm(norm_method, norm_name, data, target):
     data set into a separate numpy array specifying the norm name.
 
     @norm_method :: The normalization method sklearn object.
-    @norm_name   :: String of the normalization name..
+    @norm_name   :: String of the normalization name.
     @data        :: 2D numpy array of the features to be normalized.
     @target      :: 1D numpy array with 0 for each bkg event and 1 for the sig.
     """

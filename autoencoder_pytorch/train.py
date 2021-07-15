@@ -11,8 +11,6 @@ import os
 
 import torch.nn as nn
 
-import ae_vanilla
-# import ae_calassifier
 import plot
 import util
 
@@ -45,10 +43,10 @@ def main():
 
 
     # Load the data, both input and target.
-    train_data = np.load(os.path.join(args.data_folder, args.train_file))
-    valid_data = np.load(os.path.join(args.data_folder, args.valid_file))
     train_target_file = "y" + args.train_file[1:]
     valid_target_file = "y" + args.valid_file[1:]
+    train_data   = np.load(os.path.join(args.data_folder, args.train_file))
+    valid_data   = np.load(os.path.join(args.data_folder, args.valid_file))
     train_target = np.load(os.path.join(args.data_folder, train_target_file))
     valid_target = np.load(os.path.join(args.data_folder, valid_target_file))
 
@@ -69,7 +67,7 @@ def main():
     (args.layers).insert(0, nfeatures)
 
     model = util.choose_ae_model(ae_type, device, args.layers, args.lr,
-        encoder_activation, decoder_activation)
+        encoder_activation, decoder_activation, loss_weight=0)
     outdir = util.prep_out(model, args.batch, args.lr, nevents, args.file_flag)
 
     # Train and time it.
@@ -82,8 +80,7 @@ def main():
     train_time = (end_time - start_time)/60
     print(f"Training time: {train_time:.2e} mins.")
 
-    plot.loss_plot(loss_train, loss_valid, min_valid, model.layers,
-        args.batch, model.lr, args.epochs, outdir)
+    plot.loss_plot(loss_train, loss_valid, min_valid, args.epochs, outdir)
 
 if __name__ == '__main__':
     main()

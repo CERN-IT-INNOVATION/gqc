@@ -29,10 +29,6 @@ class AE(nn.Module):
         self.loss_weight         = loss_weight
 
         self.best_valid_loss   = 9999
-        self.all_train_loss    = []
-        self.all_valid_loss    = []
-        self.valid_recon_loss  = []
-        self.valid_class_loss  = []
 
         encoder_layers = self.construct_encoder(layers, en_activ)
         self.encoder   = nn.Sequential(*encoder_layers)
@@ -98,8 +94,26 @@ class AE(nn.Module):
         reconstructed = self.decoder(latent)
         return latent, class_output, reconstructed
 
-    def total_loss(self, recon_loss, class_loss):
+    def compute_loss(self, x_data, y_data):
+        latent, classif, recon = self.forward(x_data.float())
+
+        recon_loss = self.recon_loss_function(recon, x_data.float())
+        class_loss = self.class_loss_function(classif.flatten(), y_data)
+
         return (1 - self.loss_weight)*recon_loss + self.loss_weight*class_loss
+
+    @staticmethod
+    def print_losses(epoch, epochs, all_train_loss, all_valid_loss,
+        valid_recon_loss, valid_class_loss):
+
+        print(f"Epoch : {epoch + 1}/{epochs}, "
+                  f"Train loss (last batch) = {all_train_loss[epoch]:.8f}")
+        print(f"Epoch : {epoch + 1}/{epochs}, "
+                  f"Valid loss = {all_valid_loss[epoch]:.8f}")
+        print(f"Epoch : {epoch + 1}/{epochs}, "
+                  f"Valid recon loss = {valid_recon_loss:.8f}")
+        print(f"Epoch : {epoch + 1}/{epochs}, "
+                  f"Valid class loss = {valid_class_loss:.8f}")
 
     @torch.no_grad()
     def valid(self, valid_loader, outdir):
@@ -114,7 +128,7 @@ class AE(nn.Module):
 
         recon_loss = self.recon_loss_function(x_data_valid.float(), recon)
         class_loss = self.class_loss_function(classif.flatten(), y_data_valid)
-        valid_loss = self.total_loss(recon_loss, class_loss)
+        valid_loss = self.compute_loss(x_data_valid, y_data_valid)
 
         if valid_loss < self.best_valid_loss: self.best_valid_loss = valid_loss
 
@@ -122,19 +136,7 @@ class AE(nn.Module):
             print(f'\033[92mNew min loss: {self.best_valid_loss:.2e}\033[0m')
             torch.save(self.state_dict(), outdir + 'best_model.pt')
 
-        self.all_valid_loss.append(valid_loss)
-        self.valid_recon_loss.append(recon_loss)
-        self.valid_class_loss.append(class_loss)
-
-    def print_losses(self, epoch, epochs):
-        print(f"Epoch : {epoch + 1}/{epochs}, "
-                  f"Train loss (last batch) = {self.all_train_loss[epoch]:.8f}")
-        print(f"Epoch : {epoch + 1}/{epochs}, "
-                  f"Valid loss = {self.all_valid_loss[epoch]:.8f}")
-        print(f"Epoch : {epoch + 1}/{epochs}, "
-                  f"Valid recon loss = {self.valid_recon_loss[epoch]:.8f}")
-        print(f"Epoch : {epoch + 1}/{epochs}, "
-                  f"Valid class loss = {self.valid_class_loss[epoch]:.8f}")
+        return valid_loss, recon_loss, class_loss
 
     def train_batch(self, x_batch, y_batch):
         # Train the model on a batch and evaluate the different kinds of losses.
@@ -145,10 +147,8 @@ class AE(nn.Module):
         y_batch      = y_batch.to(self.device)
         latent, classif, recon = self.forward(init_feats.float())
 
-        recon_loss = self.recon_loss_function(init_feats.float(), recon)
-        class_loss = self.class_loss_function(classif.flatten(), y_batch)
+        batch_train_loss = self.compute_loss(init_feats.float(), y_batch)
 
-        batch_train_loss = self.total_loss(recon_loss, class_loss)
         self.optimizer.zero_grad()
         batch_train_loss.backward()
         self.optimizer.step()
@@ -161,18 +161,34 @@ class AE(nn.Module):
             x_batch, y_batch      = batch
             last_batch_train_loss = self.train_batch(x_batch, y_batch)
 
-        self.all_train_loss.append(last_batch_train_loss.item())
+        return last_batch_train_loss
 
     def train_autoencoder(self, train_loader, valid_loader, epochs, outdir):
 
         print('\033[96mTraining the classifier AE model...\033[0m')
+        all_train_loss    = []
+        all_valid_loss    = []
 
         for epoch in range(epochs):
             self.train()
 
-            self.train_all_batches(train_loader)
-            self.valid(valid_loader, outdir)
+            train_loss = self.train_all_batches(train_loader)
+            valid_loss, recon_loss, class_loss = self.valid(valid_loader,outdir)
 
-            self.print_losses(epoch, epochs)
+            all_train_loss.append(train_loss.item())
+            all_valid_loss.append(valid_loss.item())
 
-        return self.all_train_loss, self.all_valid_loss, self.best_valid_loss
+            self.print_losses(epoch, epochs, all_train_loss, all_valid_loss,
+                recon_loss.item(), class_loss.item())
+
+        return all_train_loss, all_valid_loss, self.best_valid_loss
+
+    @torch.no_grad()
+    def predict(self, x_data):
+        # Compute the prediction of the autoencoder, given input np array x.
+        x_data = torch.from_numpy(x_data).to(self.device)
+        latent, classif, recon = self.forward(x_data.float())
+
+        latent = latent.cpu().numpy()
+        recon  = recon.cpu().numpy()
+        return latent, recon

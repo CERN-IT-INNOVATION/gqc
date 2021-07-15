@@ -25,8 +25,6 @@ class AE(nn.Module):
         self.recon_loss_function = nn.MSELoss(reduction='mean')
 
         self.best_valid_loss   = 9999
-        self.all_train_loss    = []
-        self.all_valid_loss    = []
 
         encoder_layers = self.construct_encoder(layers, en_activ)
         self.encoder   = nn.Sequential(*encoder_layers)
@@ -71,6 +69,17 @@ class AE(nn.Module):
         reconstructed = self.decoder(latent)
         return latent, reconstructed
 
+    def compute_loss(self, x_data, y_data=None):
+        latent, recon = self.forward(x_data.float())
+        return self.recon_loss_function(recon, x_data.float())
+
+    @staticmethod
+    def print_losses(epoch, epochs, all_train_loss, all_valid_loss):
+        print(f"Epoch : {epoch + 1}/{epochs}, "
+              f"Train loss (last batch) = {all_train_loss[epoch]:.8f}")
+        print(f"Epoch : {epoch + 1}/{epochs}, "
+              f"Valid loss = {all_valid_loss[epoch]:.8f}")
+
     @torch.no_grad()
     def valid(self, valid_loader, outdir):
         # Evaluate the validation loss for the model and save if new minimum.
@@ -79,23 +88,15 @@ class AE(nn.Module):
         x_data_valid = x_data_valid.to(self.device)
         self.eval()
 
-        latent, recon = self.forward(x_data_valid.float())
+        loss = self.compute_loss(x_data_valid)
 
-        recon_loss = self.recon_loss_function(recon, x_data_valid.float())
+        if loss < self.best_valid_loss: self.best_valid_loss = loss
 
-        if recon_loss < self.best_valid_loss: self.best_valid_loss = recon_loss
-
-        if outdir is not None and self.best_valid_loss == recon_loss:
+        if outdir is not None and self.best_valid_loss == loss:
             print(f'\033[92mNew min loss: {self.best_valid_loss:.2e}\033[0m')
             torch.save(self.state_dict(), outdir + 'best_model.pt')
 
-        self.all_valid_loss.append(recon_loss)
-
-    def print_losses(self, epoch, epochs):
-        print(f"Epoch : {epoch + 1}/{epochs}, "
-                  f"Train loss (last batch) = {self.all_train_loss[epoch]:.8f}")
-        print(f"Epoch : {epoch + 1}/{epochs}, "
-                  f"Valid loss = {self.all_valid_loss[epoch]:.8f}")
+        return loss
 
     def train_batch(self, x_batch):
         # Train the model on a batch and evaluate the different kinds of losses.
@@ -103,34 +104,47 @@ class AE(nn.Module):
 
         feature_size  = x_batch.shape[1]
         init_feats    = x_batch.view(-1, feature_size).to(self.device)
-        latent, recon = self.forward(init_feats.float())
 
-        recon_loss = self.recon_loss_function(recon, init_feats.float())
+        loss = self.compute_loss(init_feats)
 
         self.optimizer.zero_grad()
-        recon_loss.backward()
+        loss.backward()
         self.optimizer.step()
 
-        return recon_loss
+        return loss
 
     def train_all_batches(self, train_loader):
-
+        # Train the autoencoder on all the batches.
         for batch in train_loader:
             x_batch, y_batch      = batch
             last_batch_train_loss = self.train_batch(x_batch)
 
-        self.all_train_loss.append(last_batch_train_loss.item())
+        return last_batch_train_loss
 
     def train_autoencoder(self, train_loader, valid_loader, epochs, outdir):
 
-        print('\033[96mTraining the classifier AE model...\033[0m')
+        print('\033[96mTraining the vanilla AE model...\033[0m')
+        all_train_loss = []
+        all_valid_loss = []
 
         for epoch in range(epochs):
             self.train()
 
-            self.train_all_batches(train_loader)
-            self.valid(valid_loader, outdir)
+            train_loss = self.train_all_batches(train_loader)
+            valid_loss = self.valid(valid_loader, outdir)
 
-            self.print_losses(epoch, epochs)
+            all_train_loss.append(train_loss.item())
+            all_valid_loss.append(valid_loss.item())
+            self.print_losses(epoch, epochs, all_train_loss, all_valid_loss)
 
-        return self.all_train_loss, self.all_valid_loss, self.best_valid_loss
+        return all_train_loss, all_valid_loss, self.best_valid_loss
+
+    @torch.no_grad()
+    def predict(self, x_data):
+        # Compute the prediction of the autoencoder, given input np array x.
+        x_data = torch.from_numpy(x_data).to(self.device)
+        latent, reconstructed = self.forward(x_data.float())
+
+        latent        = latent.cpu().numpy()
+        reconstructed = reconstructed.cpu().numpy()
+        return latent, reconstructed

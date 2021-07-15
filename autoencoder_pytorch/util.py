@@ -111,22 +111,6 @@ def extract_layers_from_model_path(model_path):
 
     return model_path[batch_idx:end_idx]
 
-@torch.no_grad()
-def compute_model(model, data_loader):
-    """
-    Computes the output of an autoencoder trained model.
-
-    @model       :: The name of the model we are using.
-    @data_loader :: Pytorch data loader obj containing data to give the model.
-
-    @returns :: The decoder out, the latent space, and the input data.
-    """
-    data_iter = iter(data_loader)
-    input_data = data_iter.next()
-    model_output, latent_output = model(input_data.float())
-
-    return model_output, latent_output, input_data
-
 def prep_out(model, batch_size, learning_rate, maxdata, flag):
     # Create the folder for the output of the model training.
     # Save the model architecture to a text file inside that folder.

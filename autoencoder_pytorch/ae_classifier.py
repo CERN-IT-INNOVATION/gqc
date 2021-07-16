@@ -44,9 +44,7 @@ class AE(nn.Module):
 
     @staticmethod
     def construct_encoder(layers, en_activ):
-        """
-        Construct the encoder layers.
-        """
+        # Construct the encoder layers.
         enc_layers = []
         layer_nbs = range(len(layers))
         for idx in layer_nbs:
@@ -59,7 +57,7 @@ class AE(nn.Module):
 
     @staticmethod
     def construct_classifier(layers):
-
+        # Construct the classifier layers.
         dnn_layers = []
         dnn_layers.append(nn.BatchNorm1d(layers[0]))
 
@@ -75,9 +73,7 @@ class AE(nn.Module):
 
     @staticmethod
     def construct_decoder(layers, dec_activ):
-        """
-        Construct the decoder layers.
-        """
+        # Construct the decoder layers.
         dec_layers = []
         layer_nbs = reversed(range(len(layers)))
         for idx in layer_nbs:
@@ -95,6 +91,11 @@ class AE(nn.Module):
         return latent, class_output, reconstructed
 
     def compute_loss(self, x_data, y_data):
+        if type(x_data) is np.ndarray:
+            x_data = torch.from_numpy(x_data).to(self.device)
+        if type(y_data) is np.ndarray:
+            y_data = torch.from_numpy(y_data).to(self.device)
+
         latent, classif, recon = self.forward(x_data.float())
 
         recon_loss = self.recon_loss_function(recon, x_data.float())
@@ -166,9 +167,10 @@ class AE(nn.Module):
     def train_autoencoder(self, train_loader, valid_loader, epochs, outdir):
 
         print('\033[96mTraining the classifier AE model...\033[0m')
-        all_train_loss    = []
-        all_valid_loss    = []
+        all_train_loss = []
+        all_valid_loss = []
 
+        print(self.classifier.parameters())
         for epoch in range(epochs):
             self.train()
 
@@ -180,6 +182,7 @@ class AE(nn.Module):
 
             self.print_losses(epoch, epochs, all_train_loss, all_valid_loss,
                 recon_loss.item(), class_loss.item())
+        print(self.classifier.parameters())
 
         return all_train_loss, all_valid_loss, self.best_valid_loss
 
@@ -187,6 +190,7 @@ class AE(nn.Module):
     def predict(self, x_data):
         # Compute the prediction of the autoencoder, given input np array x.
         x_data = torch.from_numpy(x_data).to(self.device)
+        self.eval()
         latent, classif, recon = self.forward(x_data.float())
 
         latent = latent.cpu().numpy()

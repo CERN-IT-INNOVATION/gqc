@@ -43,6 +43,24 @@ def define_torch_device():
     print("\033[92mUsing device:\033[0m", device)
     return device
 
+def get_train_file(norm_name, nevents):
+    return "x_data_" + norm_name + "_norm_" + nevents + "_train.npy"
+
+def get_valid_file(norm_name, nevents):
+    return "x_data_" + norm_name + "_norm_" + nevents + "_valid.npy"
+
+def get_test_file(norm_name, nevents):
+    return "x_data_" + norm_name + "_norm_" + nevents + "_test.npy"
+
+def get_train_target(norm_name, nevents):
+    return "y_data_" + norm_name + "_norm_" + nevents + "_train.npy"
+
+def get_valid_target(norm_name, nevents):
+    return "y_data_" + norm_name + "_norm_" + nevents + "_valid.npy"
+
+def get_test_target(norm_name, nevents):
+    return "y_data_" + norm_name + "_norm_" + nevents + "_test.npy"
+
 def to_pytorch_data(data, target, device, batch_size=None, shuffle=True):
     """
     Convert numpy arrays of training/validation/testing data into pytroch
@@ -79,44 +97,44 @@ def split_sig_bkg(data, target):
 
     return data_sig, data_bkg
 
-def load_model(model_module, model_path):
-    """
-    Loads a model that was trained previously.
-
-    @model_module :: The class of the model imported a the top.
-    @model_path   :: String of the path to where the trained model was saved.
-
-    @returns :: The pytorch object of the trained autoencoder model, ready to
-        use for encoding/decoding data.
-    """
-    model.load_state_dict(torch.load(model_path + 'best_model.pt',
-        map_location=torch.device('cpu')))
-    model.eval()
+def load_model(model, model_path):
+    # Loads a pytorch saved model.pt file given it's path.
+    model.load_state_dict(
+        torch.load(model_path, map_location=torch.device('cpu')))
 
     return model
 
-def extract_batch_from_model_path(model_path):
-    # Extract the batch size information from the folder name of a trained
-    # model and return it.
-    start_idx = model_path.find("_B") + 2
-    end_idx = model_path[start_idx:].find("_")
+def import_hyperparams(model_path):
+    # Import the hyperparameters given the path to the model, since the name
+    # of the model folder has the layers, batch, and learning rate in it.
 
-    return int(model_path[batch_idx:end_idx])
+    hyperparams = max(model_path.split('/'), key=len)
+    layers  = hyperparams[hyperparams.find('L')+1:hyperparams.find('_')]
+    layers  = [int(nb) for nb in layers.split(".")]
+    batch   = int(hyperparams[hyperparams.find('B')+1:hyperparams.find('_',
+        hyperparams.find('B')+1, len(hyperparams))])
+    lr      = float(hyperparams[hyperparams.find('Lr')+2:hyperparams.find('_',
+        hyperparams.find('Lr')+2, len(hyperparams))])
+    nevents = hyperparams[hyperparams.find('N')+1:hyperparams.find('_', hyperparams.find('N')+1, len(hyperparams))]
+    norm    = hyperparams[hyperparams.find('S')+1:hyperparams.find('_', hyperparams.find('S')+1, len(hyperparams))]
 
-def extract_layers_from_model_path(model_path):
-    # Extract the layer structure information from the folder name of a trained
-    # model and return it.
-    start_idx = model_path.find("L") + 1
-    end_idx = model_path[start_idx:].find("_")
+    print("\nImported model hyperparameters:")
+    print("--------------------------------")
+    print(f"Layers: {layers}")
+    print(f"Batch: {batch}")
+    print(f"Learning Rate: {lr}")
+    print(f"Normalisation Name: {norm}")
+    print(f"Number of Events: {nevents}")
 
-    return model_path[batch_idx:end_idx]
+    return layers, batch, lr, norm, nevents
 
-def prep_out(model, batch_size, learning_rate, maxdata, flag):
+def prep_out(model, batch_size, learning_rate, maxdata, norm, flag):
     # Create the folder for the output of the model training.
     # Save the model architecture to a text file inside that folder.
     layers_tag = '.'.join(str(inode) for inode in model.layers[1:])
     file_tag   = 'L' + layers_tag + '_B' + str(batch_size) + \
-        f'_Lr{learning_rate:.0e}' + "_" + f"data{maxdata:.2e}" + "_" + flag
+        f'_Lr{learning_rate:.0e}' + "_" + f"N{maxdata}" + "_S" + norm + \
+        "_" + flag
 
     outdir = './trained_models/' + file_tag + '/'
     if not os.path.exists(outdir): os.makedirs(outdir)

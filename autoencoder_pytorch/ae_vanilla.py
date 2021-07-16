@@ -70,6 +70,8 @@ class AE(nn.Module):
         return latent, reconstructed
 
     def compute_loss(self, x_data, y_data=None):
+        if type(x_data) is np.ndarray:
+            x_data = torch.from_numpy(x_data).to(self.device)
         latent, recon = self.forward(x_data.float())
         return self.recon_loss_function(recon, x_data.float())
 
@@ -143,6 +145,7 @@ class AE(nn.Module):
     def predict(self, x_data):
         # Compute the prediction of the autoencoder, given input np array x.
         x_data = torch.from_numpy(x_data).to(self.device)
+        self.eval()
         latent, reconstructed = self.forward(x_data.float())
 
         latent        = latent.cpu().numpy()

@@ -19,10 +19,10 @@ parser = argparse.ArgumentParser(formatter_class=argparse.
     ArgumentDefaultsHelpFormatter)
 parser.add_argument("--data_folder", type=str,
     help="The folder where the data is stored on the system..")
-parser.add_argument("--train_file", type=str,
-    help="The name of the training data file.")
-parser.add_argument("--valid_file", type=str,
-    help="The name of the validation data file.")
+parser.add_argument("--norm", type=str,
+    help="The name of the normalisation that you'll to use.")
+parser.add_argument("--nevents", type=str,
+    help="The number of events of the norm file.")
 parser.add_argument('--lr', type=float, default=2e-03,
     help='The learning rate.')
 parser.add_argument('--layers', type=int, default=default_layers, nargs='+',
@@ -41,12 +41,15 @@ def main():
     encoder_activation = nn.Tanh()
     decoder_activation = nn.Tanh()
 
+    # Get the names of the data files. We follow a naming scheme. See util mod.
+    train_file = util.get_train_file(args.norm, args.nevents)
+    valid_file = util.get_valid_file(args.norm, args.nevents)
+    train_target_file = util.get_train_target(args.norm, args.nevents)
+    valid_target_file = util.get_valid_target(args.norm, args.nevents)
 
-    # Load the data, both input and target.
-    train_target_file = "y" + args.train_file[1:]
-    valid_target_file = "y" + args.valid_file[1:]
-    train_data   = np.load(os.path.join(args.data_folder, args.train_file))
-    valid_data   = np.load(os.path.join(args.data_folder, args.valid_file))
+    # Load the data.
+    train_data   = np.load(os.path.join(args.data_folder, train_file))
+    valid_data   = np.load(os.path.join(args.data_folder, valid_file))
     train_target = np.load(os.path.join(args.data_folder, train_target_file))
     valid_target = np.load(os.path.join(args.data_folder, valid_target_file))
 
@@ -62,13 +65,13 @@ def main():
     print("----------------\n")
 
     # Define the model and prepare the output folder.
-    nevents   = train_data.shape[0]
     nfeatures = train_data.shape[1]
     (args.layers).insert(0, nfeatures)
 
     model = util.choose_ae_model(ae_type, device, args.layers, args.lr,
-        encoder_activation, decoder_activation, loss_weight=0)
-    outdir = util.prep_out(model, args.batch, args.lr, nevents, args.file_flag)
+        encoder_activation, decoder_activation, loss_weight=1)
+    outdir = util.prep_out(model, args.batch, args.lr, args.nevents,
+        args.norm, args.file_flag)
 
     # Train and time it.
     start_time = time.time()

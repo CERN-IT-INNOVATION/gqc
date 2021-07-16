@@ -13,10 +13,12 @@ import util
 default_layers = [64, 52, 44, 32, 24, 16]
 parser = argparse.ArgumentParser(formatter_class=argparse.
     ArgumentDefaultsHelpFormatter)
-parser.add_argument("--train_file", type=str,
-    help="The path to the training data.")
-parser.add_argument("--valid_file", type=str,
-    help="The path to the validation data.")
+parser.add_argument("--data_folder", type=str,
+    help="The folder where the data is stored on the system..")
+parser.add_argument("--norm", type=str,
+    help="The name of the normalisation that you'll to use.")
+parser.add_argument("--nevents", type=str,
+    help="The number of events of the norm file.")
 parser.add_argument('--lr', type=float, nargs=2,
     help='The learning rate range [min max].')
 parser.add_argument('--layers', type=int, default=default_layers, nargs='+',
@@ -33,12 +35,12 @@ def optuna_train(train_loader, valid_loader, model, epochs, trial):
     for epoch in range(epochs):
         model.train()
 
-        model.train_all_batches(train_loader)
-        model.valid(valid_loader, outdir)
+        train_loss = model.train_all_batches(train_loader)
+        valid_loss = model.valid(valid_loader, None)
 
-        model.print_losses(epoch, epochs)
+        model.print_losses(epoch, epochs, train_loss.item(), valid_loss.item())
 
-        trial.report(model.all_valid_loss[epoch], epoch)
+        trial.report(train_loss.item(), epoch)
         if trial.should_prune():         raise optuna.TrialPruned()
         if model.best_valid_loss > 0.09: raise optuna.TrialPruned()
 
@@ -57,13 +59,17 @@ def optuna_objective(trial):
 
     # Define parameters to be optimized by optuna.
     lr    = trial.suggest_loguniform('lr', *args.lr)
-    batch = trial.suggest_categorical('batch', args.batch)
+    batch = trial.suggest_categorical(' batch', args.batch)
 
-    # Load the data, both input and target.
-    train_data = np.load(os.path.join(args.data_folder, args.train_file))
-    valid_data = np.load(os.path.join(args.data_folder, args.valid_file))
-    train_target_file = "y" + args.train_file[1:]
-    valid_target_file = "y" + args.valid_file[1:]
+    # Get the names of the data files. We follow a naming scheme. See util mod.
+    train_file = util.get_train_file(args.norm, args.nevents)
+    valid_file = util.get_valid_file(args.norm, args.nevents)
+    train_target_file = util.get_train_target(args.norm, args.nevents)
+    valid_target_file = util.get_valid_target(args.norm, args.nevents)
+
+    # Load the data.
+    train_data   = np.load(os.path.join(args.data_folder, train_file))
+    valid_data   = np.load(os.path.join(args.data_folder, valid_file))
     train_target = np.load(os.path.join(args.data_folder, train_target_file))
     valid_target = np.load(os.path.join(args.data_folder, valid_target_file))
 
@@ -71,6 +77,7 @@ def optuna_objective(trial):
         util.to_pytorch_data(train_data, train_target, device, batch, True)
     valid_loader = \
         util.to_pytorch_data(valid_data, valid_target, device, None, True)
+
 
     print("\n----------------")
     print("\033[92mData loading complete:\033[0m")
@@ -92,13 +99,15 @@ def optuna_objective(trial):
 
 if __name__ == '__main__':
     # Start the optuna study.
+    print('\n')
     sampler = optuna.samplers.TPESampler()
-    study = optuna.create_study(sampler=sampler, direction='minimize',
+    study = optuna.create_study(study_name="batch-lr-optimizer",
+        sampler=sampler, direction='minimize',
         pruner=optuna.pruners.HyperbandPruner())
 
-    study.optimize(optuna_objective, n_trials=50)
+    study.optimize(optuna_objective, n_trials=2)
 
-    comp_trials= study.trials(deepcopy=False, states=[TrialState.COMPLETE])
+    comp_trials = study.get_trials(deepcopy=False, states=[TrialState.COMPLETE])
     print("Study statistics: ")
     print("  Number of finished trials: ", len(study.trials))
     print("  Number of complete trials: ", len(comp_trials))

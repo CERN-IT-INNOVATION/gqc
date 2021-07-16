@@ -1,19 +1,11 @@
-# Run the main script, for training the autoencoder on a particular dataset.
-<<<<<<< HEAD
-python3 main.py --data_folder {path_to_folder_containing_data_files} --train_file {name_of_training_file} --valid_file {name_of_validation_file} --train_target {name_of_train_target_file} --valid_target {name_of_valid_target_file} --lr {learning_rate} --batch {batch_size} --epochs {number_of_epochs} --file_flag {flag_to_attach_at_end_of_file_name}
-=======
-python3 main.py --train_file {path_to_training_file} --valid_file {path_to_validation_file} --lr {learning_rate} --batch {batch_size} --epochs {number_of_epochs} --file_flag {flag_to_attach_at_end_of_file_name}
->>>>>>> main
+# Train the autoencoder on a particular dataset.
+python3 train.py --data_folder ../../qml_data/input_ae/ --norm minmax --nevents 7.20e+05 --batch 128 --epochs 85 --file_flag test
 
-# Run plotting the results of the training, given an already trained model.
-python3 plotting.py --data_folder {path_to_folder_containing_data_files} --valid_file {name_of_validation_file_in_that_folder} --test_file {name_of_test_file_in_that_folder} --test_target {name_of_target_file_in_that_folder} --model_path {path_to_the_model_folder}
+# Plot the results of the training.
+python3 plotting.py --data_folder ../../qml_data/input_ae/ --model_path ./trained_models/L64.52.44.32.24.16_B128_Lr2e-03_N7.20e+05_Sminmax_test/best_model.pt
 
-# Run the batch script for the main. This uses gpu but only the script name changes for cpu. Runs with the default parameters and paths. You need to at least change the paths for it to run.
-<<<<<<< HEAD
-batch submit_gpu.sh -t x_data_optimal_norm_7.20e+05_train.npy -v x_data_optimal_norm_7.20e+05_valid.npy -l 0.002 -b 128 -e 85 -f optimal_norm_gpu
-=======
-sbatch submit_gpu.sh -t x_data_optimal_norm_7.20e+05_train.npy -v x_data_optimal_norm_7.20e+05_valid.npy -l 0.002 -b 128 -e 85 -f optimal_norm_gpu
->>>>>>> main
+# Train the autoencoder by submitting the job to batch on t3, to run on gpu.
+sbatch submit_gpu.sh -n minmax -s 7.20e+05 -l 0.002 -b 128 -e 85 -f test_job
 
-# Run the batch script for the hyperparameter optimization using optuna. Same holds as above... need to adjust the paths. Parameters can also be adjusted.
-sbatch submit_optim_gpu.sh -t x_data_optimal_robust_maxabs_norm_7.20e+05_train.npy -v x_data_optimal_robust_maxabs_norm_7.20e+05_valid.npy -l "1e-04 1e-01" -b "128 256 512" -e 50
+# Optimize hyperparameters of the autoencoder using optuna, namely the learning rate and batch size.
+sbatch submit_optim_gpu.sh -n minmax -e 7.20e+05 -l "1e-04 1e-01" -b "128 256 512" -e 50

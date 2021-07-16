@@ -70,7 +70,7 @@ def main():
 
     model = util.choose_ae_model(ae_type, device, args.layers, args.lr,
         encoder_activation, decoder_activation, loss_weight=1,
-        class_layers=[128,128,64,32,16,1])
+        class_layers=[64,64,32,16,8,1])
     outdir = util.prep_out(model, args.batch, args.lr, args.nevents,
         args.norm, args.file_flag)
 

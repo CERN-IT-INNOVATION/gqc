@@ -104,13 +104,13 @@ class AE(nn.Module):
         return (1 - self.loss_weight)*recon_loss + self.loss_weight*class_loss
 
     @staticmethod
-    def print_losses(epoch, epochs, all_train_loss, all_valid_loss,
+    def print_losses(epoch, epochs, train_loss, valid_loss,
         valid_recon_loss, valid_class_loss):
 
         print(f"Epoch : {epoch + 1}/{epochs}, "
-                  f"Train loss (last batch) = {all_train_loss[epoch]:.8f}")
+                  f"Train loss (last batch) = {train_loss:.8f}")
         print(f"Epoch : {epoch + 1}/{epochs}, "
-                  f"Valid loss = {all_valid_loss[epoch]:.8f}")
+                  f"Valid loss = {valid_loss:.8f}")
         print(f"Epoch : {epoch + 1}/{epochs}, "
                   f"Valid recon loss = {valid_recon_loss:.8f}")
         print(f"Epoch : {epoch + 1}/{epochs}, "
@@ -179,8 +179,8 @@ class AE(nn.Module):
             all_train_loss.append(train_loss.item())
             all_valid_loss.append(valid_loss.item())
 
-            self.print_losses(epoch, epochs, all_train_loss, all_valid_loss,
-                recon_loss.item(), class_loss.item())
+            self.print_losses(epoch, epochs, train_loss.item(),
+                valid_loss.item(), recon_loss.item(), class_loss.item())
 
         return all_train_loss, all_valid_loss, self.best_valid_loss
 

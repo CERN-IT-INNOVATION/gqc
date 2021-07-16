@@ -170,7 +170,6 @@ class AE(nn.Module):
         all_train_loss = []
         all_valid_loss = []
 
-        print(self.classifier.parameters())
         for epoch in range(epochs):
             self.train()
 
@@ -182,7 +181,6 @@ class AE(nn.Module):
 
             self.print_losses(epoch, epochs, all_train_loss, all_valid_loss,
                 recon_loss.item(), class_loss.item())
-        print(self.classifier.parameters())
 
         return all_train_loss, all_valid_loss, self.best_valid_loss
 

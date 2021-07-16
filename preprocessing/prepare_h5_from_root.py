@@ -12,10 +12,10 @@ import root_numpy
 parser = argparse.ArgumentParser()
 parser.add_argument( "--input", type=str,
     required=True, action="store", nargs='+',
-    help="Input data_folder or list of files.")
+    help="Input data file, data folder, or list of files.")
 parser.add_argument("--output", type=str,
     default="data.h5", action="store",
-    help="The output data file.")
+    help="The output data .h5 file.")
 args = parser.parse_args()
 output_folder = 'preprocessed_data'
 

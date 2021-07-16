@@ -39,7 +39,9 @@ def main():
 
     all_data = np.vstack((data_sig, data_bkg))
     all_targ = np.concatenate((np.ones(args.maxdata), np.zeros(args.maxdata)))
-
+    
+    print("\n\033[92mSaving all (raw) no norm data...\033[0m")
+    split_and_save(all_data, all_targ, fnn("no",args.maxdata))
     print("\n\033[92mApplying minmax normalization...\033[0m")
     apply_norm(MinMaxScaler(), fnn("minmax", args.maxdata), all_data, all_targ)
     print("\n\033[92mApplying maxabs normalization...\033[0m")

@@ -1,4 +1,4 @@
-name: qml_project
+name: qml_project_pytorch
 channels:
   - pytorch
   - conda-forge

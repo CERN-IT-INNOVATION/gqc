@@ -3,9 +3,3 @@ python3 train.py --data_folder ../../qml_data/input_ae/ --norm minmax --nevents 
 
 # Plot the results of the training.
 python3 plotting.py --data_folder ../../qml_data/input_ae/ --model_path ./trained_models/L64.52.44.32.24.16_B128_Lr2e-03_N7.20e+05_Sminmax_test/best_model.pt
-
-# Train the autoencoder by submitting the job to batch on t3, to run on gpu.
-sbatch submit_gpu.sh -n minmax -s 7.20e+05 -l 0.002 -b 128 -e 85 -f test_job
-
-# Optimize hyperparameters of the autoencoder using optuna, namely the learning rate and batch size.
-sbatch submit_optim_gpu.sh -n minmax -e 7.20e+05 -l "1e-04 1e-01" -b "128 256 512" -e 50

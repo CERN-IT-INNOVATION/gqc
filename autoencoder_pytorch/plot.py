@@ -17,12 +17,13 @@ parser.add_argument('--model_path', type=str, required=True,
     help="The path to the saved model.")
 
 def main():
+    # Import/set hyperparameters. Make sure activations are the same.
     args               = parser.parse_args()
     device             = 'cpu'
-    ae_type            = "vanilla"
     encoder_activation = nn.Tanh()
     decoder_activation = nn.Tanh()
-    layers, batch, lr, norm, nevents = util.import_hyperparams(args.model_path)
+    layers, aetype, batch, lr, norm, nevents = \
+        util.import_hyperparams(args.model_path)
 
     # Import the data.
     valid_file         = util.get_valid_file(norm, nevents)
@@ -39,14 +40,15 @@ def main():
 
     # Import the model.
     (layers).insert(0, test_data.shape[1])
-    model = util.choose_ae_model(ae_type, device, layers, lr,
-        encoder_activation, decoder_activation)
+    model = util.choose_ae_model(aetype, device, layers, lr,
+        encoder_activation, decoder_activation, loss_weight=1,
+        class_layers=[128,128,64,32,16,1])
     model = util.load_model(model, args.model_path)
 
     # Compute loss function results for the test and validation datasets.
     print('\n----------------------------------')
-    print(f"VALID MSE: {model.compute_loss(valid_data).item()}")
-    print(f"TEST MSE: {model.compute_loss(test_data).item()}")
+    print(f"VALID MSE: {model.compute_loss(valid_data, valid_target).item()}")
+    print(f"TEST MSE: {model.compute_loss(test_data, test_target).item()}")
     print('----------------------------------\n')
 
     # Compute the signal and background latent spaces and decoded data.

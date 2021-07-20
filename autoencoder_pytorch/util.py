@@ -115,8 +115,12 @@ def import_hyperparams(model_path):
         hyperparams.find('B')+1, len(hyperparams))])
     lr      = float(hyperparams[hyperparams.find('Lr')+2:hyperparams.find('_',
         hyperparams.find('Lr')+2, len(hyperparams))])
-    nevents = hyperparams[hyperparams.find('N')+1:hyperparams.find('_', hyperparams.find('N')+1, len(hyperparams))]
-    norm    = hyperparams[hyperparams.find('S')+1:hyperparams.find('_', hyperparams.find('S')+1, len(hyperparams))]
+    nevents = hyperparams[hyperparams.find('N')+1:hyperparams.find('_',
+        hyperparams.find('N')+1, len(hyperparams))]
+    norm    = hyperparams[hyperparams.find('S')+1:hyperparams.find('_',
+        hyperparams.find('S')+1, len(hyperparams))]
+    aetype  = hyperparams[hyperparams.find('T')+1:hyperparams.find('_',
+        hyperparams.find('T')+1, len(hyperparams))]
 
     print("\nImported model hyperparameters:")
     print("--------------------------------")
@@ -126,13 +130,13 @@ def import_hyperparams(model_path):
     print(f"Normalisation Name: {norm}")
     print(f"Number of Events: {nevents}")
 
-    return layers, batch, lr, norm, nevents
+    return layers, aetype, batch, lr, norm, nevents
 
-def prep_out(model, batch_size, learning_rate, maxdata, norm, flag):
+def prep_out(model, aetype, batch_size, learning_rate, maxdata, norm, flag):
     # Create the folder for the output of the model training.
     # Save the model architecture to a text file inside that folder.
     layers_tag = '.'.join(str(inode) for inode in model.layers[1:])
-    file_tag   = 'L' + layers_tag + '_B' + str(batch_size) + \
+    file_tag   = 'L' + layers_tag + '_T' + aetype + '_B' + str(batch_size) + \
         f'_Lr{learning_rate:.0e}' + "_" + f"N{maxdata}" + "_S" + norm + \
         "_" + flag
 
@@ -146,13 +150,13 @@ def prep_out(model, batch_size, learning_rate, maxdata, norm, flag):
 def varname(index):
     # Gets the name of what variable is currently considered based on the index
     # in the data array.
-    jet_feats=["$p_t$","$\\eta$","$\\phi$","Energy","$p_x$","$p_y$","$p_z$",
+    jet_feats = ["$p_t$","$\\eta$","$\\phi$","Energy","$p_x$","$p_y$","$p_z$",
         "btag"]
-    jet_nvars=len(jet_feats); num_jets = 7
-    met_feats=["$\\phi$","$p_t$","$p_x$","$p_y$"]
-    met_nvars=len(met_feats)
-    lep_feats=["$p_t$","$\\eta$","$\\phi$","Energy","$p_x$","$p_y$","$p_z$"]
-    lep_nvars=len(lep_feats)
+    jet_nvars = len(jet_feats); num_jets = 7
+    met_feats = ["$\\phi$","$p_t$","$p_x$","$p_y$"]
+    met_nvars = len(met_feats)
+    lep_feats = ["$p_t$","$\\eta$","$\\phi$","Energy","$p_x$","$p_y$","$p_z$"]
+    lep_nvars = len(lep_feats)
 
     if (index < jet_nvars * num_jets):
         jet = index // jet_nvars + 1

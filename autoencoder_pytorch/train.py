@@ -21,6 +21,8 @@ parser.add_argument("--data_folder", type=str,
     help="The folder where the data is stored on the system..")
 parser.add_argument("--norm", type=str,
     help="The name of the normalisation that you'll to use.")
+parser.add_argument("--aetype", type=str,
+    help="The type of autoencoder that you will use, i.e., vanilla etc..")
 parser.add_argument("--nevents", type=str,
     help="The number of events of the norm file.")
 parser.add_argument('--lr', type=float, default=2e-03,
@@ -37,7 +39,6 @@ parser.add_argument('--file_flag', type=str, default='',
 def main():
     args               = parser.parse_args()
     device             = util.define_torch_device()
-    ae_type            = "classifier"
     encoder_activation = nn.Tanh()
     decoder_activation = nn.Tanh()
 
@@ -68,11 +69,11 @@ def main():
     nfeatures = train_data.shape[1]
     (args.layers).insert(0, nfeatures)
 
-    model = util.choose_ae_model(ae_type, device, args.layers, args.lr,
-        encoder_activation, decoder_activation, loss_weight=1,
-        class_layers=[64,64,32,16,8,1])
-    outdir = util.prep_out(model, args.batch, args.lr, args.nevents,
-        args.norm, args.file_flag)
+    model = util.choose_ae_model(args.aetype, device, args.layers, args.lr,
+        encoder_activation, decoder_activation, loss_weight=0,
+        class_layers=[128,128,64,32,16,1])
+    outdir = util.prep_out(model, args.aetype, args.batch, args.lr,
+        args.nevents, args.norm, args.file_flag)
 
     # Train and time it.
     start_time = time.time()

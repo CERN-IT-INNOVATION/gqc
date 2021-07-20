@@ -99,7 +99,7 @@ class AE(nn.Module):
         latent, classif, recon = self.forward(x_data.float())
 
         recon_loss = self.recon_loss_function(recon, x_data.float())
-        class_loss = self.class_loss_function(classif.flatten(), y_data)
+        class_loss = self.class_loss_function(classif.flatten(), y_data.float())
 
         return (1 - self.loss_weight)*recon_loss + self.loss_weight*class_loss
 
@@ -170,6 +170,19 @@ class AE(nn.Module):
         all_train_loss = []
         all_valid_loss = []
 
+        with open('encoder1.txt', 'w') as encoder1:
+            for name, param in self.encoder.named_parameters():
+                if param.requires_grad:
+                    print(name, param.data, file=encoder1)
+        with open('classifier1.txt', 'w') as classifier1:
+            for name, param in self.classifier.named_parameters():
+                if param.requires_grad:
+                    print(name, param.data, file=classifier1)
+        with open('decoder1.txt', 'w') as decoder1:
+            for name, param in self.decoder.named_parameters():
+                if param.requires_grad:
+                    print(name, param.data, file=decoder1)
+
         for epoch in range(epochs):
             self.train()
 
@@ -181,6 +194,19 @@ class AE(nn.Module):
 
             self.print_losses(epoch, epochs, train_loss.item(),
                 valid_loss.item(), recon_loss.item(), class_loss.item())
+
+        with open('encoder2.txt', 'w') as encoder2:
+            for name, param in self.encoder.named_parameters():
+                if param.requires_grad:
+                    print(name, param.data, file=encoder2)
+        with open('classifier2.txt', 'w') as classifier2:
+            for name, param in self.classifier.named_parameters():
+                if param.requires_grad:
+                    print(name, param.data, file=classifier2)
+        with open('decoder2.txt', 'w') as decoder2:
+            for name, param in self.decoder.named_parameters():
+                if param.requires_grad:
+                    print(name, param.data, file=decoder2)
 
         return all_train_loss, all_valid_loss, self.best_valid_loss
 

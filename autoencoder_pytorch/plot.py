@@ -78,7 +78,7 @@ def sig_bkg_plots(input_sig, input_bkg, output_sig, output_bkg, model_path):
         ratio_plotter(input_sig[:,idx], output_sig[:,idx], idx,
             'navy', class_label='Signal')
 
-        plt.savefig(plots_folder + 'Ratio Plot ' + util.varname(idx) + '.pdf')
+        plt.savefig(plots_folder + 'Ratio Plot ' + util.varname(idx) + '.png')
         plt.close()
 
     print(f"\033[92mRatio plots were saved to {plots_folder}.\033[0m")
@@ -101,7 +101,7 @@ def latent_space_plots(latent_data_sig, latent_data_bkg, model_path):
 
         plt.legend()
         plt.xlabel(f'Latent feature {i}')
-        plt.savefig(storage_folder_path + 'Latent Feature '+ str(i) + '.pdf')
+        plt.savefig(storage_folder_path + 'Latent Feature '+ str(i) + '.png')
         plt.close()
 
     print(f"\033[92mLatent plots were saved to {storage_folder_path}.\033[0m")

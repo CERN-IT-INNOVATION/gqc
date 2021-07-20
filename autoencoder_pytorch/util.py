@@ -99,6 +99,7 @@ def split_sig_bkg(data, target):
 
 def load_model(model, model_path):
     # Loads a pytorch saved model.pt file given it's path.
+    if not os.path.exists(model_path): raise FileNotFoundError("∄ path.")
     model.load_state_dict(
         torch.load(model_path, map_location=torch.device('cpu')))
 

@@ -17,6 +17,8 @@ parser.add_argument("--data_folder", type=str,
     help="The folder where the data is stored on the system..")
 parser.add_argument("--norm", type=str,
     help="The name of the normalisation that you'll to use.")
+parser.add_argument("--aetype", type=str,
+    help="The type of autoencoder that you will use, i.e., vanilla etc..")
 parser.add_argument("--nevents", type=str,
     help="The number of events of the norm file.")
 parser.add_argument('--lr', type=float, nargs=2,
@@ -53,7 +55,6 @@ def optuna_objective(trial):
     """
     args               = parser.parse_args()
     device             = util.define_torch_device()
-    ae_type            = "vanilla"
     encoder_activation = nn.Tanh()
     decoder_activation = nn.Tanh()
 
@@ -78,7 +79,6 @@ def optuna_objective(trial):
     valid_loader = \
         util.to_pytorch_data(valid_data, valid_target, device, None, True)
 
-
     print("\n----------------")
     print("\033[92mData loading complete:\033[0m")
     print(f"Training data size: {train_data.shape[0]:.2e}")
@@ -89,7 +89,7 @@ def optuna_objective(trial):
     nfeatures = train_data.shape[1]
     (args.layers).insert(0, nfeatures)
 
-    model = util.choose_ae_model(ae_type, device, args.layers, lr,
+    model = util.choose_ae_model(args.aetype, device, args.layers, lr,
         encoder_activation, decoder_activation)
 
     min_valid = \

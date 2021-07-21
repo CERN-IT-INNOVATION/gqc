@@ -1,7 +1,7 @@
-# The vanilla autoencoder architecture. Reduces the number
-# of features from 67 down to 16 by using a combination of linear and ELU
-# layers. The loss function of the autoencoder is the MSE between the
-# histograms reconstructed by the decoder and the original variables.
+# Classifier autencoder. Different from the vanilla one since it has a
+# classifier attached to the latent space, that does the classification
+# for each batch latent space and outputs the binary cross-entropy loss
+# that is then used to optimize the autoencoder as a whole.
 
 import numpy as np
 import torch
@@ -25,10 +25,10 @@ class AE(nn.Module):
         self.class_layers        = class_layers
         self.device              = device
         self.recon_loss_function = nn.MSELoss(reduction='mean')
-        self.class_loss_function = nn.BCELoss()
+        self.class_loss_function = nn.BCELoss(reduction='mean')
         self.loss_weight         = loss_weight
 
-        self.best_valid_loss   = 9999
+        self.best_valid_loss = 9999
 
         encoder_layers = self.construct_encoder(layers, en_activ)
         self.encoder   = nn.Sequential(*encoder_layers)
@@ -59,14 +59,14 @@ class AE(nn.Module):
     def construct_classifier(layers):
         # Construct the classifier layers.
         dnn_layers = []
-        dnn_layers.append(nn.BatchNorm1d(layers[0]))
+        # dnn_layers.append(nn.BatchNorm1d(layers[0]))
 
         for idx in range(len(layers)):
             dnn_layers.append(nn.Linear(layers[idx], layers[idx+1]))
             if idx == len(layers) - 2: dnn_layers.append(nn.Sigmoid()); break
 
-            dnn_layers.append(nn.BatchNorm1d(layers[idx+1]))
-            dnn_layers.append(nn.Dropout(0.5))
+            # dnn_layers.append(nn.BatchNorm1d(layers[idx+1]))
+            # dnn_layers.append(nn.Dropout(0.5))
             dnn_layers.append(nn.LeakyReLU(0.2))
 
         return dnn_layers

@@ -39,8 +39,10 @@ parser.add_argument('--file_flag', type=str, default='',
 def main():
     args               = parser.parse_args()
     device             = util.define_torch_device()
-    encoder_activation = nn.Tanh()
+    encoder_activation = nn.Sigmoid()
     decoder_activation = nn.Tanh()
+    loss_weight        = 1
+    class_layers       = [128, 128, 64, 32, 16, 1]
 
     # Get the names of the data files. We follow a naming scheme. See util mod.
     train_file = util.get_train_file(args.norm, args.nevents)
@@ -70,8 +72,8 @@ def main():
     (args.layers).insert(0, nfeatures)
 
     model = util.choose_ae_model(args.aetype, device, args.layers, args.lr,
-        encoder_activation, decoder_activation, loss_weight=0.5,
-        class_layers=[128,128,64,32,16,1])
+        encoder_activation, decoder_activation, loss_weight=loss_weight,
+        class_layers=class_layers)
     outdir = util.prep_out(model, args.aetype, args.batch, args.lr,
         args.nevents, args.norm, args.file_flag)
 

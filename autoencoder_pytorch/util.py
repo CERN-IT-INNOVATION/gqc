@@ -24,11 +24,12 @@ def choose_ae_model(user_choice, device, layers, lr, en_activ=nn.Tanh(),
     return model
 
 def ae_vanilla_model(device, layers, lr, en_activ, dec_activ):
-    return ae_vanilla.AE(device, layers, lr, en_activ, dec_activ).to(device)
+    return ae_vanilla.AE_vanilla(device, layers, lr, en_activ,
+        dec_activ).to(device)
 
 def ae_classifier_model(device, layers, lr, en_activ, dec_activ, class_layers,
     loss_weight):
-    return ae_classifier.AE(device, layers, lr, en_activ, dec_activ,
+    return ae_classifier.AE_classifier(device, layers, lr, en_activ, dec_activ,
         class_layers, loss_weight).to(device)
 
 def define_torch_device():

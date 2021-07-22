@@ -13,6 +13,7 @@ import torch.nn as nn
 
 import plot
 import util
+from terminal_colors import tcols
 
 default_layers = [64, 52, 44, 32, 24, 16]
 parser = argparse.ArgumentParser(formatter_class=argparse.
@@ -39,10 +40,10 @@ parser.add_argument('--file_flag', type=str, default='',
 def main():
     args               = parser.parse_args()
     device             = util.define_torch_device()
-    encoder_activation = nn.Sigmoid()
+    encoder_activation = nn.Tanh()
     decoder_activation = nn.Tanh()
     loss_weight        = 1
-    class_layers       = [128, 128, 64, 32, 16, 1]
+    class_layers       = [128, 64, 32, 16, 8, 1]
 
     # Get the names of the data files. We follow a naming scheme. See util mod.
     train_file = util.get_train_file(args.norm, args.nevents)
@@ -62,7 +63,7 @@ def main():
         util.to_pytorch_data(valid_data, valid_target, device, None, True)
 
     print("\n----------------")
-    print("\033[92mData loading complete:\033[0m")
+    print(tcols.OKGREEN + "Data loading complete:" + tcols.ENDC)
     print(f"Training data size: {train_data.shape[0]:.2e}")
     print(f"Validation data size: {valid_data.shape[0]:.2e}")
     print("----------------\n")
@@ -71,7 +72,7 @@ def main():
     nfeatures = train_data.shape[1]
     (args.layers).insert(0, nfeatures)
 
-    model = util.choose_ae_model(args.aetype, device, args.layers, args.lr,
+    model  = util.choose_ae_model(args.aetype, device, args.layers, args.lr,
         encoder_activation, decoder_activation, loss_weight=loss_weight,
         class_layers=class_layers)
     outdir = util.prep_out(model, args.aetype, args.batch, args.lr,

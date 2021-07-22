@@ -8,6 +8,9 @@ import torch
 import torch.nn as nn
 import torch.optim as optim
 
+from ae_vanilla import AE_vanilla
+from terminal_colors import tcols
+
 seed = 100
 torch.manual_seed(seed)
 
@@ -15,45 +18,21 @@ torch.manual_seed(seed)
 torch.autograd.set_detect_anomaly(False)
 torch.autograd.profiler.profile(enabled=False)
 
-class AE(nn.Module):
+class AE_classifier(AE_vanilla):
     def __init__(self, device, layers, lr, en_activ, dec_activ, class_layers,
         loss_weight, **kwargs):
 
-        super(AE, self).__init__()
-        self.lr                  = lr
-        self.layers              = layers
+        super().__init__(device, layers, lr, en_activ, dec_activ)
+
         self.class_layers        = class_layers
-        self.device              = device
-        self.recon_loss_function = nn.MSELoss(reduction='mean')
         self.class_loss_function = nn.BCELoss(reduction='mean')
         self.loss_weight         = loss_weight
-
-        self.best_valid_loss = 9999
-
-        encoder_layers = self.construct_encoder(layers, en_activ)
-        self.encoder   = nn.Sequential(*encoder_layers)
 
         (class_layers).insert(0, layers[-1])
         class_layers    = self.construct_classifier(class_layers)
         self.classifier = nn.Sequential(*class_layers)
 
-        decoder_layers = self.construct_decoder(layers, dec_activ)
-        self.decoder   = nn.Sequential(*decoder_layers)
-
         self.optimizer = optim.Adam(self.parameters(), lr=lr)
-
-    @staticmethod
-    def construct_encoder(layers, en_activ):
-        # Construct the encoder layers.
-        enc_layers = []
-        layer_nbs = range(len(layers))
-        for idx in layer_nbs:
-            enc_layers.append(nn.Linear(layers[idx], layers[idx+1]))
-            if idx == len(layers) - 2 and en_activ is None: break
-            if idx == len(layers) - 2: enc_layers.append(en_activ); break
-            enc_layers.append(nn.ELU(True))
-
-        return enc_layers
 
     @staticmethod
     def construct_classifier(layers):
@@ -68,21 +47,9 @@ class AE(nn.Module):
             # dnn_layers.append(nn.BatchNorm1d(layers[idx+1]))
             # dnn_layers.append(nn.Dropout(0.5))
             dnn_layers.append(nn.LeakyReLU(0.2))
+            # dnn_layers.append(nn.ELU(True))
 
         return dnn_layers
-
-    @staticmethod
-    def construct_decoder(layers, dec_activ):
-        # Construct the decoder layers.
-        dec_layers = []
-        layer_nbs = reversed(range(len(layers)))
-        for idx in layer_nbs:
-            dec_layers.append(nn.Linear(layers[idx], layers[idx-1]))
-            if idx == 1 and dec_activ is None: break
-            if idx == 1 and dec_activ: dec_layers.append(dec_activ); break
-            dec_layers.append(nn.ELU(True))
-
-        return dec_layers
 
     def forward(self, x):
         latent        = self.encoder(x)
@@ -116,6 +83,17 @@ class AE(nn.Module):
         print(f"Epoch : {epoch + 1}/{epochs}, "
                   f"Valid class loss = {valid_class_loss:.8f}")
 
+    def network_summary(self):
+        print(tcols.OKGREEN + "Encoder summary:" + tcols.ENDC)
+        self.print_summary(self.encoder, self.device)
+        print('\n')
+        print(tcols.OKGREEN + "Classifier summary:" + tcols.ENDC)
+        self.print_summary(self.classifier, self.device)
+        print('\n')
+        print(tcols.OKGREEN + "Decoder summary:" + tcols.ENDC)
+        self.print_summary(self.decoder, self.device)
+        print('\n\n')
+
     @torch.no_grad()
     def valid(self, valid_loader, outdir):
         # Evaluate the validation loss for the model and save if new minimum.
@@ -134,7 +112,8 @@ class AE(nn.Module):
         if valid_loss < self.best_valid_loss: self.best_valid_loss = valid_loss
 
         if outdir is not None and self.best_valid_loss == valid_loss:
-            print(f'\033[92mNew min loss: {self.best_valid_loss:.2e}\033[0m')
+            print(tcols.OKGREEN + f"New min loss: {self.best_valid_loss:.2e}" +
+                  tcols.ENDC)
             torch.save(self.state_dict(), outdir + 'best_model.pt')
 
         return valid_loss, recon_loss, class_loss
@@ -166,7 +145,8 @@ class AE(nn.Module):
 
     def train_autoencoder(self, train_loader, valid_loader, epochs, outdir):
 
-        print('\033[96mTraining the classifier AE model...\033[0m')
+        self.network_summary()
+        print(tcols.OKCYAN + "Training the classifier AE model..." + tcols.ENDC)
         all_train_loss = []
         all_valid_loss = []
 

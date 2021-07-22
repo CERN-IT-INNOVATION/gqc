@@ -8,6 +8,7 @@ import torch.nn as nn
 from sklearn import metrics
 
 import util
+from terminal_colors import tcols
 
 parser = argparse.ArgumentParser(formatter_class=argparse.
     ArgumentDefaultsHelpFormatter)
@@ -81,7 +82,7 @@ def sig_bkg_plots(input_sig, input_bkg, output_sig, output_bkg, model_path):
         plt.savefig(plots_folder + 'Ratio Plot ' + util.varname(idx) + '.png')
         plt.close()
 
-    print(f"\033[92mRatio plots were saved to {plots_folder}.\033[0m")
+    print(f"Ratio plots were saved to {plots_folder}.")
 
 def latent_space_plots(latent_data_sig, latent_data_bkg, model_path):
     # Makes the plots of the latent space data produced by the encoder.
@@ -104,7 +105,7 @@ def latent_space_plots(latent_data_sig, latent_data_bkg, model_path):
         plt.savefig(storage_folder_path + 'Latent Feature '+ str(i) + '.png')
         plt.close()
 
-    print(f"\033[92mLatent plots were saved to {storage_folder_path}.\033[0m")
+    print(f"Latent plots were saved to {storage_folder_path}.")
 
 def latent_roc_plots(data, target, model_path):
     # Plot the roc curves of the latent space distributions.
@@ -135,7 +136,7 @@ def latent_roc_plots(data, target, model_path):
     with open(plots_folder + 'auc_sum.txt', 'w') as auc_sum_file:
         auc_sum_file.write(f"{auc_sum:.3f}")
 
-    print(f"\033[92mLatent roc plots were saved to {plots_folder}.\033[0m")
+    print(f"Latent roc plots were saved to {plots_folder}.")
 
 def ratio_plotter(input_data, output_data, ifeature, color, class_label=''):
     # Plots two overlaid histograms.
@@ -169,7 +170,7 @@ def loss_plot(loss_train, loss_valid, min_valid, epochs, outdir):
     plt.legend()
     plt.savefig(outdir + "loss_epochs.pdf"); plt.close()
 
-    print(f"\033[92mLoss vs epochs plot saved to {outdir}.\033[0m")
+    print(tcols.OKGREEN + f"Loss vs epochs plot saved to {outdir}." +tcols.ENDC)
 
 if __name__ == '__main__':
     main()

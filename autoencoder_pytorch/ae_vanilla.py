@@ -7,6 +7,9 @@ import numpy as np
 import torch
 import torch.nn as nn
 import torch.optim as optim
+from pytorch_model_summary import summary
+
+from terminal_colors import tcols
 
 seed = 100
 torch.manual_seed(seed)
@@ -15,10 +18,10 @@ torch.manual_seed(seed)
 torch.autograd.set_detect_anomaly(False)
 torch.autograd.profiler.profile(enabled=False)
 
-class AE(nn.Module):
+class AE_vanilla(nn.Module):
     def __init__(self, device, layers, lr, en_activ=None, dec_activ=None):
 
-        super(AE, self).__init__()
+        super().__init__()
         self.lr                  = lr
         self.layers              = layers
         self.device              = device
@@ -82,6 +85,20 @@ class AE(nn.Module):
         print(f"Epoch : {epoch + 1}/{epochs}, "
               f"Valid loss = {valid_loss:.8f}")
 
+    @staticmethod
+    def print_summary(model, device):
+        summary(model, torch.Tensor(model[0].in_features).to(device),
+            show_input=True, show_hierarchical=False, print_summary=True,
+            max_depth=1, show_parent_layers=False)
+
+    def network_summary(self):
+        print(tcols.OKGREEN+ "Encoder summary:" + tcols.ENDC)
+        self.print_summary(self.encoder, self.device)
+        print('\n')
+        print(tcols.OKGREEN+ "Decoder summary:" + tcols.ENDC)
+        self.print_summary(self.decoder, self.device)
+        print('\n\n')
+
     @torch.no_grad()
     def valid(self, valid_loader, outdir):
         # Evaluate the validation loss for the model and save if new minimum.
@@ -95,7 +112,8 @@ class AE(nn.Module):
         if loss < self.best_valid_loss: self.best_valid_loss = loss
 
         if outdir is not None and self.best_valid_loss == loss:
-            print(f'\033[92mNew min loss: {self.best_valid_loss:.2e}\033[0m')
+            print(tcols.OKGREEN + f"New min loss: {self.best_valid_loss:.2e}" +
+                  tcols.ENDC)
             torch.save(self.state_dict(), outdir + 'best_model.pt')
 
         return loss
@@ -125,7 +143,8 @@ class AE(nn.Module):
 
     def train_autoencoder(self, train_loader, valid_loader, epochs, outdir):
 
-        print('\033[96mTraining the vanilla AE model...\033[0m')
+        self.network_summary()
+        print(tcols.OKCYAN + "Training the vanilla AE model..." + tcols.ENDC)
         all_train_loss = []
         all_valid_loss = []
 

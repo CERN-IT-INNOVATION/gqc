@@ -38,43 +38,20 @@ class AE_vanilla(nn.Module):
 
         self.optimizer = optim.Adam(self.parameters(), lr=lr)
 
-
-
     @staticmethod
     def construct_encoder(layers, en_activ):
-        # Construct the classifier layers.
+        """
+        Construct the encoder layers.
+        """
         enc_layers = []
-        enc_layers.append(nn.BatchNorm1d(layers[0]))
-
-        for idx in range(len(layers)):
+        layer_nbs = range(len(layers))
+        for idx in layer_nbs:
             enc_layers.append(nn.Linear(layers[idx], layers[idx+1]))
-            if idx == len(layers) - 2:
-                enc_layers.append(nn.BatchNorm1d(layers[idx+1]))
-                enc_layers.append(nn.Dropout(0.5))
-                enc_layers.append(nn.LeakyReLU(0.2));
-                break
-
-            enc_layers.append(nn.BatchNorm1d(layers[idx+1]))
-            enc_layers.append(nn.Dropout(0.5))
-            enc_layers.append(nn.LeakyReLU(0.2))
-            # dnn_layers.append(nn.ELU(True))
+            if idx == len(layers) - 2 and en_activ is None: break
+            if idx == len(layers) - 2: enc_layers.append(en_activ); break
+            enc_layers.append(nn.ELU(True))
 
         return enc_layers
-
-    # @staticmethod
-    # def construct_encoder(layers, en_activ):
-    #     """
-    #     Construct the encoder layers.
-    #     """
-    #     enc_layers = []
-    #     layer_nbs = range(len(layers))
-    #     for idx in layer_nbs:
-    #         enc_layers.append(nn.Linear(layers[idx], layers[idx+1]))
-    #         if idx == len(layers) - 2 and en_activ is None: break
-    #         if idx == len(layers) - 2: enc_layers.append(en_activ); break
-    #         enc_layers.append(nn.ELU(True))
-
-    #     return enc_layers
 
     @staticmethod
     def construct_decoder(layers, dec_activ):

@@ -33,7 +33,7 @@ class AE_classifier(AE_vanilla):
         self.classifier = nn.Sequential(*class_layers)
         self = self.to(device)
 
-        self.optimizer = optim.Adagrad(self.parameters(), lr=lr, lr_decay=0.04)
+        self.optimizer = optim.Adam(self.parameters(), lr=lr)
 
     @staticmethod
     def construct_classifier(layers):
@@ -45,10 +45,9 @@ class AE_classifier(AE_vanilla):
             dnn_layers.append(nn.Linear(layers[idx], layers[idx+1]))
             if idx == len(layers) - 2: dnn_layers.append(nn.Sigmoid()); break
 
-            dnn_layers.append(nn.BatchNorm1d(layers[idx+1]))
-            dnn_layers.append(nn.Dropout(0.5))
+            # dnn_layers.append(nn.BatchNorm1d(layers[idx+1]))
+            # dnn_layers.append(nn.Dropout(0.5))
             dnn_layers.append(nn.LeakyReLU(0.2))
-            # dnn_layers.append(nn.ELU(True))
 
         return dnn_layers
 

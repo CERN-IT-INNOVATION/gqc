@@ -40,8 +40,8 @@ def main():
     encoder_activation = nn.Tanh()
     decoder_activation = nn.Tanh()
     loss_weight        = 1
-    ae_layers          = [1024, 1024, 512]
-    class_layers       = [256, 128, 1]
+    ae_layers          = [64, 52, 44, 32, 24, 16]
+    class_layers       = [128, 64, 32, 16, 8, 1]
 
     # Get the names of the data files. We follow a naming scheme. See util mod.
     train_file = util.get_train_file(args.norm, args.nevents)

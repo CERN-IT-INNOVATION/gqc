@@ -28,7 +28,9 @@ parser.add_argument("--data_sig", type=str, required=True,
 parser.add_argument("--data_bkg", type=str, required=True,
     help="Path to the .npy file containing bkg data to be normalized.")
 parser.add_argument('--maxdata', type=int, default=-1,
-    help='The maximum number of training samples to use.')
+    help='The maximum train samples to use for signal. bkg will be equal.')
+parser.add_argument('--valid_percent', type=float, default=-1,
+    help='Percentage of total data that will make validation and test data.')
 
 def main():
     print('Normalizing the sig data file: ' + args.data_sig)
@@ -40,23 +42,23 @@ def main():
     all_data = np.vstack((data_sig, data_bkg))
     all_targ = np.concatenate((np.ones(args.maxdata), np.zeros(args.maxdata)))
     
-    print("\n\033[92mSaving all (raw) no norm data...\033[0m")
-    split_and_save(all_data, all_targ, fnn("no",args.maxdata))
+    # print("\n\033[92mSaving all (raw) no norm data...\033[0m")
+    # split_and_save(all_data, all_targ, fnn("no",args.maxdata))
     print("\n\033[92mApplying minmax normalization...\033[0m")
     apply_norm(MinMaxScaler(), fnn("minmax", args.maxdata), all_data, all_targ)
-    print("\n\033[92mApplying maxabs normalization...\033[0m")
-    apply_norm(MaxAbsScaler(), fnn("maxabs", args.maxdata), all_data, all_targ)
-    print("\n\033[92mApplying standard normalization...\033[0m")
-    apply_norm(StandardScaler(), fnn("std", args.maxdata), all_data, all_targ)
-    print("\n\033[92mApplying robust normalization...\033[0m")
-    apply_norm(RobustScaler(), fnn("robust", args.maxdata), all_data, all_targ)
-    print("\n\033[92mApplying power normalization...\033[0m")
-    apply_norm(PowerTransformer(),fnn("power",args.maxdata), all_data, all_targ)
-    print("\n\033[92mApplying quantile normalization...\033[0m")
-    apply_norm(QuantileTransformer(), fnn("quant",args.maxdata), all_data, all_targ)
+    # print("\n\033[92mApplying maxabs normalization...\033[0m")
+    # apply_norm(MaxAbsScaler(), fnn("maxabs", args.maxdata), all_data, all_targ)
+    # print("\n\033[92mApplying standard normalization...\033[0m")
+    # apply_norm(StandardScaler(), fnn("std", args.maxdata), all_data, all_targ)
+    # print("\n\033[92mApplying robust normalization...\033[0m")
+    # apply_norm(RobustScaler(), fnn("robust", args.maxdata), all_data, all_targ)
+    # print("\n\033[92mApplying power normalization...\033[0m")
+    # apply_norm(PowerTransformer(),fnn("power",args.maxdata), all_data, all_targ)
+    # print("\n\033[92mApplying quantile normalization...\033[0m")
+    # apply_norm(QuantileTransformer(), fnn("quant",args.maxdata), all_data, all_targ)
 
-    print("\n\033[92mApplying personalized normalization...\033[0m")
-    apply_personalized_norm(all_data, all_targ, args.maxdata)
+    # print("\n\033[92mApplying personalized normalization...\033[0m")
+    # apply_personalized_norm(all_data, all_targ, args.maxdata)
 
 def fnn(norm, maxdata):
     # Format the name of a normalization.
@@ -104,9 +106,10 @@ def split_and_save(data, target, name):
     save_dir = os.path.dirname(args.data_sig) + "/"
     print("Splitting data into training, validation, and testing sets.")
     x_train, x_valid, y_train, y_valid = train_test_split(data, target,
-        test_size=0.1, shuffle=True)
+        test_size=args.valid_percent, shuffle=True)
+    test_percent = x_valid.shape[0]/x_train.shape[0]
     x_train, x_test, y_train, y_test = train_test_split(x_train, y_train,
-        test_size=0.111111, shuffle=True)
+        test_size=test_percent, shuffle=True)
 
     print("Saving data to: ", save_dir)
     np.save(save_dir + "x_data_" + name + "_train", x_train)

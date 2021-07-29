@@ -9,8 +9,8 @@ import torch.nn as nn
 import torch.optim as optim
 
 import util
+from terminal_colors import tcols
 
-default_layers = [64, 52, 44, 32, 24, 16]
 parser = argparse.ArgumentParser(formatter_class=argparse.
     ArgumentDefaultsHelpFormatter)
 parser.add_argument("--data_folder", type=str,
@@ -23,8 +23,6 @@ parser.add_argument("--nevents", type=str,
     help="The number of events of the norm file.")
 parser.add_argument('--lr', type=float, nargs=2,
     help='The learning rate range [min max].')
-parser.add_argument('--layers', type=int, default=default_layers, nargs='+',
-    help='The layers structure.')
 parser.add_argument('--batch', type=int, nargs="+",
     help='The batch options, e.g., [128 256 512].')
 parser.add_argument('--epochs', type=int,
@@ -32,7 +30,7 @@ parser.add_argument('--epochs', type=int,
 
 def optuna_train(train_loader, valid_loader, model, epochs, trial):
     # Training method for the autoencoder that was defined above.
-    print('\033[96mTraining the AE model...\033[0m')
+    print(tcols.OKCYAN + "Training the AE model to be optimized..." +tcols.ENDC)
 
     for epoch in range(epochs):
         model.train()
@@ -40,11 +38,11 @@ def optuna_train(train_loader, valid_loader, model, epochs, trial):
         train_loss = model.train_all_batches(train_loader)
         valid_loss = model.valid(valid_loader, None)
 
-        model.print_losses(epoch, epochs, train_loss.item(), valid_loss.item())
+        model.print_losses(epoch, epochs, train_loss, valid_loss)
 
         trial.report(train_loss.item(), epoch)
         if trial.should_prune():         raise optuna.TrialPruned()
-        if model.best_valid_loss > 0.09: raise optuna.TrialPruned()
+        # if model.best_valid_loss > 0.09: raise optuna.TrialPruned()
 
     return model.best_valid_loss
 
@@ -57,6 +55,10 @@ def optuna_objective(trial):
     device             = util.define_torch_device()
     encoder_activation = nn.Tanh()
     decoder_activation = nn.Tanh()
+    loss_weight        = 1
+    ae_layers          = [64, 52, 44, 32, 24, 16]
+    class_layers       = [128, 64, 32, 16, 8, 1]
+
 
     # Define parameters to be optimized by optuna.
     lr    = trial.suggest_loguniform('lr', *args.lr)
@@ -87,10 +89,11 @@ def optuna_objective(trial):
 
     # Define the model and prepare the output folder.
     nfeatures = train_data.shape[1]
-    (args.layers).insert(0, nfeatures)
+    (ae_layers).insert(0, nfeatures)
 
-    model = util.choose_ae_model(args.aetype, device, args.layers, lr,
-        encoder_activation, decoder_activation)
+    model = util.choose_ae_model(args.aetype, device, ae_layers, lr,
+        encoder_activation, decoder_activation, loss_weight=loss_weight,
+        class_layers=class_layers)
 
     min_valid = \
         optuna_train(train_loader, valid_loader, model, args.epochs, trial)
@@ -105,7 +108,7 @@ if __name__ == '__main__':
         sampler=sampler, direction='minimize',
         pruner=optuna.pruners.HyperbandPruner())
 
-    study.optimize(optuna_objective, n_trials=2)
+    study.optimize(optuna_objective, n_trials=70)
 
     comp_trials = study.get_trials(deepcopy=False, states=[TrialState.COMPLETE])
     print("Study statistics: ")

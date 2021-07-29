@@ -34,23 +34,47 @@ class AE_vanilla(nn.Module):
 
         decoder_layers = self.construct_decoder(layers, dec_activ)
         self.decoder   = nn.Sequential(*decoder_layers)
+        self = self.to(device)
 
         self.optimizer = optim.Adam(self.parameters(), lr=lr)
 
+
+
     @staticmethod
     def construct_encoder(layers, en_activ):
-        """
-        Construct the encoder layers.
-        """
+        # Construct the classifier layers.
         enc_layers = []
-        layer_nbs = range(len(layers))
-        for idx in layer_nbs:
+        enc_layers.append(nn.BatchNorm1d(layers[0]))
+
+        for idx in range(len(layers)):
             enc_layers.append(nn.Linear(layers[idx], layers[idx+1]))
-            if idx == len(layers) - 2 and en_activ is None: break
-            if idx == len(layers) - 2: enc_layers.append(en_activ); break
-            enc_layers.append(nn.ELU(True))
+            if idx == len(layers) - 2:
+                enc_layers.append(nn.BatchNorm1d(layers[idx+1]))
+                enc_layers.append(nn.Dropout(0.5))
+                enc_layers.append(nn.LeakyReLU(0.2));
+                break
+
+            enc_layers.append(nn.BatchNorm1d(layers[idx+1]))
+            enc_layers.append(nn.Dropout(0.5))
+            enc_layers.append(nn.LeakyReLU(0.2))
+            # dnn_layers.append(nn.ELU(True))
 
         return enc_layers
+
+    # @staticmethod
+    # def construct_encoder(layers, en_activ):
+    #     """
+    #     Construct the encoder layers.
+    #     """
+    #     enc_layers = []
+    #     layer_nbs = range(len(layers))
+    #     for idx in layer_nbs:
+    #         enc_layers.append(nn.Linear(layers[idx], layers[idx+1]))
+    #         if idx == len(layers) - 2 and en_activ is None: break
+    #         if idx == len(layers) - 2: enc_layers.append(en_activ); break
+    #         enc_layers.append(nn.ELU(True))
+
+    #     return enc_layers
 
     @staticmethod
     def construct_decoder(layers, dec_activ):
@@ -81,22 +105,32 @@ class AE_vanilla(nn.Module):
     @staticmethod
     def print_losses(epoch, epochs, train_loss, valid_loss):
         print(f"Epoch : {epoch + 1}/{epochs}, "
-              f"Train loss (last batch) = {train_loss:.8f}")
+              f"Train loss (last batch) = {train_loss.item():.8f}")
         print(f"Epoch : {epoch + 1}/{epochs}, "
-              f"Valid loss = {valid_loss:.8f}")
+              f"Valid loss = {valid_loss.item():.8f}")
 
     @staticmethod
     def print_summary(model, device):
-        summary(model, torch.Tensor(model[0].in_features).to(device),
-            show_input=True, show_hierarchical=False, print_summary=True,
-            max_depth=1, show_parent_layers=False)
+        try:
+            summary(model, torch.Tensor(model[0].in_features).to(device),
+                show_input=True, show_hierarchical=False, print_summary=True,
+                max_depth=1, show_parent_layers=False)
+        except:
+            print(tcols.WARNING +
+                  "Net summary failed! Probs using BatchNorm layers!"
+                  + tcols.ENDC)
 
     def network_summary(self):
-        print(tcols.OKGREEN+ "Encoder summary:" + tcols.ENDC)
+        print(tcols.OKGREEN + "Encoder summary:" + tcols.ENDC)
         self.print_summary(self.encoder, self.device)
         print('\n')
-        print(tcols.OKGREEN+ "Decoder summary:" + tcols.ENDC)
+        print(tcols.OKGREEN + "Decoder summary:" + tcols.ENDC)
         self.print_summary(self.decoder, self.device)
+        print('\n\n')
+
+    def optimizer_summary(self):
+        print(tcols.OKGREEN + "Optimizer summary:" + tcols.ENDC)
+        print(self.optimizer)
         print('\n\n')
 
     @torch.no_grad()
@@ -144,6 +178,7 @@ class AE_vanilla(nn.Module):
     def train_autoencoder(self, train_loader, valid_loader, epochs, outdir):
 
         self.network_summary()
+        self.optimizer_summary()
         print(tcols.OKCYAN + "Training the vanilla AE model..." + tcols.ENDC)
         all_train_loss = []
         all_valid_loss = []
@@ -156,7 +191,7 @@ class AE_vanilla(nn.Module):
 
             all_train_loss.append(train_loss.item())
             all_valid_loss.append(valid_loss.item())
-            self.print_losses(epoch,epochs,train_loss.item(),valid_loss.item())
+            self.print_losses(epoch, epochs, train_loss, valid_loss)
 
         return all_train_loss, all_valid_loss, self.best_valid_loss
 

@@ -7,30 +7,23 @@ import os, warnings, time
 
 import ae_vanilla
 import ae_classifier
+import ae_svm
+from terminal_colors import tcols
 
 def choose_ae_model(user_choice, device, layers, lr, en_activ=nn.Tanh(),
     dec_activ=nn.Tanh(), class_layers=[256, 256, 128, 64, 32, 1],
     loss_weight=0.5):
     # Picks and loads one of the implemented autencoder models.
     switcher = {
-        "vanilla":   lambda : ae_vanilla_model(device, layers, lr, en_activ,
-            dec_activ),
-        "classifier": lambda : ae_classifier_model(device, layers, lr, en_activ,
-            dec_activ, class_layers, loss_weight)
+        "vanilla": ae_vanilla.AE_vanilla(device,layers,lr,en_activ,dec_activ),
+        "classifier": ae_classifier.AE_classifier(device, layers, lr, en_activ,
+            dec_activ, class_layers, loss_weight),
+        "svm": ae_svm.AE_svm(device, layers, lr, en_activ, dec_activ,
+            loss_weight)
     }
-    func   = switcher.get(user_choice, lambda : "Invalid type of AE given!")
-    model = func()
+    model = switcher.get(user_choice)
 
     return model
-
-def ae_vanilla_model(device, layers, lr, en_activ, dec_activ):
-    return ae_vanilla.AE_vanilla(device, layers, lr, en_activ,
-        dec_activ).to(device)
-
-def ae_classifier_model(device, layers, lr, en_activ, dec_activ, class_layers,
-    loss_weight):
-    return ae_classifier.AE_classifier(device, layers, lr, en_activ, dec_activ,
-        class_layers, loss_weight).to(device)
 
 def define_torch_device():
     # Use gpu for training if available. Alert the user if not and then use cpu.
@@ -38,7 +31,7 @@ def define_torch_device():
     with warnings.catch_warnings(record=True) as w:
         warnings.simplefilter("always")
         device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
-        if len(w): print("\033[93mGPU not available. \033[0m")
+        if len(w): print(tcols.WARNING + "GPU not available." + tcols.ENDC)
 
 
     print("\033[92mUsing device:\033[0m", device)
@@ -124,7 +117,7 @@ def import_hyperparams(model_path):
     aetype  = hyperparams[hyperparams.find('T')+1:hyperparams.find('_',
         hyperparams.find('T')+1, len(hyperparams))]
 
-    print("\nImported model hyperparameters:")
+    print(tcols.OKGREEN + "\nImported model hyperparameters:" + tcols.ENDC)
     print("--------------------------------")
     print(f"Layers: {layers}")
     print(f"Batch: {batch}")

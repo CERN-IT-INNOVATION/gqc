@@ -1,5 +1,5 @@
-# Classifier autencoder. Different from the vanilla one since it has a
-# classifier attached to the latent space, that does the classification
+# SVM autencoder. Different from the vanilla one since it has a
+# SVM attached to the latent space, that does the classification
 # for each batch latent space and outputs the binary cross-entropy loss
 # that is then used to optimize the autoencoder as a whole.
 
@@ -18,45 +18,25 @@ torch.manual_seed(seed)
 torch.autograd.set_detect_anomaly(False)
 torch.autograd.profiler.profile(enabled=False)
 
-class AE_classifier(AE_vanilla):
-    def __init__(self, device, layers, lr, en_activ, dec_activ, class_layers,
-        loss_weight, **kwargs):
+# WORK IN PROGRESS.
+class AE_svm(AE_vanilla):
+    def __init__(self, device, layers, lr, en_activ, dec_activ, loss_weight):
 
         super().__init__(device, layers, lr, en_activ, dec_activ)
 
-        self.class_layers        = class_layers
-        self.class_loss_function = nn.BCELoss(reduction='mean')
+        self.class_loss_function = self.hinge_loss
         self.loss_weight         = loss_weight
 
-        (class_layers).insert(0, layers[-1])
-        class_layers    = self.construct_classifier(class_layers)
-        self.classifier = nn.Sequential(*class_layers)
-        self = self.to(device)
+        self.svm = nn.Sequential(nn.Linear(16, 1))
+        self     = self.to(device)
 
-        self.optimizer = optim.Adagrad(self.parameters(), lr=lr, lr_decay=0.04)
-
-    @staticmethod
-    def construct_classifier(layers):
-        # Construct the classifier layers.
-        dnn_layers = []
-        # dnn_layers.append(nn.BatchNorm1d(layers[0]))
-
-        for idx in range(len(layers)):
-            dnn_layers.append(nn.Linear(layers[idx], layers[idx+1]))
-            if idx == len(layers) - 2: dnn_layers.append(nn.Sigmoid()); break
-
-            dnn_layers.append(nn.BatchNorm1d(layers[idx+1]))
-            dnn_layers.append(nn.Dropout(0.5))
-            dnn_layers.append(nn.LeakyReLU(0.2))
-            # dnn_layers.append(nn.ELU(True))
-
-        return dnn_layers
+        self.optimizer = optim.SGD(self.parameters(), lr=lr)
 
     def forward(self, x):
         latent        = self.encoder(x)
-        class_output  = self.classifier(latent)
+        classif       = self.svm(latent)
         reconstructed = self.decoder(latent)
-        return latent, class_output, reconstructed
+        return latent, classif, reconstructed
 
     def compute_loss(self, x_data, y_data):
         if type(x_data) is np.ndarray:
@@ -70,6 +50,10 @@ class AE_classifier(AE_vanilla):
         class_loss = self.class_loss_function(classif.flatten(), y_data.float())
 
         return (1 - self.loss_weight)*recon_loss + self.loss_weight*class_loss
+
+    @staticmethod
+    def hinge_loss(output, y):
+        return torch.mean(torch.clamp(1 - output * y, min=0))
 
     @staticmethod
     def print_losses(epoch, epochs, train_loss, valid_losses):
@@ -88,7 +72,7 @@ class AE_classifier(AE_vanilla):
         self.print_summary(self.encoder, self.device)
         print('\n')
         print(tcols.OKGREEN + "Classifier summary:" + tcols.ENDC)
-        self.print_summary(self.classifier, self.device)
+        self.print_summary(self.svm, self.device)
         print('\n')
         print(tcols.OKGREEN + "Decoder summary:" + tcols.ENDC)
         self.print_summary(self.decoder, self.device)
@@ -136,21 +120,17 @@ class AE_classifier(AE_vanilla):
 
     def train_all_batches(self, train_loader):
 
-        batch_loss_sum = 0
-        nb_of_batches  = 0
         for batch in train_loader:
-            x_batch, y_batch = batch
-            batch_loss       = self.train_batch(x_batch, y_batch)
-            batch_loss_sum   += batch_loss
-            nb_of_batches    += 1
+            x_batch, y_batch      = batch
+            last_batch_train_loss = self.train_batch(x_batch, y_batch)
 
-        return batch_loss_sum/nb_of_batches
+        return last_batch_train_loss
 
     def train_autoencoder(self, train_loader, valid_loader, epochs, outdir):
 
         self.network_summary()
         self.optimizer_summary()
-        print(tcols.OKCYAN + "Training the classifier AE model..." + tcols.ENDC)
+        print(tcols.OKCYAN + "Training the SVM AE model..." + tcols.ENDC)
         all_train_loss = []
         all_valid_loss = []
 

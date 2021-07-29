@@ -28,9 +28,9 @@ class AE_classifier(AE_vanilla):
         self.class_loss_function = nn.BCELoss(reduction='mean')
         self.loss_weight         = loss_weight
 
-        (class_layers).insert(0, layers[-1])
-        class_layers    = self.construct_classifier(class_layers)
-        self.classifier = nn.Sequential(*class_layers)
+        (self.class_layers).insert(0, layers[-1])
+        self.class_layers = self.construct_classifier(self.class_layers)
+        self.classifier   = nn.Sequential(*class_layers)
         self = self.to(device)
 
         self.optimizer = optim.Adam(self.parameters(), lr=lr)
@@ -108,30 +108,9 @@ class AE_classifier(AE_vanilla):
         class_loss = self.class_loss_function(classif.flatten(), y_data_valid)
         valid_loss = self.compute_loss(x_data_valid, y_data_valid)
 
-        if valid_loss < self.best_valid_loss: self.best_valid_loss = valid_loss
-
-        if outdir is not None and self.best_valid_loss == valid_loss:
-            print(tcols.OKGREEN + f"New min loss: {self.best_valid_loss:.2e}" +
-                  tcols.ENDC)
-            torch.save(self.state_dict(), outdir + 'best_model.pt')
+        self.save_best_loss_model(valid_loss, outdir)
 
         return valid_loss, recon_loss, class_loss
-
-    def train_batch(self, x_batch, y_batch):
-        # Train the model on a batch and evaluate the different kinds of losses.
-        # Propagate this backwards for minimum train_loss.
-
-        feature_size = x_batch.shape[1]
-        init_feats   = x_batch.view(-1, feature_size).to(self.device)
-        y_batch      = y_batch.to(self.device)
-
-        batch_train_loss = self.compute_loss(init_feats, y_batch)
-
-        self.optimizer.zero_grad()
-        batch_train_loss.backward()
-        self.optimizer.step()
-
-        return batch_train_loss
 
     def train_all_batches(self, train_loader):
 
@@ -147,17 +126,18 @@ class AE_classifier(AE_vanilla):
 
     def train_autoencoder(self, train_loader, valid_loader, epochs, outdir):
 
-        self.network_summary()
-        self.optimizer_summary()
+        self.network_summary(); self.optimizer_summary()
         print(tcols.OKCYAN + "Training the classifier AE model..." + tcols.ENDC)
-        all_train_loss = []
-        all_valid_loss = []
+        all_train_loss = []; all_valid_loss = []
 
         for epoch in range(epochs):
             self.train()
 
             train_loss   = self.train_all_batches(train_loader)
             valid_losses = self.valid(valid_loader,outdir)
+
+            if early_stopping():
+                return all_train_loss, all_valid_loss, self.best_valid_loss
 
             all_train_loss.append(train_loss.item())
             all_valid_loss.append(valid_losses[0].item())

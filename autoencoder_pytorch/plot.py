@@ -79,7 +79,7 @@ def input_vs_reco(input_sig, input_bkg, output_sig, output_bkg, model_path):
 
         ratio_plotter(input_bkg[:,idx], output_bkg[:,idx], idx, 'gray',
             class_label='Background')
-        ratio_plotter(input_sig[:,idx], output_sig[:,idx], idx, 'navy',
+        ratio_plotter(input_sig[:,idx], output_sig[:,idx], idx, 'chartreuse',
             class_label='Signal')
 
         plt.savefig(plots_folder + util.varname(idx) + '.png')
@@ -98,7 +98,7 @@ def sig_vs_bkg(data_sig, data_bkg, model_path, output_folder):
 
         hSig,_,_ = plt.hist(x=data_sig[:,i], density=1,
             range = (xmin,xmax), bins=50, alpha=0.8, histtype='step',
-            linewidth=2.5, label='Sig', color='navy')
+            linewidth=2.5, label='Sig', color='chartreuse')
         hBkg,_,_ = plt.hist(x=data_bkg[:,i], density=1,
             range = (xmin,xmax), bins=50, alpha=0.4, histtype='step',
             linewidth=2.5,label='Bkg', color='gray', hatch='xxx')
@@ -148,7 +148,7 @@ def roc_plots(sig, bkg, model_path, output_folder):
         fig = plt.figure(figsize=(12, 10))
         plt.title(f"Feature {feature}")
         plt.plot(fpr, tpr,
-            label=f"AUC: {mean_auc:.3f} ± {std_auc:.3f}", color='navy')
+            label=f"AUC: {mean_auc:.3f} ± {std_auc:.3f}", color='chartreuse')
         plt.plot([0, 1], [0, 1], ls="--", color='gray')
 
         plt.xlim([0.0, 1.0]); plt.ylim([0.0, 1.0])
@@ -184,13 +184,14 @@ def ratio_plotter(input_data, output_data, ifeature, color, class_label=''):
 def loss_plot(loss_train, loss_valid, min_valid, epochs, outdir):
     # Plots the loss for each epoch for the training and validation data.
 
-    plt.plot(list(range(epochs)), loss_train, color="gray",
-        label="Average Training Loss")
-    plt.plot(list(range(epochs)), loss_valid, color="navy",
-        label="Validation Loss")
+    epochs = list(range(len(loss_train)))
+    plt.plot(epochs, loss_train, color="gray", label="Training Loss (average)")
+    plt.plot(epochs, loss_valid, color="chartreuse", label="Validation Loss")
     plt.xlabel("Epochs"); plt.ylabel("Loss")
 
-    plt.title(f"min={min_valid:.6f}")
+    plt.text(np.min(epochs), np.max(loss_train), f"Min: {min_valid:.2e}",
+        verticalalignment='top', horizontalalignment='left', color='green',
+        fontsize=15, bbox={'facecolor': 'white', 'alpha': 0.8, 'pad': 5})
 
     plt.legend()
     plt.savefig(outdir + "loss_epochs.pdf"); plt.close()

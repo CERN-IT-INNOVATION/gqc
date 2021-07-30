@@ -38,10 +38,11 @@ def optuna_train(train_loader, valid_loader, model, epochs, trial):
         train_loss = model.train_all_batches(train_loader)
         valid_loss = model.valid(valid_loader, None)
 
+        if model.early_stopping(): return model.best_valid_loss
         model.print_losses(epoch, epochs, train_loss, valid_loss)
 
         trial.report(train_loss.item(), epoch)
-        if trial.should_prune():         raise optuna.TrialPruned()
+        if trial.should_prune(): raise optuna.TrialPruned()
         # if model.best_valid_loss > 0.09: raise optuna.TrialPruned()
 
     return model.best_valid_loss

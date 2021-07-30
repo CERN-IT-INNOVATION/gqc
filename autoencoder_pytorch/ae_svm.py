@@ -21,14 +21,14 @@ torch.autograd.profiler.profile(enabled=False)
 class AE_svm(AE_classifier):
     def __init__(self, device, layers, lr, en_activ, dec_activ, loss_weight):
 
-        super().__init__(device, layers, lr, en_activ, dec_activ)
+        super(AE_classifier, self).__init__(device, layers, lr,
+            en_activ, dec_activ)
 
-        self.class_layers        = [1]
         self.class_loss_function = self.hinge_loss
         self.loss_weight         = loss_weight
 
-        (self.class_layers).insert(0, self.layers[-1])
-        self.classifier = nn.Sequential(nn.Linear(*self.class_layers))
+        self.class_layers = [layers[-1] ,1]
+        self.classifier   = nn.Sequential(nn.Linear(*self.class_layers))
         self = self.to(device)
 
         self.optimizer = optim.SGD(self.parameters(), lr=lr)
@@ -49,7 +49,7 @@ class AE_svm(AE_classifier):
             train_loss   = self.train_all_batches(train_loader)
             valid_losses = self.valid(valid_loader,outdir)
 
-            if early_stopping():
+            if self.early_stopping():
                 return all_train_loss, all_valid_loss, self.best_valid_loss
 
             all_train_loss.append(train_loss.item())

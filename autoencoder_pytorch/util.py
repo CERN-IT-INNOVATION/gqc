@@ -12,12 +12,12 @@ from terminal_colors import tcols
 
 def choose_ae_model(user_choice, device, layers, lr, en_activ=nn.Tanh(),
     dec_activ=nn.Tanh(), class_layers=[256, 256, 128, 64, 32, 1],
-    loss_weight=0.5):
+    loss_weight=0.5, adam_betas=(0.9, 0.999)):
     # Picks and loads one of the implemented autencoder models.
     switcher = {
         "vanilla": ae_vanilla.AE_vanilla(device,layers,lr,en_activ,dec_activ),
         "classifier": ae_classifier.AE_classifier(device, layers, lr, en_activ,
-            dec_activ, class_layers, loss_weight),
+            dec_activ, class_layers, loss_weight, adam_betas),
         "svm": ae_svm.AE_svm(device, layers, lr, en_activ, dec_activ,
             loss_weight)
     }

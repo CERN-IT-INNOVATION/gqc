@@ -20,7 +20,7 @@ torch.autograd.profiler.profile(enabled=False)
 
 class AE_classifier(AE_vanilla):
     def __init__(self, device, layers, lr, en_activ, dec_activ, class_layers,
-        loss_weight, **kwargs):
+        loss_weight, adam_betas=(0.9, 0.999)):
 
         super().__init__(device, layers, lr, en_activ, dec_activ)
 
@@ -30,10 +30,10 @@ class AE_classifier(AE_vanilla):
 
         (self.class_layers).insert(0, layers[-1])
         self.class_layers = self.construct_classifier(self.class_layers)
-        self.classifier   = nn.Sequential(*class_layers)
+        self.classifier   = nn.Sequential(*self.class_layers)
         self = self.to(device)
 
-        self.optimizer = optim.Adam(self.parameters(), lr=lr)
+        self.optimizer = optim.Adam(self.parameters(), lr=lr, betas=adam_betas)
 
     @staticmethod
     def construct_classifier(layers):
@@ -74,7 +74,7 @@ class AE_classifier(AE_vanilla):
     def print_losses(epoch, epochs, train_loss, valid_losses):
 
         print(f"Epoch : {epoch + 1}/{epochs}, "
-              f"Train loss (last batch) = {train_loss.item():.8f}")
+              f"Train loss (average) = {train_loss.item():.8f}")
         print(f"Epoch : {epoch + 1}/{epochs}, "
               f"Valid loss = {valid_losses[0].item():.8f}")
         print(f"Epoch : {epoch + 1}/{epochs}, "
@@ -136,7 +136,7 @@ class AE_classifier(AE_vanilla):
             train_loss   = self.train_all_batches(train_loader)
             valid_losses = self.valid(valid_loader,outdir)
 
-            if early_stopping():
+            if self.early_stopping():
                 return all_train_loss, all_valid_loss, self.best_valid_loss
 
             all_train_loss.append(train_loss.item())

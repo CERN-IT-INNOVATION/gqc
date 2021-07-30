@@ -84,7 +84,7 @@ class AE_vanilla(nn.Module):
     @staticmethod
     def print_losses(epoch, epochs, train_loss, valid_loss):
         print(f"Epoch : {epoch + 1}/{epochs}, "
-              f"Train loss (last batch) = {train_loss.item():.8f}")
+              f"Train loss (average) = {train_loss.item():.8f}")
         print(f"Epoch : {epoch + 1}/{epochs}, "
               f"Valid loss = {valid_loss.item():.8f}")
 
@@ -137,7 +137,7 @@ class AE_vanilla(nn.Module):
         self.eval()
 
         loss = self.compute_loss(x_data_valid, None)
-        save_best_loss_model(loss, outdir)
+        self.save_best_loss_model(loss, outdir)
 
         return loss
 
@@ -181,7 +181,7 @@ class AE_vanilla(nn.Module):
 
             train_loss = self.train_all_batches(train_loader)
             valid_loss = self.valid(valid_loader, outdir)
-            if early_stopping():
+            if self.early_stopping():
                 return all_train_loss, all_valid_loss, self.best_valid_loss
 
             all_train_loss.append(train_loss.item())

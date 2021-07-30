@@ -41,7 +41,8 @@ def main():
     decoder_activation = nn.Tanh()
     loss_weight        = 1
     ae_layers          = [64, 52, 44, 32, 24, 16]
-    class_layers       = [128, 64, 32, 16, 8, 1]
+    class_layers       = [32, 64, 128, 64, 32, 16, 8, 1]
+    adam_betas         = (0.9, 0.999)
 
     # Get the names of the data files. We follow a naming scheme. See util mod.
     train_file = util.get_train_file(args.norm, args.nevents)
@@ -73,7 +74,7 @@ def main():
 
     model  = util.choose_ae_model(args.aetype, device, ae_layers, args.lr,
         encoder_activation, decoder_activation, loss_weight=loss_weight,
-        class_layers=class_layers)
+        class_layers=class_layers, adam_betas=adam_betas)
     outdir = util.prep_out(model, args.aetype, args.batch, args.lr,
         args.nevents, args.norm, args.file_flag)
 

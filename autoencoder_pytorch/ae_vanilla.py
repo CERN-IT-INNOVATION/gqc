@@ -114,6 +114,7 @@ class AE_vanilla(nn.Module):
 
     def save_best_loss_model(self, valid_loss, outdir):
         if self.best_valid_loss > valid_loss:
+            self.epochs_no_improve = 0
             print(tcols.OKGREEN + f"New min: {self.best_valid_loss:.2e}" +
                   tcols.ENDC)
 

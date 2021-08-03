@@ -1,9 +1,11 @@
-# Quantum classifiers for Higgs searches:
+[![Chat](https://img.shields.io/badge/chat-CERNopenlabAI&QC-lightgrey.svg?style=flat-square&logo=slack)](placeholder)
+# Quantum Machine Learning Classifier Applied to ttHbb Measurement
 
-### Data pre-processing
-(#TODO: refer to the new folder location of the below code)
-- Raw data from ROOT trees (ntuples) .root -> .h5 file (format.py)
-- .h5 file -> .npy with event selection (data\_prep.py)
-- Extra event selection, concatination of arrays and reducing the number of samples/events (e.g. n\_btag>=2) (reshaper\_reducer.py)
-- Normalize the dataset for the Autoencoder (normalize.py)
+## Dependencies
+The code has several dependencies that can be installed using miniconda by running
 
+```
+conda env create -f qml_project_conda_env.yml
+```
+
+Otherwise, you can install the dependencies by hand.

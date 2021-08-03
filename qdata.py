@@ -1,5 +1,5 @@
 import numpy as np
-from aePyTorch.splitDatasets import splitDatasets
+from splitDatasets import splitDatasets
 
 #TODO: Takes some time to load encoded datasets, because the AE model runs on the full datasets and then outputs only a subset 
 

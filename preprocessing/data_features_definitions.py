@@ -4,7 +4,7 @@ def choose_data_type(user_choice):
     """
     Determines which data type is used in the formatting.
 
-    @user_choice :: The data type given by the user.
+    @user_choice :: String of the data type given by the user.
 
     @returns     :: Dictionary containing formatting specifications for the
                     particular data type that is being used.

@@ -40,8 +40,6 @@ def main():
     valid_target = np.load(os.path.join(args.data_folder, valid_target_file))
     test_target  = np.load(os.path.join(args.data_folder, test_target_file))
 
-    # test_data   = np.vstack((test_data, valid_data))
-    # test_target = np.vstack((test_target, valid_target))
     test_sig, test_bkg = util.split_sig_bkg(test_data, test_target)
 
     # Import the model.

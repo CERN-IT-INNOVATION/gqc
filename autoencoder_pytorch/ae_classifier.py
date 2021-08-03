@@ -34,6 +34,8 @@ class AE_classifier(AE_vanilla):
         self = self.to(device)
 
         self.optimizer = optim.Adam(self.parameters(), lr=lr, betas=adam_betas)
+        # self.lr_decay  = torch.optim.lr_scheduler.ExponentialLR(
+            # optimizer=self.optimizer, gamma=0.5)
 
     @staticmethod
     def construct_classifier(layers):
@@ -65,8 +67,8 @@ class AE_classifier(AE_vanilla):
 
         latent, classif, recon = self.forward(x_data.float())
 
-        recon_loss = self.recon_loss_function(recon, x_data.float())
         class_loss = self.class_loss_function(classif.flatten(), y_data.float())
+        recon_loss = self.recon_loss_function(recon, x_data.float())
 
         return (1 - self.loss_weight)*recon_loss + self.loss_weight*class_loss
 
@@ -135,6 +137,7 @@ class AE_classifier(AE_vanilla):
 
             train_loss   = self.train_all_batches(train_loader)
             valid_losses = self.valid(valid_loader,outdir)
+            # self.lr_decay.step()
 
             if self.early_stopping():
                 return all_train_loss, all_valid_loss, self.best_valid_loss

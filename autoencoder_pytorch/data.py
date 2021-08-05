@@ -20,9 +20,9 @@ class AE_data():
         self.valid_data = self.get_numpy_data("valid")[:valid_events, :]
         self.test_data  = self.get_numpy_data("test")[:test_events, :]
 
-        self.train_target = self.get_numpy_target("train")[:train_events, :]
-        self.valid_target = self.get_numpy_target("valid")[:valid_events, :]
-        self.test_target  = self.get_numpy_target("test")[:test_events, :]
+        self.train_target = self.get_numpy_target("train")[:train_events]
+        self.valid_target = self.get_numpy_target("valid")[:valid_events]
+        self.test_target  = self.get_numpy_target("test")[:test_events]
 
         self.nfeats = self.train_data.shape[1]
 
@@ -59,7 +59,7 @@ class AE_data():
         print(tcols.OKGREEN + "AE data loading complete:" + tcols.ENDC)
         print(f"Training data size: {self.train_data.shape[0]:.2e}")
         print(f"Validation data size: {self.valid_data.shape[0]:.2e}")
-        print(f"Validation data size: {self.test_data.shape[0]:.2e}")
+        print(f"Test data size: {self.test_data.shape[0]:.2e}")
         print("----------------\n")
 
     def get_pytorch_dataset(self, data_type):

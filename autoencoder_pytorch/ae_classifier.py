@@ -7,6 +7,7 @@ import numpy as np
 import torch
 import torch.nn as nn
 import torch.optim as optim
+import matplotlib.pyplot as plt
 
 from ae_vanilla import AE_vanilla
 from terminal_colors import tcols
@@ -19,23 +20,32 @@ torch.autograd.set_detect_anomaly(False)
 torch.autograd.profiler.profile(enabled=False)
 
 class AE_classifier(AE_vanilla):
-    def __init__(self, device, layers, lr, en_activ, dec_activ, class_layers,
-        loss_weight, adam_betas=(0.9, 0.999)):
+    def __init__(self, device = 'cpu', hparams = {}):
 
-        super().__init__(device, layers, lr, en_activ, dec_activ)
+        super().__init__(device, hparams)
+        new_hp = {
+            "ae_type":      "classifier",
+            "class_layers": [128, 64, 32, 16, 8, 1],
+            "adam_betas"  : (0.9, 0.999),
+            "loss_weight" : 0.5
+        }
+        self.hp.update(new_hp)
 
-        self.class_layers        = class_layers
+        # del self.recon_loss_function
+        # self.recon_loss_function = nn.L1Loss(reduction='mean')
         self.class_loss_function = nn.BCELoss(reduction='mean')
-        self.loss_weight         = loss_weight
+        self.hp.update((k, hparams[k]) for k in self.hp.keys() & hparams.keys())
 
-        (self.class_layers).insert(0, layers[-1])
-        self.class_layers = self.construct_classifier(self.class_layers)
+        self.all_recon_loss = []
+        self.all_class_loss = []
+
+        (self.hp['class_layers']).insert(0, self.hp['ae_layers'][-1])
+        self.class_layers = self.construct_classifier(self.hp['class_layers'])
         self.classifier   = nn.Sequential(*self.class_layers)
         self = self.to(device)
 
-        self.optimizer = optim.Adam(self.parameters(), lr=lr, betas=adam_betas)
-        # self.lr_decay  = torch.optim.lr_scheduler.ExponentialLR(
-            # optimizer=self.optimizer, gamma=0.5)
+        self.optimizer = optim.Adam(self.parameters(), lr=self.hp['lr'],
+            betas=self.hp['adam_betas'])
 
     @staticmethod
     def construct_classifier(layers):
@@ -70,7 +80,8 @@ class AE_classifier(AE_vanilla):
         class_loss = self.class_loss_function(classif.flatten(), y_data.float())
         recon_loss = self.recon_loss_function(recon, x_data.float())
 
-        return (1 - self.loss_weight)*recon_loss + self.loss_weight*class_loss
+        return (1 - self.hp['loss_weight'])*100*recon_loss + \
+               self.hp['loss_weight']*class_loss
 
     @staticmethod
     def print_losses(epoch, epochs, train_loss, valid_losses):
@@ -137,17 +148,40 @@ class AE_classifier(AE_vanilla):
 
             train_loss   = self.train_all_batches(train_loader)
             valid_losses = self.valid(valid_loader,outdir)
-            # self.lr_decay.step()
 
-            if self.early_stopping():
-                return all_train_loss, all_valid_loss, self.best_valid_loss
-
-            all_train_loss.append(train_loss.item())
-            all_valid_loss.append(valid_losses[0].item())
+            self.all_train_loss.append(train_loss.item())
+            self.all_valid_loss.append(valid_losses[0].item())
+            self.all_recon_loss.append(valid_losses[1].item())
+            self.all_class_loss.append(valid_losses[2].item())
 
             self.print_losses(epoch, epochs, train_loss, valid_losses)
 
-        return all_train_loss, all_valid_loss, self.best_valid_loss
+
+    def loss_plot(self, outdir):
+        # Plots the loss for each epoch for the training and validation data.
+
+        epochs = list(range(len(self.all_train_loss)))
+        plt.plot(epochs, self.all_train_loss,
+            color="gray", label="Training Loss (average)")
+        plt.plot(epochs, self.all_valid_loss,
+            color="chartreuse", label="Validation Loss")
+        plt.plot(epochs, self.all_recon_loss,
+            color="darkseagreen", label="Recon Loss")
+        plt.plot(epochs, self.all_class_loss,
+            color="olivedrab", label="Classif Loss")
+        plt.xlabel("Epochs"); plt.ylabel("Loss")
+
+        plt.text(np.min(epochs), np.max(self.all_train_loss),
+            f"Min: {self.best_valid_loss:.2e}", verticalalignment='top',
+            horizontalalignment='left', color='green', fontsize=15,
+            bbox={'facecolor': 'white', 'alpha': 0.8, 'pad': 5})
+
+        plt.legend()
+        plt.savefig(outdir + "loss_epochs.png")
+        plt.close()
+
+        print(tcols.OKGREEN + f"Loss vs epochs plot saved to {outdir}." +
+              tcols.ENDC)
 
     @torch.no_grad()
     def predict(self, x_data):

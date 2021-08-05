@@ -9,50 +9,39 @@ from sklearn import metrics
 from sklearn.utils import shuffle
 
 import util
+import data
 from terminal_colors import tcols
 
 parser = argparse.ArgumentParser(formatter_class=argparse.
     ArgumentDefaultsHelpFormatter)
 parser.add_argument("--data_folder", type=str,
     help="The folder where the data is stored on the system..")
+parser.add_argument("--norm", type=str,
+    help="The name of the normalisation that you'll to use.")
+parser.add_argument("--nevents", type=str,
+    help="The number of events of the norm file.")
 parser.add_argument('--model_path', type=str, required=True,
     help="The path to the saved model.")
 
 def main():
-    # Import/set hyperparameters. Make sure activations are the same.
-    args               = parser.parse_args()
-    device             = 'cpu'
-    encoder_activation = nn.Tanh()
-    decoder_activation = nn.Tanh()
-    class_layers       = [128, 64, 32, 16, 8, 1]
-    loss_weight        = 1
-    layers, aetype, batch, lr, norm, nevents = \
-        util.import_hyperparams(args.model_path)
+    args   = parser.parse_args()
+    device = 'cpu'
+    hp     = util.import_hyperparams(args.model_path)
 
     # Import the data.
-    valid_file         = util.get_valid_file(norm, nevents)
-    test_file          = util.get_test_file(norm, nevents)
-    valid_target_file  = util.get_valid_target(norm, nevents)
-    test_target_file   = util.get_test_target(norm, nevents)
-
-    valid_data   = np.load(os.path.join(args.data_folder, valid_file))
-    test_data    = np.load(os.path.join(args.data_folder, test_file))
-    valid_target = np.load(os.path.join(args.data_folder, valid_target_file))
-    test_target  = np.load(os.path.join(args.data_folder, test_target_file))
-
-    test_sig, test_bkg = util.split_sig_bkg(test_data, test_target)
+    ae_data = data.AE_data(args.data_folder, args.norm, args.nevents)
+    test_sig, test_bkg = ae_data.split_sig_bkg('test')
 
     # Import the model.
-    (layers).insert(0, test_data.shape[1])
-    model = util.choose_ae_model(aetype, device, layers, lr,
-        encoder_activation, decoder_activation, loss_weight=loss_weight,
-        class_layers=class_layers)
-    model = util.load_model(model, args.model_path)
+    model = util.choose_ae_model(hp['ae_type'], device, hp)
+    model.load_model(args.model_path)
 
     # Compute loss function results for the test and validation datasets.
     print('\n----------------------------------')
-    print(f"VALID MSE: {model.compute_loss(valid_data, valid_target).item()}")
-    print(f"TEST MSE: {model.compute_loss(test_data, test_target).item()}")
+    print(f"VALID MSE: \
+        {model.compute_loss(ae_data.valid_data, ae_data.valid_target).item()}")
+    print(f"TEST MSE: \
+        {model.compute_loss(ae_data.test_data, ae_data.test_target).item()}")
     print('----------------------------------\n')
 
     # Compute the signal and background latent spaces and decoded data.
@@ -178,23 +167,6 @@ def ratio_plotter(input_data, output_data, ifeature, color, class_label=''):
     plt.xlim(*prange)
     plt.gca().set_yscale("log")
     plt.legend()
-
-def loss_plot(loss_train, loss_valid, min_valid, epochs, outdir):
-    # Plots the loss for each epoch for the training and validation data.
-
-    epochs = list(range(len(loss_train)))
-    plt.plot(epochs, loss_train, color="gray", label="Training Loss (average)")
-    plt.plot(epochs, loss_valid, color="chartreuse", label="Validation Loss")
-    plt.xlabel("Epochs"); plt.ylabel("Loss")
-
-    plt.text(np.min(epochs), np.max(loss_train), f"Min: {min_valid:.2e}",
-        verticalalignment='top', horizontalalignment='left', color='green',
-        fontsize=15, bbox={'facecolor': 'white', 'alpha': 0.8, 'pad': 5})
-
-    plt.legend()
-    plt.savefig(outdir + "loss_epochs.pdf"); plt.close()
-
-    print(tcols.OKGREEN + f"Loss vs epochs plot saved to {outdir}." +tcols.ENDC)
 
 if __name__ == '__main__':
     main()

@@ -9,18 +9,20 @@ from terminal_colors import tcols
 
 
 class AE_data():
-    def __init__(self, data_folder, norm_name, nevents):
+    def __init__(self, data_folder, norm_name, nevents,
+        train_events=-1, valid_events=-1, test_events=-1):
+
         self.norm_name   = norm_name
         self.nevents     = nevents
         self.data_folder = data_folder
 
-        self.train_data = self.get_numpy_data("train")
-        self.valid_data = self.get_numpy_data("valid")
-        self.test_data  = self.get_numpy_data("test")
+        self.train_data = self.get_numpy_data("train")[:train_events, :]
+        self.valid_data = self.get_numpy_data("valid")[:valid_events, :]
+        self.test_data  = self.get_numpy_data("test")[:test_events, :]
 
-        self.train_target = self.get_numpy_target("train")
-        self.valid_target = self.get_numpy_target("valid")
-        self.test_target  = self.get_numpy_target("test")
+        self.train_target = self.get_numpy_target("train")[:train_events, :]
+        self.valid_target = self.get_numpy_target("valid")[:valid_events, :]
+        self.test_target  = self.get_numpy_target("test")[:test_events, :]
 
         self.nfeats = self.train_data.shape[1]
 
@@ -54,9 +56,10 @@ class AE_data():
 
     def success_message(self):
         print("\n----------------")
-        print(tcols.OKGREEN + "Data loading complete:" + tcols.ENDC)
+        print(tcols.OKGREEN + "AE data loading complete:" + tcols.ENDC)
         print(f"Training data size: {self.train_data.shape[0]:.2e}")
         print(f"Validation data size: {self.valid_data.shape[0]:.2e}")
+        print(f"Validation data size: {self.test_data.shape[0]:.2e}")
         print("----------------\n")
 
     def get_pytorch_dataset(self, data_type):
@@ -70,18 +73,6 @@ class AE_data():
             raise TypeError("Dataset must be train, valid, or test!!")
 
         return dataset
-
-    def get_data_target(self, data_type):
-        switcher = {
-            'train': (self.train_data, self.train_target),
-            'valid': (self.valid_data, self.valid_target),
-            'test':  (self.test_data,  self.test_target)
-        }
-        data, target = switcher.get(data_type, (None, None))
-        if data is None:
-            raise TypeError("Dataset must be train, valid, or test!!")
-
-        return data, target
 
     @staticmethod
     def make_set(data, target):
@@ -112,12 +103,10 @@ class AE_data():
 
         return pytorch_loader
 
-    def split_sig_bkg(self, data_type):
+    @staticmethod
+    def split_sig_bkg(data, target):
         # Split dataset into signal and background samples using the target.
         # The target is supposed to be 1 for every signal and 0 for every bkg.
-        data, target = self.get_data_target(data_type)
-        print(target)
-        print(target.shape)
         sig_mask = (target == 1); bkg_mask = (target == 0)
         data_sig = data[sig_mask, :]
         data_bkg = data[bkg_mask, :]

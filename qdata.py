@@ -1,170 +1,41 @@
+# Loads the data that is subsequently fed to the quantum ml networks.
 import numpy as np
-from splitDatasets import splitDatasets
-
-#TODO: Takes some time to load encoded datasets, because the AE model runs on the full datasets and then outputs only a subset 
+import ae_pytorch as ae
+from ae_pytorch.terminal_colors import tcols
 
 class qdata:
-	'''
-	Class from with which the training, validation and testing datasets of quantum classifiers is defined
-	
+    def __init__(self, data_folder, norm_name, nevents, model_path,
+        train_events=-1, valid_events=-1, test_events=-1):
 
-	'''
+        hp           = ae.util.import_hyperparams(model_path)
+        self.ae_data = ae.data.AE_data(data_folder, norm_name, nevents,
+            train_events, valid_events, test_events)
+        self.model   = ae.util.choose_ae_model(hp['ae_type'], device, hp)
+        self.model.load_model(model_path)
 
-	#Load the test dataset of the autoencoder and split it to training,validation and testing datasets for the qml
-	#infiles = ('input_ae/trainingTestingDataSig.npy','input_ae/trainingTestingDataBkg.npy')
-	infiles = ('input_ae/trainingTestingDataSig7.2e5.npy','input_ae/trainingTestingDataBkg7.2e5.npy')
-	trainSigAE, trainBkgAE, validSigAE, validBkgAE, testSigAE,testBkgAE = splitDatasets(infiles,separate=True, not_all = False)
+        self.ntrain = self.ae_data.train_data.shape[0]
+        self.nvalid = self.ae_data.valid_data.shape[0]
+        self.ntest  = self.ae_data.test_data.shape[0]
 
+    def get_latent_space(self, datat):
+        if datat == 'train': return self.model.predict(self.ae_data.train_data)
+        if datat == 'valid': return self.model.predict(self.ae_data.valid_data)
+        if datat == 'test':  return self.model.predict(self.ae_data.test_data)
 
-	ntot_test = int(testSigAE.shape[0])
-	ntot_train = int(trainSigAE.shape[0])
-	ntot_valid = int(validSigAE.shape[0])
+        raise TypeError("Given data type does not exist!")
 
-	def __init__(self, encoder = "", train_p = 0.0005, valid_p = 0.005, 
-				test_p = 0.005, use_complex = False):
-		'''	   
-		Args:	
-    	----------
-    	train_p : float or int
-			float: Proportion of total training data set (from splitDatasets) that will be used in the training of the quantum
-			classifiers and the classical models used for benchmarking (trained and tested on the same data sets)
-			int: Number of training data samples to be used
-    	valid_p : float
-			float: Proportion of total validation data set (from splitDatasets) that will be used in the training of the quantum
-			classifiers and the classical models used for benchmarking (trained and tested on the same data sets)
-			int: Number of validation data samples to be used
-    	test_p : float
-			float: Proportion of total testing data set (from splitDatasets) that will be used in the training of the quantum
-			classifiers and the classical models used for benchmarking (trained and tested on the same data sets)
-			int: Number of testing data samples to be used
-    	-------
-		'''
-		#TODO: maybe we should go **kwargs, so we don't have a lot of argumnets
-		
-		if type(encoder) == np.ndarray:
-			encoder = list(encoder)
+    def fold(self, data, target, kfolds, events_per_kfold):
+        data_sig, data_bkg = self.ae_data.split_sig_bkg(data, target)
+        data_sig = data_sig.reshape(-1, self.ae_data.nfeats, events_per_kfold)
+        data_bkg = data_bkg.reshape(-1, self.ae_data.nfeats, events_per_kfold)
 
-		if encoder == "tf":
-			from aeTF.encode import encode
-			from aeTF.encode import model
-			print('Using TensorFlow for autoencoder model')
-			self.trainSigAE = encode(self.trainSigAE)
-			self.trainBkgAE = encode(self.trainBkgAE)
-			self.validSigAE = encode(self.validSigAE)
-			self.validBkgAE = encode(self.validBkgAE)
-			self.testSigAE = encode(self.testSigAE)
-			self.testBkgAE = encode(self.testBkgAE)
-			self.model = model
-		elif encoder == "pt":
-			from aePyTorch.encodePT import encode
-			print('Using PyTorch for autoencoder model to encode the data')
-			#TODO: add functionality: use other models for autoencoder
-			self.savedModel = "aePyTorch/trained_models/L64.52.44.32.24.16B128Lr2e-037.2e5/"
-			self.layers = [67,64, 52, 44, 32, 24, 16]
-			self.trainSigAE = encode(self.trainSigAE,self.savedModel,self.layers)
-			self.trainBkgAE = encode(self.trainBkgAE,self.savedModel,self.layers)
-			self.validSigAE = encode(self.validSigAE,self.savedModel,self.layers)
-			self.validBkgAE = encode(self.validBkgAE,self.savedModel,self.layers)
-			self.testSigAE = encode(self.testSigAE,self.savedModel,self.layers)
-			self.testBkgAE = encode(self.testBkgAE,self.savedModel,self.layers)
-		elif type(encoder) == list:
-			self.trainSigAE = self.trainSigAE[:,encoder]
-			self.trainBkgAE = self.trainBkgAE[:,encoder]
-			self.validSigAE = self.validSigAE[:,encoder]
-			self.validBkgAE = self.validBkgAE[:,encoder]
-			self.testSigAE = self.testSigAE[:,encoder]
-			self.testBkgAE = self.testBkgAE[:,encoder]
-		elif encoder == "":
-			print("Using unencoded data")
-		else:
-			raise Exception('Unknown encoder')
+        return np.concatenate((data_sig[:, :, :kfolds],
+            data_bkg[:, :, :kfolds]), axis=1)
 
-		if use_complex:
-			self.trainSigAE = self.trainSigAE.astype(complex)
-			self.trainBkgAE = self.trainBkgAE.astype(complex)
-			self.validSigAE = self.validSigAE.astype(complex)
-			self.validBkgAE = self.validBkgAE.astype(complex)
-			self.testSigAE = self.testSigAE.astype(complex)
-			self.testBkgAE = self.testBkgAE.astype(complex)
+    def get_kfolded_data(self, datat, kfolds, nevt):
+        if datat == 'valid':
+            return self.fold(self.valid_data, self.valid_target, kfolds, nevt)
+        if datat == 'test':
+            return self.fold(self.test_data, self.test_target, kfolds, nevt)
 
-		if train_p <= 1:
-			ntrain = int(self.ntot_train*train_p)
-			self.train_p = train_p
-			if self.ntot_train % ntrain != 0:
-				raise Exception('ntot_train mod ntrain != 0, choose train_p so the dataset can be divided')
-		else:
-			ntrain = train_p
-			self.train_p = train_p / self.ntot_train
-
-		if valid_p <= 1:
-			nvalid = int(self.ntot_valid*valid_p)
-			self.valid_p = valid_p
-			if self.ntot_valid % nvalid != 0:
-				raise Exception('ntot_valid mod nvalid != 0, choose valid_p so the dataset can be divided')
-		else:
-			nvalid = valid_p
-			self.valid_p = valid_p / self.ntot_valid
-		
-		if (test_p <= 1) & (test_p > 0):
-			ntest = int(self.ntot_test*test_p)
-			self.test_p = test_p
-			if self.ntot_test % ntest != 0:
-				raise Exception('ntot_test mod ntest != 0, choose test_p so the dataset can be divided')
-		else:
-			ntest = test_p
-			self.test_p = test_p / self.ntot_test
-
-		self.ntrain = ntrain
-		self.nvalid = nvalid
-		self.ntest = ntest
-
-		#print(f'Loaded data for Quantum classifier: ntrain = {ntrain}, nvalid = {nvalid}, ntest = {ntest} ')
-
-		self.train = np.vstack((self.trainSigAE[:ntrain], self.trainBkgAE[:ntrain]))
-		self.train_labels = np.array(['s'] * ntrain + ['b'] * ntrain)
-		self.train_nlabels = np.array([1] * ntrain + [0] * ntrain)
-		self.train_dict = {'s': self.trainSigAE[:ntrain], 'b': self.trainBkgAE[:ntrain]}
-
-		self.validation = np.vstack((self.validSigAE[:nvalid],self.validBkgAE[:nvalid]))
-		self.validation_labels = np.array(['s'] * nvalid + ['b'] * nvalid)
-		self.validation_nlabels = np.array([1] * nvalid + [0] * nvalid)
-		self.validation_dict = {'s': self.validSigAE[:nvalid], 'b': self.validBkgAE[:nvalid]}
-
-		self.test = np.vstack((self.testSigAE[:ntest],self.testBkgAE[:ntest]))
-		self.test_labels = np.array(['s'] * ntest + ['b'] * ntest)
-		self.test_nlabels = np.array([1] * ntest + [0] * ntest)
-		self.test_dict = {'s': self.testSigAE[:ntest], 'b': self.testBkgAE[:ntest]}
-
-		print(f'xcheck: train/validation/test shapes: {self.train.shape}/{self.validation.shape}/{self.test.shape}')
-	
-	def get_kfold_validation(self,k=5):
-		splits_total = int(1/self.valid_p)
-		'''
-		splits_total: the max number we can divide the initial validation dataset (from splitDatasets). 
-		E.g. for the 7.2e5 dataset (default),  it's 500 if we want to have 288 validation samples per fold (144 Sig + 144 Bkg)
-		'''
-		validation_folds_sig = np.split(self.validSigAE,splits_total)
-		validation_folds_bkg = np.split(self.validBkgAE,splits_total)
-		
-		validation_folds_sig = np.array(validation_folds_sig)
-		validation_folds_bkg = np.array(validation_folds_bkg)
-		#Create the k-fold for validation of sig+bkg equal chunks(folds) of samples:
-		validation_folds = np.concatenate((validation_folds_sig,validation_folds_bkg),axis=1)
-		#Return k batches of validation samples:
-		return validation_folds[:k]#if k>splits_total it will just return the [:splits_total] folds
-
-	def get_kfold_test(self,k=5):
-		splits_total = int(1/self.valid_p)
-		'''
-		splits_total: the max number we can divide the initial validation dataset (from splitDatasets). 
-		E.g. for the 7.2e5 dataset (default),  it's 500 if we want to have 288 validation samples per fold (144 Sig + 144 Bkg)
-		'''
-		test_folds_sig = np.split(self.testSigAE,splits_total)
-		test_folds_bkg = np.split(self.testBkgAE,splits_total)
-		
-		test_folds_sig = np.array(test_folds_sig)
-		test_folds_bkg = np.array(test_folds_bkg)
-		#Create the k-fold for validation of sig+bkg equal chunks(folds) of samples:
-		test_folds = np.concatenate((test_folds_sig,test_folds_bkg),axis=1)
-		#Return k batches of validation samples:
-		return test_folds[:k]#if k>splits_total it will just return the [:splits_total] folds
+        raise TypeError("Given data type does not exist!")

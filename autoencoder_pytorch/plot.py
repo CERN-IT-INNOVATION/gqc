@@ -30,7 +30,8 @@ def main():
 
     # Import the data.
     ae_data = data.AE_data(args.data_folder, args.norm, args.nevents)
-    test_sig, test_bkg = ae_data.split_sig_bkg('test')
+    test_sig, test_bkg = \
+        ae_data.split_sig_bkg(ae_data.test_data, ae_data.test_target)
 
     # Import the model.
     model = util.choose_ae_model(hp['ae_type'], device, hp)

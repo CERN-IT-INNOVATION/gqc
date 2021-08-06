@@ -2,6 +2,7 @@ data/
 *.npy
 *.h5
 *.root
+*.out
 Tests_qiskit/
 __pycache__
 trained_models/

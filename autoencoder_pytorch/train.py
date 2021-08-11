@@ -37,12 +37,15 @@ parser.add_argument('--outdir', type=str, default='',
 def main():
     args   = parser.parse_args()
     device = util.define_torch_device()
+    vqc_specs   = [["zzfm", 0, 4], ["2local", 0, 20, 4, "linear"],
+                   ["zzfm", 4, 8], ["2local", 20, 40, 4, "linear"]]
     hyperparams   = {
         "lr"           : args.lr,
         "ae_layers"    : [64, 52, 44, 32, 24, 16],
         "class_layers" : [32, 64, 128, 64, 32, 16, 8, 1],
-        "enc_activ"    : 'None',
+        "enc_activ"    : 'nn.Tanh()',
         "dec_activ"    : 'nn.Tanh()',
+        "vqc_specs"    : vqc_specs,
         "loss_weight"  : 1,
         "adam_betas"   : (0.9, 0.999),
     }

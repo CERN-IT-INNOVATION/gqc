@@ -31,21 +31,16 @@ class AE_classifier(AE_vanilla):
         }
         self.hp.update(new_hp)
 
-        # del self.recon_loss_function
-        # self.recon_loss_function = nn.L1Loss(reduction='mean')
         self.class_loss_function = nn.BCELoss(reduction='mean')
         self.hp.update((k, hparams[k]) for k in self.hp.keys() & hparams.keys())
 
+        self.recon_loss_weight = 1 - self.hp['loss_weight']
+        self.class_loss_weight = self.hp['loss_weight']
         self.all_recon_loss = []
         self.all_class_loss = []
 
-        (self.hp['class_layers']).insert(0, self.hp['ae_layers'][-1])
-        self.class_layers = self.construct_classifier(self.hp['class_layers'])
-        self.classifier   = nn.Sequential(*self.class_layers)
-        self = self.to(device)
-
-        self.optimizer = optim.Adam(self.parameters(), lr=self.hp['lr'],
-            betas=self.hp['adam_betas'])
+        self.class_layers = [self.hp['ae_layers'][-1]] + self.hp['class_layers']
+        self.classifier   = self.construct_classifier(self.class_layers)
 
     @staticmethod
     def construct_classifier(layers):
@@ -61,7 +56,7 @@ class AE_classifier(AE_vanilla):
             # dnn_layers.append(nn.Dropout(0.5))
             dnn_layers.append(nn.LeakyReLU(0.2))
 
-        return dnn_layers
+        return nn.Sequential(*dnn_layers)
 
     def forward(self, x):
         latent        = self.encoder(x)
@@ -80,8 +75,8 @@ class AE_classifier(AE_vanilla):
         class_loss = self.class_loss_function(classif.flatten(), y_data.float())
         recon_loss = self.recon_loss_function(recon, x_data.float())
 
-        return (1 - self.hp['loss_weight'])*100*recon_loss + \
-               self.hp['loss_weight']*class_loss
+        return self.recon_loss_weight*recon_loss + \
+               self.class_loss_weight*class_loss
 
     @staticmethod
     def print_losses(epoch, epochs, train_loss, valid_losses):
@@ -97,13 +92,13 @@ class AE_classifier(AE_vanilla):
 
     def network_summary(self):
         print(tcols.OKGREEN + "Encoder summary:" + tcols.ENDC)
-        self.print_summary(self.encoder, self.device)
+        self.print_summary(self.encoder)
         print('\n')
         print(tcols.OKGREEN + "Classifier summary:" + tcols.ENDC)
-        self.print_summary(self.classifier, self.device)
+        self.print_summary(self.classifier)
         print('\n')
         print(tcols.OKGREEN + "Decoder summary:" + tcols.ENDC)
-        self.print_summary(self.decoder, self.device)
+        self.print_summary(self.decoder)
         print('\n\n')
 
     @torch.no_grad()
@@ -117,10 +112,12 @@ class AE_classifier(AE_vanilla):
 
         latent, classif, recon = self.forward(x_data_valid.float())
 
-        recon_loss = self.recon_loss_function(x_data_valid.float(), recon)
-        class_loss = self.class_loss_function(classif.flatten(), y_data_valid)
-        valid_loss = self.compute_loss(x_data_valid, y_data_valid)
+        recon_loss = self.recon_loss_weight * \
+            self.recon_loss_function(x_data_valid.float(), recon)
+        class_loss = self.class_loss_weight * \
+            self.class_loss_function(classif.flatten(), y_data_valid)
 
+        valid_loss = recon_loss + class_loss
         self.save_best_loss_model(valid_loss, outdir)
 
         return valid_loss, recon_loss, class_loss
@@ -139,8 +136,11 @@ class AE_classifier(AE_vanilla):
 
     def train_autoencoder(self, train_loader, valid_loader, epochs, outdir):
 
+        self.instantiate_adam_optimizer()
         self.network_summary(); self.optimizer_summary()
-        print(tcols.OKCYAN + "Training the classifier AE model..." + tcols.ENDC)
+        print(tcols.OKCYAN)
+        print("Training the " + self.hp['ae_type'] + " AE model...")
+        print(tcols.ENDC)
         all_train_loss = []; all_valid_loss = []
 
         for epoch in range(epochs):

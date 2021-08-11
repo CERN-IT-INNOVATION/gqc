@@ -40,7 +40,7 @@ def main():
     hyperparams   = {
         "lr"           : args.lr,
         "ae_layers"    : [64, 52, 44, 32, 24, 16],
-        "class_layers" : [32, 128, 512, 256, 128, 64, 32, 16, 8, 1],
+        "class_layers" : [32, 64, 128, 64, 32, 16, 8, 1],
         "enc_activ"    : 'None',
         "dec_activ"    : 'nn.Tanh()',
         "loss_weight"  : 1,

@@ -61,14 +61,14 @@ def optuna_objective(trial):
         "lr"           : args.lr,
         "ae_layers"    : [64, 52, 44, 32, 24, 16],
         "class_layers" : [32, 64, 128, 64, 32, 16, 8, 1],
-        "enc_activ"    : 'nn.Sigmoid()',
+        "enc_activ"    : 'nn.Tanh()',
         "dec_activ"    : 'nn.Tanh()',
         "loss_weight"  : 1,
         "adam_betas"   : (0.9, 0.999),
     }
     # Define parameters to be optimized by optuna.
     lr             = trial.suggest_loguniform('lr', *args.lr)
-    loss_weight    = trial.suggest_uniform('loss_weight', 1, 1)
+    loss_weight    = trial.suggest_uniform('loss_weight', 0, 1)
     batch          = trial.suggest_categorical('batch', args.batch)
     hyperparams.update({"lr": lr, "loss_weight": loss_weight})
 

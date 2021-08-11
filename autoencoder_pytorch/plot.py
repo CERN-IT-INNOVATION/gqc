@@ -39,9 +39,9 @@ def main():
 
     # Compute loss function results for the test and validation datasets.
     print('\n----------------------------------')
-    print("VALID MSE:")
+    print("VALID LOSS:")
     print(model.compute_loss(ae_data.valid_data, ae_data.valid_target).item())
-    print("TEST MSE:")
+    print("TEST LOSS:")
     print(model.compute_loss(ae_data.test_data, ae_data.test_target).item())
     print('----------------------------------\n')
 

@@ -90,7 +90,7 @@ class AE_variational(AE_vanilla):
         latent, recon = self.forward(x_data.float())
 
         samples = self.desired_latent_dist.sample(latent.shape)
-        comparison_probs = self.desired_latent_dist.cdf(samples).to(self.device)
+        comparison_probs = func.softmax(samples, dim=1).to(self.device)
         latent_log_probs = func.log_softmax(latent, dim=1)
 
         laten_loss = self.laten_loss_function(latent_log_probs,comparison_probs)
@@ -122,9 +122,8 @@ class AE_variational(AE_vanilla):
         latent, recon = self.forward(x_data_valid.float())
 
         samples = self.desired_latent_dist.sample(latent.shape)
-        comparison_probs = self.desired_latent_dist.cdf(samples).to(self.device)
+        comparison_probs = func.softmax(samples, dim=1).to(self.device)
         latent_log_probs = func.log_softmax(latent, dim=1)
-
 
         recon_loss = self.recon_loss_weight * \
            self.recon_loss_function(recon, x_data_valid.float())

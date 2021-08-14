@@ -4,7 +4,6 @@
 # but Gaussian is the usual one found in literature.
 
 import numpy as np
-import matplotlib.pyplot as plt
 
 import torch
 import torch.nn as nn
@@ -26,7 +25,7 @@ class AE_variational(AE_vanilla):
 
         super().__init__(device, hparams)
         new_hp = {
-            "ae_type":      "variational",
+            "ae_type"     : "variational",
             "adam_betas"  : (0.9, 0.999),
             "loss_weight" : 0.5
         }
@@ -107,9 +106,9 @@ class AE_variational(AE_vanilla):
         print(f"Epoch : {epoch + 1}/{epochs}, "
               f"Valid loss = {valid_losses[0].item():.8f}")
         print(f"Epoch : {epoch + 1}/{epochs}, "
-              f"Valid recon loss = {valid_losses[1].item():.8f}")
+              f"Valid recon loss  (no weight) = {valid_losses[1].item():.8f}")
         print(f"Epoch : {epoch + 1}/{epochs}, "
-              f"Valid latent loss = {valid_losses[2].item():.8f}")
+              f"Valid latent loss (no weight) = {valid_losses[2].item():.8f}")
 
     @torch.no_grad()
     def valid(self, valid_loader, outdir):
@@ -125,12 +124,11 @@ class AE_variational(AE_vanilla):
         comparison_probs = func.softmax(samples, dim=1).to(self.device)
         latent_log_probs = func.log_softmax(latent, dim=1)
 
-        recon_loss = self.recon_loss_weight * \
-           self.recon_loss_function(recon, x_data_valid.float())
-        laten_loss = self.laten_loss_weight * \
-            self.laten_loss_function(latent_log_probs, comparison_probs)
+        recon_loss = self.recon_loss_function(recon, x_data_valid.float())
+        laten_loss = self.laten_loss_function(latent_log_probs,comparison_probs)
 
-        valid_loss = recon_loss + laten_loss
+        valid_loss = self.recon_loss_weight * recon_loss + \
+                     self.laten_loss_weight * laten_loss
         self.save_best_loss_model(valid_loss, outdir)
 
         return valid_loss, recon_loss, laten_loss
@@ -148,6 +146,7 @@ class AE_variational(AE_vanilla):
 
             train_loss   = self.train_all_batches(train_loader)
             valid_losses = self.valid(valid_loader,outdir)
+            if self.early_stopping(): break
 
             self.all_train_loss.append(train_loss.item())
             self.all_valid_loss.append(valid_losses[0].item())

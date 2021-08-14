@@ -35,18 +35,31 @@ def optuna_train(train_loader, valid_loader, model, epochs, trial):
     model.instantiate_adam_optimizer()
     model.network_summary(); model.optimizer_summary()
 
+    valid_losses = []
     for epoch in range(epochs):
         model.train()
 
         train_loss = model.train_all_batches(train_loader)
         valid_loss = model.valid(valid_loader, None)
 
+        if model.hp["ae_type"] in ["classifier", "classvqc"]:
+            model.all_recon_loss.append(valid_loss[1].item())
+            model.all_class_loss.append(valid_loss[2].item())
+
+        if model.hp["ae_type"] in ["variational", "sinkhorn"]:
+            model.all_recon_loss.append(valid_loss[1].item())
+
         if model.early_stopping(): return model.best_valid_loss
         model.print_losses(epoch, epochs, train_loss, valid_loss)
 
         trial.report(train_loss.item(), epoch)
         if trial.should_prune(): raise optuna.TrialPruned()
-        # if model.best_valid_loss > 0.09: raise optuna.TrialPruned()
+
+    # if model.hp["ae_type"] in ["classifier", "classvqc"]:
+        # return min(model.all_class_loss) + min(model.all_recon_loss)
+
+    # if model.hp["ae_type"] in ["variational", "sinkhorn"]:
+        # return min(model.all_recon_loss)
 
     return model.best_valid_loss
 
@@ -57,18 +70,22 @@ def optuna_objective(trial):
     """
     args   = parser.parse_args()
     device = util.define_torch_device()
+    vqc_specs   = [["zzfm", 0, 4], ["2local", 0, 20, 4, "linear"],
+                   ["zzfm", 4, 8], ["2local", 20, 40, 4, "linear"]]
     hyperparams   = {
         "lr"           : args.lr,
         "ae_layers"    : [64, 52, 44, 32, 24, 16],
         "class_layers" : [32, 64, 128, 64, 32, 16, 8, 1],
         "enc_activ"    : 'nn.Tanh()',
         "dec_activ"    : 'nn.Tanh()',
+        "vqc_specs"    : vqc_specs,
         "loss_weight"  : 1,
+        "weight_sink"  : 1,
         "adam_betas"   : (0.9, 0.999),
     }
     # Define parameters to be optimized by optuna.
     lr             = trial.suggest_loguniform('lr', *args.lr)
-    loss_weight    = trial.suggest_uniform('loss_weight', 0, 1)
+    loss_weight    = trial.suggest_uniform('loss_weight', 1, 1)
     batch          = trial.suggest_categorical('batch', args.batch)
     hyperparams.update({"lr": lr, "loss_weight": loss_weight})
 
@@ -90,11 +107,11 @@ if __name__ == '__main__':
     # Start the optuna study.
     print('\n')
     sampler = optuna.samplers.TPESampler()
-    study = optuna.create_study(study_name="batch-lr-optimizer",
+    study = optuna.create_study(study_name="loss-weight-optimizer",
         sampler=sampler, direction='minimize',
         pruner=optuna.pruners.HyperbandPruner())
 
-    study.optimize(optuna_objective, n_trials=70)
+    study.optimize(optuna_objective, n_trials=100)
 
     comp_trials = study.get_trials(deepcopy=False, states=[TrialState.COMPLETE])
     print("Study statistics: ")

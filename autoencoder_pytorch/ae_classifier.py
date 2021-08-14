@@ -24,15 +24,15 @@ class AE_classifier(AE_vanilla):
 
         super().__init__(device, hparams)
         new_hp = {
-            "ae_type":      "classifier",
-            "class_layers": [128, 64, 32, 16, 8, 1],
-            "adam_betas"  : (0.9, 0.999),
-            "loss_weight" : 0.5
+            "ae_type"      : "classifier",
+            "class_layers" : [128, 64, 32, 16, 8, 1],
+            "adam_betas"   : (0.9, 0.999),
+            "loss_weight"  : 0.5
         }
         self.hp.update(new_hp)
+        self.hp.update((k, hparams[k]) for k in self.hp.keys() & hparams.keys())
 
         self.class_loss_function = nn.BCELoss(reduction='mean')
-        self.hp.update((k, hparams[k]) for k in self.hp.keys() & hparams.keys())
 
         self.recon_loss_weight = 1 - self.hp['loss_weight']
         self.class_loss_weight = self.hp['loss_weight']
@@ -86,9 +86,9 @@ class AE_classifier(AE_vanilla):
         print(f"Epoch : {epoch + 1}/{epochs}, "
               f"Valid loss = {valid_losses[0].item():.8f}")
         print(f"Epoch : {epoch + 1}/{epochs}, "
-              f"Valid recon loss = {valid_losses[1].item():.8f}")
+              f"Valid recon loss (no weight) = {valid_losses[1].item():.8f}")
         print(f"Epoch : {epoch + 1}/{epochs}, "
-              f"Valid class loss = {valid_losses[2].item():.8f}")
+              f"Valid class loss (no weight) = {valid_losses[2].item():.8f}")
 
     def network_summary(self):
         print(tcols.OKGREEN + "Encoder summary:" + tcols.ENDC)
@@ -112,12 +112,12 @@ class AE_classifier(AE_vanilla):
 
         latent, classif, recon = self.forward(x_data_valid.float())
 
-        recon_loss = self.recon_loss_weight * \
-            self.recon_loss_function(x_data_valid.float(), recon)
-        class_loss = self.class_loss_weight * \
-            self.class_loss_function(classif.flatten(), y_data_valid)
+        recon_loss = self.recon_loss_function(x_data_valid.float(), recon)
+        class_loss = self.class_loss_function(classif.flatten(), y_data_valid)
 
-        valid_loss = recon_loss + class_loss
+        valid_loss = self.recon_loss_weight * recon_loss + \
+                     self.class_loss_weight * class_loss
+
         self.save_best_loss_model(valid_loss, outdir)
 
         return valid_loss, recon_loss, class_loss
@@ -148,6 +148,7 @@ class AE_classifier(AE_vanilla):
 
             train_loss   = self.train_all_batches(train_loader)
             valid_losses = self.valid(valid_loader,outdir)
+            if self.early_stopping(): break
 
             self.all_train_loss.append(train_loss.item())
             self.all_valid_loss.append(valid_losses[0].item())
@@ -155,33 +156,6 @@ class AE_classifier(AE_vanilla):
             self.all_class_loss.append(valid_losses[2].item())
 
             self.print_losses(epoch, epochs, train_loss, valid_losses)
-
-
-    def loss_plot(self, outdir):
-        # Plots the loss for each epoch for the training and validation data.
-
-        epochs = list(range(len(self.all_train_loss)))
-        plt.plot(epochs, self.all_train_loss,
-            color="gray", label="Training Loss (average)")
-        plt.plot(epochs, self.all_valid_loss,
-            color="chartreuse", label="Validation Loss")
-        plt.plot(epochs, self.all_recon_loss,
-            color="darkseagreen", label="Recon Loss")
-        plt.plot(epochs, self.all_class_loss,
-            color="olivedrab", label="Classif Loss")
-        plt.xlabel("Epochs"); plt.ylabel("Loss")
-
-        plt.text(np.min(epochs), np.max(self.all_train_loss),
-            f"Min: {self.best_valid_loss:.2e}", verticalalignment='top',
-            horizontalalignment='left', color='green', fontsize=15,
-            bbox={'facecolor': 'white', 'alpha': 0.8, 'pad': 5})
-
-        plt.legend()
-        plt.savefig(outdir + "loss_epochs.png")
-        plt.close()
-
-        print(tcols.OKGREEN + f"Loss vs epochs plot saved to {outdir}." +
-              tcols.ENDC)
 
     @torch.no_grad()
     def predict(self, x_data):

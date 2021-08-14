@@ -38,12 +38,12 @@ def main():
     model.load_model(args.model_path)
 
     # Compute loss function results for the test and validation datasets.
-    print('\n----------------------------------')
-    print("VALID LOSS:")
-    print(model.compute_loss(ae_data.valid_data, ae_data.valid_target).item())
-    print("TEST LOSS:")
-    print(model.compute_loss(ae_data.test_data, ae_data.test_target).item())
-    print('----------------------------------\n')
+    # print('\n----------------------------------')
+    # print("VALID LOSS:")
+    # print(model.compute_loss(ae_data.valid_data, ae_data.valid_target).item())
+    # print("TEST LOSS:")
+    # print(model.compute_loss(ae_data.test_data, ae_data.test_target).item())
+    # print('----------------------------------\n')
 
     # Compute the signal and background latent spaces and decoded data.
     model_sig = model.predict(test_sig)

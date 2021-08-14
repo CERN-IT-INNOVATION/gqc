@@ -9,16 +9,20 @@ from ae_vanilla import AE_vanilla
 from ae_classifier import AE_classifier
 from ae_variational import AE_variational
 from ae_sinkhorn import AE_sinkhorn
+from ae_vqc import AE_vqc
+from ae_sinkclass import AE_sinkclass
 
 from terminal_colors import tcols
 
 def choose_ae_model(ae_type, device, hyperparams):
     # Picks and loads one of the implemented autencoder models.
     switcher = {
-        "vanilla":     lambda: AE_vanilla(device, hyperparams),
-        "classifier":  lambda: AE_classifier(device, hyperparams),
-        "variational": lambda: AE_variational(device,hyperparams),
-        "sinkhorn":    lambda: AE_sinkhorn(device,hyperparams),
+        "vanilla"    : lambda: AE_vanilla(device, hyperparams),
+        "classifier" : lambda: AE_classifier(device, hyperparams),
+        "variational": lambda: AE_variational(device, hyperparams),
+        "sinkhorn"   : lambda: AE_sinkhorn(device, hyperparams),
+        "classvqc"   : lambda: AE_vqc(device, hyperparams),
+        "sinkclass"  : lambda: AE_sinkclass(device, hyperparams),
     }
     model = switcher.get(ae_type, lambda: None)()
     if model is None: raise TypeError("Specified AE type does not exist!")

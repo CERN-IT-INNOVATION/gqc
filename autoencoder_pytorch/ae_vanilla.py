@@ -52,8 +52,6 @@ class AE_vanilla(nn.Module):
         self.decoder = \
             self.construct_decoder(self.hp['ae_layers'], self.dec_activ)
 
-        del self.enc_activ; del self.dec_activ
-
     @staticmethod
     def construct_encoder(layers, en_activ):
         """

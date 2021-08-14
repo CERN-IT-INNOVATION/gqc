@@ -18,33 +18,55 @@ torch.manual_seed(seed)
 torch.autograd.set_detect_anomaly(False)
 torch.autograd.profiler.profile(enabled=False)
 
-class AE_sinkhorn(AE_vanilla):
+class AE_sinkclass(AE_vanilla):
     def __init__(self, device='cpu', hparams={}):
 
         super().__init__(device, hparams)
         new_hp = {
-            "ae_type":                 "sinkhorn",
-            "noise_gen_input_layers":  self.hp["ae_layers"][:2],
-            "labels_dimension" :       2,
-            "adam_betas"  :            (0.9, 0.999),
-            "loss_weight" :            0.5
+            "ae_type"                : "sinkclass",
+            "noise_gen_input_layers" : self.hp["ae_layers"][:2],
+            "class_layers"           : [128, 64, 32, 16, 8, 1],
+            "labels_dimension"       : 2,
+            "adam_betas"             : (0.9, 0.999),
+            "loss_weight"            : 0.5,
+            "weight_sink"            : 1
         }
 
         self.hp.update(new_hp)
         self.hp.update((k, hparams[k]) for k in self.hp.keys() & hparams.keys())
 
-        self.recon_loss_weight = 1 - self.hp['loss_weight']
-        self.laten_loss_weight = self.hp['loss_weight']
+        self.class_loss_weight = self.hp['loss_weight']
+        self.laten_loss_weight = self.hp['weight_sink']
 
+        self.class_loss_function = nn.BCELoss(reduction='mean')
         self.laten_loss_function = geomloss.SamplesLoss("sinkhorn", blur=0.05,
             scaling=0.95, diameter=0.01, debias=True)
 
         self.encoder = nn.Sequential(*list(self.encoder.children())[:-1])
         self.construct_noise_gen_input()
         self.construct_noise_generator()
+        self.class_layers = [self.hp['ae_layers'][-1]] + self.hp['class_layers']
+        self.classifier   = self.construct_classifier(self.class_layers)
 
         self.all_recon_loss = []
         self.all_laten_loss = []
+        self.all_class_loss = []
+
+    @staticmethod
+    def construct_classifier(layers):
+        # Construct the classifier layers.
+        dnn_layers = []
+        # dnn_layers.append(nn.BatchNorm1d(layers[0]))
+
+        for idx in range(len(layers)):
+            dnn_layers.append(nn.Linear(layers[idx], layers[idx+1]))
+            if idx == len(layers) - 2: dnn_layers.append(nn.Sigmoid()); break
+
+            # dnn_layers.append(nn.BatchNorm1d(layers[idx+1]))
+            # dnn_layers.append(nn.Dropout(0.5))
+            dnn_layers.append(nn.LeakyReLU(0.2))
+
+        return nn.Sequential(*dnn_layers)
 
     def construct_noise_gen_input(self):
         """
@@ -96,25 +118,33 @@ class AE_sinkhorn(AE_vanilla):
         return y_map.scatter_(1, y_batch.reshape([-1, 1]).type(torch.int64), 1)\
                .to(self.device)
 
+    def forward(self, x):
+        latent        = self.encoder(x)
+        class_output  = self.classifier(latent)
+        reconstructed = self.decoder(latent)
+        return latent, class_output, reconstructed
+
     def compute_loss(self, x_data, y_data):
         if type(x_data) is np.ndarray:
             x_data = torch.from_numpy(x_data).to(self.device)
         if type(y_data) is np.ndarray:
             y_data = torch.from_numpy(y_data).to(self.device)
 
-        y_data = self.transform_target_data(y_data)
-        latent, recon = self.forward(x_data.float())
+        y_data_trans = self.transform_target_data(y_data)
+        latent, classif, recon = self.forward(x_data.float())
 
         noise_input_probs = torch.rand(x_data.shape).to(self.device)
-        latent_noise      = self.generate_noise(noise_input_probs, y_data)
-        latent_noise      = torch.cat([latent_noise, y_data], 1)
-        latent            = torch.cat([latent, y_data], 1)
+        latent_noise      = self.generate_noise(noise_input_probs, y_data_trans)
+        latent_noise      = torch.cat([latent_noise, y_data_trans], 1)
+        latent            = torch.cat([latent, y_data_trans], 1)
 
+        class_loss = self.class_loss_function(classif.flatten(), y_data)
         laten_loss = self.laten_loss_function(latent, latent_noise)
         recon_loss = self.recon_loss_function(recon, x_data.float())
 
-        return self.recon_loss_weight*recon_loss + \
-               self.laten_loss_weight*laten_loss
+        return recon_loss + \
+               self.laten_loss_weight*laten_loss + \
+               self.class_loss_weight*class_loss
 
     @staticmethod
     def print_losses(epoch, epochs, train_loss, valid_losses):
@@ -127,6 +157,8 @@ class AE_sinkhorn(AE_vanilla):
               f"Valid recon loss (no weight) = {valid_losses[1].item():.8f}")
         print(f"Epoch : {epoch + 1}/{epochs}, "
               f"Valid sinkh loss (no weight) = {valid_losses[2].item():.8f}")
+        print(f"Epoch : {epoch + 1}/{epochs}, "
+              f"Valid class loss (no weight) = {valid_losses[3].item():.8f}")
 
     @torch.no_grad()
     def valid(self, valid_loader, outdir):
@@ -135,24 +167,27 @@ class AE_sinkhorn(AE_vanilla):
         x_data_valid, y_data_valid = iter(valid_loader).next()
         x_data_valid = x_data_valid.to(self.device)
         y_data_valid = y_data_valid.to(self.device)
-        y_data_valid = self.transform_target_data(y_data_valid)
+        y_data_trans = self.transform_target_data(y_data_valid)
         self.eval()
 
-        latent, recon = self.forward(x_data_valid.float())
+        latent, classif, recon = self.forward(x_data_valid.float())
 
         noise_input_probs = torch.rand(x_data_valid.shape).to(self.device)
-        latent_noise      = self.generate_noise(noise_input_probs, y_data_valid)
-        latent_noise      = torch.cat([latent_noise, y_data_valid], 1)
-        latent            = torch.cat([latent, y_data_valid], 1)
+        latent_noise      = self.generate_noise(noise_input_probs, y_data_trans)
+        latent_noise      = torch.cat([latent_noise, y_data_trans], 1)
+        latent            = torch.cat([latent, y_data_trans], 1)
 
-        recon_loss =  self.recon_loss_function(recon, x_data_valid.float())
-        laten_loss =  self.laten_loss_function(latent, latent_noise)
+        class_loss = self.class_loss_function(classif.flatten(), y_data_valid)
+        recon_loss = self.recon_loss_function(recon, x_data_valid.float())
+        laten_loss = self.laten_loss_function(latent, latent_noise)
 
-        valid_loss = self.recon_loss_weight * recon_loss + \
-                     self.laten_loss_weight * laten_loss
+        valid_loss = recon_loss + \
+                     self.laten_loss_weight*laten_loss + \
+                     self.class_loss_weight*class_loss
+
         self.save_best_loss_model(valid_loss, outdir)
 
-        return valid_loss, recon_loss, laten_loss
+        return valid_loss, recon_loss, laten_loss, class_loss
 
     def train_all_batches(self, train_loader):
 
@@ -185,5 +220,6 @@ class AE_sinkhorn(AE_vanilla):
             self.all_valid_loss.append(valid_losses[0].item())
             self.all_recon_loss.append(valid_losses[1].item())
             self.all_laten_loss.append(valid_losses[2].item())
+            self.all_class_loss.append(valid_losses[2].item())
 
             self.print_losses(epoch, epochs, train_loss, valid_losses)

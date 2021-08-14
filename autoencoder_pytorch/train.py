@@ -42,11 +42,12 @@ def main():
     hyperparams   = {
         "lr"           : args.lr,
         "ae_layers"    : [64, 52, 44, 32, 24, 16],
-        "class_layers" : [32, 64, 128, 64, 32, 16, 8, 1],
+        "class_layers" : [128, 64, 32, 16, 8, 1],
         "enc_activ"    : 'nn.Tanh()',
         "dec_activ"    : 'nn.Tanh()',
         "vqc_specs"    : vqc_specs,
         "loss_weight"  : 1,
+        "weight_sink"  : 1,
         "adam_betas"   : (0.9, 0.999),
     }
     outdir = "./trained_models/" + args.outdir + '/'

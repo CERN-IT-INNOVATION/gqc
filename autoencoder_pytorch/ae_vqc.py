@@ -1,5 +1,5 @@
 # Just like the classifier ae, but with a vqc attached that does the
-# classification. 
+# classification.
 
 import numpy as np
 import torch
@@ -11,7 +11,7 @@ from pennylane.templates import AngleEmbedding
 import matplotlib.pyplot as plt
 
 
-from ae_vanilla import AE_classifier
+from ae_classifier import AE_classifier
 import vqc_forms
 from terminal_colors import tcols
 
@@ -27,32 +27,50 @@ class AE_vqc(AE_classifier):
 
         super().__init__(device, hparams)
         del self.class_layers; del self.classifier
+        self.qcirc_default_specs = \
+            [["zzfm", 0, 4], ["2local", 0, 20, 4, "linear"],
+             ["zzfm", 4, 8], ["2local", 20, 40, 4, "linear"]]
+
         new_hp = {
             "ae_type"     : "classvqc",
             "nqbits"      : 4,
-            "vqc_specs"   : qcirc_specs,
+            "vqc_specs"   : self.qcirc_default_specs,
             "measurement" : "first",
         }
+
         self.hp.update(new_hp)
         self.hp.update((k, hparams[k]) for k in self.hp.keys() & hparams.keys())
 
-        self.nparams = 0 # To be filled in construct_vqc method.
-        self.qdevice = qml.device("default.qubit", wires=self.hp["nqubits"])
-        self.vqc_cl  = self.construct_vqc
+        self.nparams = self.getnparams(self.hp['vqc_specs'])
+        self.qdevice = qml.device("default.qubit", wires=self.hp["nqbits"])
+        self.vqc_circuit = \
+            qml.qnode(self.qdevice, interface="torch")(self.construct_vqc)
         self.wshape  = {"theta": self.nparams}
 
-        self.classifier = qml.qnn.TorchLayer(self.vqc_cl, wshape, output_dim=1)
+        self.encoder = \
+            self.construct_encoder(self.hp['ae_layers'] + [8], self.enc_activ)
+        self.decoder = \
+            self.construct_decoder(self.hp['ae_layers'] + [8], self.dec_activ)
+        self.classifier = qml.qnn.TorchLayer(self.vqc_circuit, self.wshape)
 
-    @qml.qnode(self.qdevice, interface="torch")
+    @staticmethod
+    def getnparams(specs):
+        nparams = 0
+        for spec in specs:
+            if spec[0] == '2local' or spec[0] == 'tree' or spec[0] == 'step':
+                nparams += spec[2] - spec[1]
+
+        return nparams
+
     def construct_vqc(self, inputs, theta):
 
         state_0 = [[1], [0]]
         state_all = [[1]],
         y = state_0 * np.conj(state_0).T
 
-        for idx in range(1, len(self.hp["vqc_specs"])):
-            self.nparams += self.add_vqc_layer(self.hp["vqc_specs"][idx],
-                self.nqubits, inputs, theta)
+        for idx in range(0, len(self.hp["vqc_specs"])):
+            self.add_vqc_layer(self.hp["vqc_specs"][idx], self.hp['nqbits'],
+                inputs, theta)
 
         get_meas_type = {
             "first": lambda: self.meas_first_qbit(y),
@@ -65,34 +83,32 @@ class AE_vqc(AE_classifier):
         return measurement
 
     @staticmethod
-    def add_vqc_layer(spec, nqubits, inputs, theta):
+    def add_vqc_layer(spec, nqbits, inputs, theta):
         vform_name    = spec[0]
         nfrom         = int(spec[1])
         nto           = int(spec[2])
         layer_nparams = nto - nfrom
 
-        implement_vqc_form = {
-            "zzfm"   : lambda: vqc_forms.zzfm(nqubits, inputs[nfrom:nto])
-            "zzfm2"  : lambda: vqc_forms.zzfm(nqubits, inputs[nfrom:nto],
-                        scaled = True)
+        implement_vqc_layer = {
+            "zzfm"   : lambda: vqc_forms.zzfm(nqbits, inputs[nfrom:nto]),
+            "zzfm2"  : lambda: vqc_forms.zzfm(nqbits, inputs[nfrom:nto],
+                        scaled=True),
             "angle"  : lambda: AngleEmbedding(features=inputs[nfrom:nto],
-                        wires = range(nqubits))
+                        wires=range(nqbits)),
             "angle2" : lambda: AngleEmbedding(features=np.pi*inputs[nfrom:nto],
-                        wires = range(nqubits))
+                        wires=range(nqbits)),
             "amp"    : lambda: AmplitudeEmbedding(features=inputs[nfrom:nto],
-                        wires = range(nqubits), normalize = True)
-            "2local" : lambda: vqc_forms.twolocal(nqubits, theta[nfrom:nto],
-                        reps=int(spec[3]), entanglement=spec[4])
-            "tree"   : lambda: vqc_forms.treevf(nqubits, theta[nfrom:nto],
-                        reps=int(spec[3]))
-            "step"   : lambda: vqc_forms.stepc(nqubits, theta[nfrom:nto],
+                        wires=range(nqbits), normalize=True),
+            "2local" : lambda: vqc_forms.twolocal(nqbits, theta[nfrom:nto],
+                        reps=int(spec[3]), entanglement=spec[4]),
+            "tree"   : lambda: vqc_forms.treevf(nqbits, theta[nfrom:nto],
+                        reps=int(spec[3])),
+            "step"   : lambda: vqc_forms.stepc(nqbits, theta[nfrom:nto],
                         reps=int(spec[3]))
         }
         if vform_name in implement_vqc_layer.keys():
             implement_vqc_layer.get(vform_name)()
         else: raise TypeError("Undefined VQC Template!")
-
-        return layer_nparams
 
     @staticmethod
     def meas_first_qbit(y):

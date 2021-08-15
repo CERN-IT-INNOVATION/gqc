@@ -3,7 +3,12 @@ from qsvm.feature_map_circuits import customFeatureMap,get_circuit14,u2Reuploadi
 from qiskit.utils import QuantumInstance
 from qiskit.utils import algorithm_globals
 from sklearn.svm import SVC
+from sklearn.preprocessing import MinMaxScaler
+
 from qiskit_machine_learning.circuit.library import RawFeatureVector
+# from qiskit.aqua.components.feature_maps import RawFeatureVector
+
+from qiskit.circuit.library import ZZFeatureMap
 from qiskit_machine_learning.kernels import QuantumKernel
 import numpy as np
 from qiskit_machine_learning.datasets import breast_cancer#test if this produces "bound" parameters for RawFeatureVector
@@ -43,24 +48,25 @@ def main():
 	qdata_loader = qd.qdata(data_folder = '../qml_data/input_ae/', norm_name = 'minmax',
 		nevents = '7.20e+05', model_path= '/work/vabelis/qml_project/autoencoder_pytorch/'
 		'trained_models/vanilla_best', train_events=576, valid_events=720, test_events=720)
-	
+
 	train_features = qdata_loader.get_latent_space('train')
-	train_labels = qdata_loader.ae_data.train_target
-	test_features = qdata_loader.get_latent_space('test')
-	test_labels = qdata_loader.ae_data.test_target
+	train_labels   = qdata_loader.ae_data.train_target
+	test_features  = qdata_loader.get_latent_space('test')
+	test_labels    = qdata_loader.ae_data.test_target
 
 	feature_map = RawFeatureVector(feature_dim)
-	backend = QuantumInstance(Aer.get_backend('aer_simulator_statevector'),\
-		seed_simulator=seed,seed_transpiler = seed)
-	quantum_kernel = QuantumKernel(feature_map = feature_map, quantum_instance =\
-		 backend)
+	backend = QuantumInstance(Aer.get_backend('aer_simulator_statevector'),
+		seed_simulator=seed, seed_transpiler = seed)
+	quantum_kernel = QuantumKernel(feature_map = feature_map,
+		quantum_instance = backend)
 	
-	qsvm = SVC(kernel = quantum_kernel.evaluate)
-	qsvm.fit(train_features,train_labels)
+	qsvm = SVC(kernel=quantum_kernel.evaluate)
+	qsvm.fit(train_features, train_labels)
+
 	print('Train labels:', train_labels)
 	print('Train data:', train_features)
 	test_accuracy = qsvm.score(test_features, test_labels)
-	
+
 	end_time = time.time()
 	runtime = end_time-start_time
 	print(f'Total runtime: {runtime:.2f} sec.')

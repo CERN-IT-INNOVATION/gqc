@@ -20,9 +20,12 @@ class qdata:
         self.ntest  = self.ae_data.test_data.shape[0]
 
     def get_latent_space(self, datat):
-        if datat == 'train': return self.model.predict(self.ae_data.train_data)
-        if datat == 'valid': return self.model.predict(self.ae_data.valid_data)
-        if datat == 'test':  return self.model.predict(self.ae_data.test_data)
+        if datat == 'train':
+            return self.model.predict(self.ae_data.train_data)[0]
+        if datat == 'valid':
+            return self.model.predict(self.ae_data.valid_data)[0]
+        if datat == 'test':
+            return self.model.predict(self.ae_data.test_data)[0]
 
         raise TypeError("Given data type does not exist!")
 

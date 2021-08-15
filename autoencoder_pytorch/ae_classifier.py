@@ -9,8 +9,8 @@ import torch.nn as nn
 import torch.optim as optim
 import matplotlib.pyplot as plt
 
-from ae_vanilla import AE_vanilla
-from terminal_colors import tcols
+from .ae_vanilla import AE_vanilla
+from .terminal_colors import tcols
 
 seed = 100
 torch.manual_seed(seed)

@@ -5,14 +5,14 @@ import torch.nn as nn
 import numpy as np
 import os, warnings, time, json
 
-from ae_vanilla import AE_vanilla
-from ae_classifier import AE_classifier
-from ae_variational import AE_variational
-from ae_sinkhorn import AE_sinkhorn
-from ae_vqc import AE_vqc
-from ae_sinkclass import AE_sinkclass
+from .ae_vanilla import AE_vanilla
+from .ae_classifier import AE_classifier
+from .ae_variational import AE_variational
+from .ae_sinkhorn import AE_sinkhorn
+from .ae_vqc import AE_vqc
+from .ae_sinkclass import AE_sinkclass
 
-from terminal_colors import tcols
+from .terminal_colors import tcols
 
 def choose_ae_model(ae_type, device, hyperparams):
     # Picks and loads one of the implemented autencoder models.

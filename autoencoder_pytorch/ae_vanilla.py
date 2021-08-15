@@ -12,7 +12,7 @@ from torchinfo import summary
 import os, json
 import matplotlib.pyplot as plt
 
-from terminal_colors import tcols
+from .terminal_colors import tcols
 
 seed = 100
 torch.manual_seed(seed)

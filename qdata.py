@@ -1,16 +1,18 @@
 # Loads the data that is subsequently fed to the quantum ml networks.
 import numpy as np
-import ae_pytorch as ae
-from ae_pytorch.terminal_colors import tcols
+from autoencoder_pytorch import data as aedata
+from autoencoder_pytorch import util as aeutil
+from autoencoder_pytorch.terminal_colors import tcols
 
 class qdata:
     def __init__(self, data_folder, norm_name, nevents, model_path,
         train_events=-1, valid_events=-1, test_events=-1):
 
-        hp           = ae.util.import_hyperparams(model_path)
-        self.ae_data = ae.data.AE_data(data_folder, norm_name, nevents,
+        device       = 'cpu'
+        hp           = aeutil.import_hyperparams(model_path)
+        self.ae_data = aedata.AE_data(data_folder, norm_name, nevents,
             train_events, valid_events, test_events)
-        self.model   = ae.util.choose_ae_model(hp['ae_type'], device, hp)
+        self.model   = aeutil.choose_ae_model(hp['ae_type'], device, hp)
         self.model.load_model(model_path)
 
         self.ntrain = self.ae_data.train_data.shape[0]

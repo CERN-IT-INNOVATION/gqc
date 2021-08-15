@@ -11,9 +11,9 @@ import os
 
 import torch.nn as nn
 
-import util
-import data
-from terminal_colors import tcols
+from . import util
+from . import data
+from .terminal_colors import tcols
 
 parser = argparse.ArgumentParser(formatter_class=argparse.
     ArgumentDefaultsHelpFormatter)
@@ -37,13 +37,17 @@ parser.add_argument('--outdir', type=str, default='',
 def main():
     args   = parser.parse_args()
     device = util.define_torch_device()
+    vqc_specs   = [["zzfm", 0, 4], ["2local", 0, 20, 4, "linear"],
+                   ["zzfm", 4, 8], ["2local", 20, 40, 4, "linear"]]
     hyperparams   = {
         "lr"           : args.lr,
         "ae_layers"    : [64, 52, 44, 32, 24, 16],
-        "class_layers" : [32, 64, 128, 64, 32, 16, 8, 1],
+        "class_layers" : [128, 64, 32, 16, 8, 1],
         "enc_activ"    : 'nn.Tanh()',
         "dec_activ"    : 'nn.Tanh()',
-        "loss_weight"  : 0.5,
+        "vqc_specs"    : vqc_specs,
+        "loss_weight"  : 1,
+        "weight_sink"  : 1,
         "adam_betas"   : (0.9, 0.999),
     }
     outdir = "./trained_models/" + args.outdir + '/'

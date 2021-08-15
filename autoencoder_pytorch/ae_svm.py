@@ -8,8 +8,8 @@ import torch
 import torch.nn as nn
 import torch.optim as optim
 
-from ae_classifier import AE_classifier
-from terminal_colors import tcols
+from .ae_classifier import AE_classifier
+from .terminal_colors import tcols
 
 seed = 100
 torch.manual_seed(seed)

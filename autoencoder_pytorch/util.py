@@ -5,16 +5,24 @@ import torch.nn as nn
 import numpy as np
 import os, warnings, time, json
 
-import ae_vanilla
-import ae_classifier
-import ae_svm
-from terminal_colors import tcols
+from .ae_vanilla import AE_vanilla
+from .ae_classifier import AE_classifier
+from .ae_variational import AE_variational
+from .ae_sinkhorn import AE_sinkhorn
+from .ae_vqc import AE_vqc
+from .ae_sinkclass import AE_sinkclass
+
+from .terminal_colors import tcols
 
 def choose_ae_model(ae_type, device, hyperparams):
     # Picks and loads one of the implemented autencoder models.
     switcher = {
-        "vanilla": lambda: ae_vanilla.AE_vanilla(device, hyperparams),
-        "classifier": lambda: ae_classifier.AE_classifier(device, hyperparams),
+        "vanilla"    : lambda: AE_vanilla(device, hyperparams),
+        "classifier" : lambda: AE_classifier(device, hyperparams),
+        "variational": lambda: AE_variational(device, hyperparams),
+        "sinkhorn"   : lambda: AE_sinkhorn(device, hyperparams),
+        "classvqc"   : lambda: AE_vqc(device, hyperparams),
+        "sinkclass"  : lambda: AE_sinkclass(device, hyperparams),
     }
     model = switcher.get(ae_type, lambda: None)()
     if model is None: raise TypeError("Specified AE type does not exist!")
@@ -28,7 +36,6 @@ def define_torch_device():
         warnings.simplefilter("always")
         device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
         if len(w): print(tcols.WARNING + "GPU not available." + tcols.ENDC)
-
 
     print("\033[92mUsing device:\033[0m", device)
     return device

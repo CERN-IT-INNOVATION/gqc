@@ -7,11 +7,12 @@ import numpy as np
 import torch
 import torch.nn as nn
 import torch.optim as optim
-from pytorch_model_summary import summary
+from torchinfo import summary
+
 import os, json
 import matplotlib.pyplot as plt
 
-from terminal_colors import tcols
+from .terminal_colors import tcols
 
 seed = 100
 torch.manual_seed(seed)
@@ -32,11 +33,12 @@ class AE_vanilla(nn.Module):
             "dec_activ"  : 'nn.Tanh()',
         }
         self.device    = device
-        exec('self.enc_activ = ' + self.hp["enc_activ"])
-        exec('self.dec_activ = ' + self.hp["dec_activ"])
 
         self.recon_loss_function = nn.MSELoss(reduction='mean')
         self.hp.update((k, hparams[k]) for k in self.hp.keys() & hparams.keys())
+
+        exec('self.enc_activ = ' + self.hp["enc_activ"])
+        exec('self.dec_activ = ' + self.hp["dec_activ"])
 
         self.best_valid_loss = 9999
         self.all_train_loss  = []
@@ -49,9 +51,6 @@ class AE_vanilla(nn.Module):
             self.construct_encoder(self.hp['ae_layers'], self.enc_activ)
         self.decoder = \
             self.construct_decoder(self.hp['ae_layers'], self.dec_activ)
-
-        self = self.to(device)
-        self.optimizer = optim.Adam(self.parameters(), lr=self.hp['lr'])
 
     @staticmethod
     def construct_encoder(layers, en_activ):
@@ -83,6 +82,11 @@ class AE_vanilla(nn.Module):
 
         return nn.Sequential(*dec_layers)
 
+    def instantiate_adam_optimizer(self):
+        self = self.to(self.device)
+        self.optimizer = optim.Adam(self.parameters(), lr=self.hp['lr'])
+        scheduler = optim.lr_scheduler.ExponentialLR(self.optimizer, gamma=0.95)
+
     def forward(self, x):
         latent = self.encoder(x)
         reconstructed = self.decoder(latent)
@@ -102,22 +106,17 @@ class AE_vanilla(nn.Module):
               f"Valid loss = {valid_loss.item():.8f}")
 
     @staticmethod
-    def print_summary(model, device):
-        try:
-            summary(model, torch.Tensor(model[0].in_features).to(device),
-                show_input=True, show_hierarchical=False, print_summary=True,
-                max_depth=1, show_parent_layers=False)
-        except:
-            print(tcols.WARNING +
-                  "Net summary failed! Probs using BatchNorm layers!"
-                  + tcols.ENDC)
+    def print_summary(model):
+        try: summary(model, show_input=True, show_hierarchical=False,
+                print_summary=True, max_depth=1, show_parent_layers=False)
+        except: print(tcols.WARNING + "Net summary failed!" + tcols.ENDC)
 
     def network_summary(self):
         print(tcols.OKGREEN + "Encoder summary:" + tcols.ENDC)
-        self.print_summary(self.encoder, self.device)
+        self.print_summary(self.encoder)
         print('\n')
         print(tcols.OKGREEN + "Decoder summary:" + tcols.ENDC)
-        self.print_summary(self.decoder, self.device)
+        self.print_summary(self.decoder)
         print('\n\n')
 
     def optimizer_summary(self):
@@ -186,8 +185,11 @@ class AE_vanilla(nn.Module):
 
     def train_autoencoder(self, train_loader, valid_loader, epochs, outdir):
 
+        self.instantiate_adam_optimizer()
         self.network_summary(); self.optimizer_summary()
-        print(tcols.OKCYAN + "Training the vanilla AE model..." + tcols.ENDC)
+        print(tcols.OKCYAN)
+        print("Training the " + self.hp['ae_type'] + " AE model...")
+        print(tcols.ENDC)
 
         for epoch in range(epochs):
             self.train()

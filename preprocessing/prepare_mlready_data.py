@@ -9,7 +9,8 @@
 import argparse, os, glob, itertools
 import pandas as pd
 import numpy as np
-import data_features_definitions
+
+from . import data_features_definitions
 
 # Disable the pandas warning when working on a copy. Re-enable if you care
 # about what you do to a dataframe copy making it back to original.

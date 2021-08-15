@@ -5,7 +5,7 @@ import torch.nn as nn
 import numpy as np
 import os, warnings, time
 
-from terminal_colors import tcols
+from .terminal_colors import tcols
 
 
 class AE_data():

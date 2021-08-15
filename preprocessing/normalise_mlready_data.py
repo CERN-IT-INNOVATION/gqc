@@ -107,7 +107,7 @@ def split_and_save(data, target, name):
     print("Splitting data into training, validation, and testing sets.")
     x_train, x_valid, y_train, y_valid = train_test_split(data, target,
         test_size=args.valid_percent, shuffle=True)
-    test_percent = x_valid.shape[0]/x_train.shape[0]
+    test_percent = float(x_valid.shape[0]/x_train.shape[0])
     x_train, x_test, y_train, y_test = train_test_split(x_train, y_train,
         test_size=test_percent, shuffle=True)
 

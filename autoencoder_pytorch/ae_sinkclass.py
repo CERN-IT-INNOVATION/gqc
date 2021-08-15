@@ -223,3 +223,15 @@ class AE_sinkclass(AE_vanilla):
             self.all_class_loss.append(valid_losses[2].item())
 
             self.print_losses(epoch, epochs, train_loss, valid_losses)
+
+    @torch.no_grad()
+    def predict(self, x_data):
+        # Compute the prediction of the autoencoder, given input np array x.
+        x_data = torch.from_numpy(x_data).to(self.device)
+        self.eval()
+        latent, classif, recon = self.forward(x_data.float())
+
+        latent  = latent.cpu().numpy()
+        classif = classif.cpu().numpy()
+        recon   = recon.cpu().numpy()
+        return latent, recon, classif

@@ -55,11 +55,11 @@ def optuna_train(train_loader, valid_loader, model, epochs, trial):
         trial.report(train_loss.item(), epoch)
         if trial.should_prune(): raise optuna.TrialPruned()
 
-    # if model.hp["ae_type"] in ["classifier", "classvqc"]:
-        # return min(model.all_class_loss) + min(model.all_recon_loss)
+    if model.hp["ae_type"] in ["classifier", "classvqc"]:
+        return min(model.all_class_loss)
 
-    # if model.hp["ae_type"] in ["variational", "sinkhorn"]:
-        # return min(model.all_recon_loss)
+    if model.hp["ae_type"] in ["variational", "sinkhorn"]:
+        return min(model.all_recon_loss)
 
     return model.best_valid_loss
 
@@ -85,7 +85,7 @@ def optuna_objective(trial):
     }
     # Define parameters to be optimized by optuna.
     lr             = trial.suggest_loguniform('lr', *args.lr)
-    loss_weight    = trial.suggest_uniform('loss_weight', 1, 1)
+    loss_weight    = trial.suggest_uniform('loss_weight', 0, 1)
     batch          = trial.suggest_categorical('batch', args.batch)
     hyperparams.update({"lr": lr, "loss_weight": loss_weight})
 

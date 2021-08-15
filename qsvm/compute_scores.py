@@ -29,7 +29,7 @@ qsvm = QSVM(feature_map,quantum_instance = qi)
 
 qsvm.load_model(args.model+'.npz')
 
-validation_folds = qdata.get_kfold_validation()
+validation_folds = qdata.get_kfold_validation() [5,720,64]
 #Best input features based on individual AUC values: (test vs autoencoder)
 cols = [32, 24, 40, 16, 8, 0, 48, 3, 51, 19, 11, 43, 27, 35, 64, 47]
 validation_folds = validation_folds[:,:,cols]

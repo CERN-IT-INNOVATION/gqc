@@ -10,7 +10,7 @@ from qiskit.aqua.algorithms import QSVM
 from qiskit.circuit import QuantumCircuit, ParameterVector
 from qiskit.visualization import circuit_drawer
 import numpy as np
-import qdata as qd
+#import qdata as qd
 import torch
 
 

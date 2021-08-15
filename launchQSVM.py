@@ -6,8 +6,7 @@ from sklearn.svm import SVC
 from qiskit_machine_learning.circuit.library import RawFeatureVector
 from qiskit_machine_learning.kernels import QuantumKernel
 import numpy as np
-from qiskit_machine_learning.datasets import wine#test if this produces "bound" parameters for RawFeatureVector
-#from encodePT import encode#, device
+from qiskit_machine_learning.datasets import breast_cancer#test if this produces "bound" parameters for RawFeatureVector
 import time, sys, argparse
 from datetime import datetime
 import qdata as qd
@@ -43,13 +42,24 @@ def main():
 	feature_dim=4
 	training_size = 12
 	test_size = 4
-
+	qdata_loader = qd.qdata(data_folder = '../qml_data/', norm_name = 'minmax',\
+		nevents = '7.20e+05', model_path= '/autoencoder_pytorch/trained_models/'
+			'L64.52.44.32.24.16_B128_Lr2e-03_data1.15e+06_minmax_norm_gpu',\
+				train_events=576, valid_events=720, test_events=720)
+	'''
 	train_features, train_labels, test_features, test_labels = \
-	wine(training_size=training_size, test_size=test_size, n=feature_dim)
+	breast_cancer(training_size=training_size, test_size=test_size, n=feature_dim)
+	print(train_labels)
+
+	train_features = qdata_loader.get_latent_space()
+	train_labels = qdata_loader.ae_data.train_target
+
 	
-	feature_map = RawFeatureVector(feature_dim)
-	backend = QuantumInstance(Aer.get_backend('aer_simulator_statevector'),seed_simulator=seed,seed_transpiler = seed)
-	quantum_kernel = QuantumKernel(feature_map = feature_map, quantum_instance = backend)
+
+	backend = QuantumInstance(Aer.get_backend('aer_simulator_statevector'),\
+		seed_simulator=seed,seed_transpiler = seed)
+	quantum_kernel = QuantumKernel(feature_map = feature_map, quantum_instance =\
+		 backend)
 	
 	qsvm = SVC(kernel = quantum_kernel.evaluate)
 	qsvm.fit(train_features,train_labels)
@@ -60,6 +70,7 @@ def main():
 	end_time = time.time()
 	runtime = end_time-start_time
 	print(f'Total runtime: {runtime:.2f} sec.')
+	'''
 
 if __name__ == '__main__':
 	main()

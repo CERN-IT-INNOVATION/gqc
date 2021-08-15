@@ -41,9 +41,9 @@ def main():
                    ["zzfm", 4, 8], ["2local", 20, 40, 4, "linear"]]
     hyperparams   = {
         "lr"           : args.lr,
-        "ae_layers"    : [64, 52, 44, 32, 24, 16],
+        "ae_layers"    : [32, 16],
         "class_layers" : [128, 64, 32, 16, 8, 1],
-        "enc_activ"    : 'nn.Tanh()',
+        "enc_activ"    : 'nn.Sigmoid()',
         "dec_activ"    : 'nn.Tanh()',
         "vqc_specs"    : vqc_specs,
         "loss_weight"  : 1,

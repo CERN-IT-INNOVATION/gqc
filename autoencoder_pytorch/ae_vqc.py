@@ -40,6 +40,7 @@ class AE_vqc(AE_classifier):
 
         self.hp.update(new_hp)
         self.hp.update((k, hparams[k]) for k in self.hp.keys() & hparams.keys())
+        self.hp.pop("class_layers")
 
         self.nparams = self.getnparams(self.hp['vqc_specs'])
         self.qdevice = qml.device("default.qubit", wires=self.hp["nqbits"])

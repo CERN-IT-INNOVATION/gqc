@@ -42,9 +42,14 @@ def optuna_train(train_loader, valid_loader, model, epochs, trial):
         train_loss = model.train_all_batches(train_loader)
         valid_loss = model.valid(valid_loader, None)
 
-        if model.hp["ae_type"] in ["classifier", "classvqc", "sinkclass"]:
+        if model.hp["ae_type"] in ["classifier", "classvqc"]:
             model.all_recon_loss.append(valid_loss[1].item())
             model.all_class_loss.append(valid_loss[2].item())
+
+        if model.hp["ae_type"] in ["sinkclass"]:
+            model.all_recon_loss.append(valid_loss[1].item())
+            model.all_laten_loss.append(valid_loss[2].item())
+            model.all_class_loss.append(valid_loss[3].item())
 
         if model.hp["ae_type"] in ["variational", "sinkhorn"]:
             model.all_recon_loss.append(valid_loss[1].item())
@@ -56,7 +61,7 @@ def optuna_train(train_loader, valid_loader, model, epochs, trial):
         if trial.should_prune(): raise optuna.TrialPruned()
 
     if model.hp["ae_type"] in ["classifier", "classvqc", "sinkclass"]:
-        return min(model.all_recon_loss)
+        return min(model.all_class_loss)
 
     if model.hp["ae_type"] in ["variational", "sinkhorn"]:
         return min(model.all_recon_loss)

@@ -43,10 +43,10 @@ def main():
         "lr"           : args.lr,
         "ae_layers"    : [32, 16],
         "class_layers" : [128, 64, 32, 16, 8, 1],
-        "enc_activ"    : 'nn.Sigmoid()',
+        "enc_activ"    : 'nn.Tanh()',
         "dec_activ"    : 'nn.Tanh()',
         "vqc_specs"    : vqc_specs,
-        "loss_weight"  : 1,
+        "loss_weight"  : 0.06,
         "weight_sink"  : 1,
         "adam_betas"   : (0.9, 0.999),
     }

@@ -220,7 +220,7 @@ class AE_sinkclass(AE_vanilla):
             self.all_valid_loss.append(valid_losses[0].item())
             self.all_recon_loss.append(valid_losses[1].item())
             self.all_laten_loss.append(valid_losses[2].item())
-            self.all_class_loss.append(valid_losses[2].item())
+            self.all_class_loss.append(valid_losses[3].item())
 
             self.print_losses(epoch, epochs, train_loss, valid_losses)
 

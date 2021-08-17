@@ -12,3 +12,4 @@ submit_gpu.sh
 submit_optim_gpu.sh
 ._*
 *.pyc
+submit_qsvm_cpu.sh

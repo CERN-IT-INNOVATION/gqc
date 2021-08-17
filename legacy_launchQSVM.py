@@ -17,7 +17,7 @@ seed = 12345
 parser = argparse.ArgumentParser()
 parser = argparse.ArgumentParser(formatter_class=argparse.ArgumentDefaultsHelpFormatter)#include defaults in -h
 parser.add_argument('--model_path',type=str,default='/work/vabelis/qml_project/'
-		'autoencoder_pytorch/trained_models/vanilla_best',
+		'autoencoder_pytorch/trained_models/vanilla_vasilis',
 		help='path to saved model')
 parser.add_argument('--name', required = True,help='Model name to be saved')
 
@@ -40,7 +40,7 @@ def main():
 	backend = QuantumInstance(Aer.get_backend('statevector_simulator'),
 		seed_simulator=seed, seed_transpiler = seed)
 	
-	qsvm = QSVM(feature_map, quantum_instance = backend,lambda2=0.1)
+	qsvm = QSVM(feature_map, quantum_instance = backend,lambda2=0.2)
 	qsvm.train(train_features, train_labels)
 
 	# Compute the accuracies for quick probe for overtraining

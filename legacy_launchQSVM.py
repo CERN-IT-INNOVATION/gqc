@@ -28,8 +28,8 @@ def main():
 	start_time = time.time()
 	feature_dim=16
 	qdata_loader = qd.qdata(data_folder = '../qml_data/input_ae/', norm_name = 'minmax',
-		nevents = '7.20e+05', model_path= args.model_path, train_events=10,
-		 valid_events=10, test_events=10)
+		nevents = '7.20e+05', model_path= args.model_path, train_events=200,
+		 valid_events=720, test_events=50)
 
 	train_features = qdata_loader.get_latent_space('train')
 	train_labels   = qdata_loader.ae_data.train_target
@@ -40,12 +40,12 @@ def main():
 	backend = QuantumInstance(Aer.get_backend('statevector_simulator'),
 		seed_simulator=seed, seed_transpiler = seed)
 	
-	qsvm = QSVM(feature_map, quantum_instance = backend,lambda2 = 0.2)
+	qsvm = QSVM(feature_map, quantum_instance = backend,lambda2=0.1)
 	qsvm.train(train_features, train_labels)
 
 	# Compute the accuracies for quick probe for overtraining
 	test_accuracy = qsvm.test(test_features, test_labels)
-	train_accuracy = qsvm.test(train_features,test_labels)
+	train_accuracy = qsvm.test(train_features,train_labels)
 	
 	print(f'Test Accuracy = {test_accuracy}')
 	print(f'Training Accuracy = {train_accuracy}')
@@ -63,12 +63,12 @@ def save_model_log(qdata_loader,qsvm_model,runtime,train_accuracy,test_accuracy)
 		sys.stdout = f
 		print(f'\n---------------------{datetime.now()}----------------------')
 		print('Autoencoder model path:', args.model_path)
-		#TODO: add data path(?)
+		print('Data path:', qdata_loader.ae_data.data_folder)
 		print(f'ntrain = {len(qdata_loader.ae_data.train_target)}, '
 				f'ntest = {len(qdata_loader.ae_data.test_target)}, '
 				f'lambda2 = {qsvm_model.lambda2}')
 		print(f'Execution Time {runtime} s or {runtime/60} min.')
-		print(f'Test Accuracy: {train_accuracy}, Training Accuracy: {test_accuracy}')
+		print(f'Test Accuracy: {test_accuracy}, Training Accuracy: {train_accuracy}')
 		print('-------------------------------------------\n')
 		sys.stdout = original_stdout
 	

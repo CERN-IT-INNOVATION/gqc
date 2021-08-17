@@ -242,7 +242,6 @@ dependencies:
   - root_numpy=4.8.0=py38hfdf6b3b_9
   - ruamel_yaml=0.15.100=py38h27cfd23_0
   - scikit-learn=0.24.2=py38hdc147b9_0
-  - scipy=1.6.2=py38had2a1c9_1
   - send2trash=1.7.1=pyhd8ed1ab_0
   - setuptools=52.0.0=py38h06a4308_0
   - six=1.16.0=pyh6c4a22f_0
@@ -297,7 +296,7 @@ dependencies:
     - appdirs==1.4.4
     - autograd==1.3
     - autoray==0.2.5
-    - cvxpy==1.1.15
+    - cvxpy==1.1.7
     - cython==0.29.24
     - decorator==4.4.2
     - dill==0.3.4
@@ -323,15 +322,16 @@ dependencies:
     - pykeops==1.5
     - python-constraint==1.4.0
     - qdldl==0.1.5.post0
-    - qiskit==0.23.3
-    - qiskit-aer==0.7.3
+    - qiskit==0.23.2
+    - qiskit-aer==0.7.2
     - qiskit-aqua==0.8.1
     - qiskit-ibmq-provider==0.11.1
     - qiskit-ignis==0.5.1
-    - qiskit-terra==0.16.2
+    - qiskit-terra==0.16.1
     - quandl==3.6.1
     - requests-ntlm==1.1.0
     - retworkx==0.9.0
+    - scipy==1.5.0
     - scs==2.1.4
     - semantic-version==2.6.0
     - sympy==1.8

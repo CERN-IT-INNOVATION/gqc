@@ -31,26 +31,26 @@ args = parser.parse_args()
 
 
 def main():
-	start_time = time.time()
-	feature_dim=16
+	start_time  = time.time()
+	feature_dim = 16
 	qdata_loader = qd.qdata(args.data_folder, args.norm, args.nevents,
-	 	args.model_path, train_events=200, valid_events=50, test_events=720)
+	 	args.model_path, train_events=576, valid_events=720, test_events=720)
 
 	train_features = qdata_loader.get_latent_space('train')
 	train_labels   = qdata_loader.ae_data.train_target
-	valid_features = qdata_loader.get_latent_space('test')
+	valid_features = qdata_loader.get_latent_space('valid')
 	valid_labels   = qdata_loader.ae_data.valid_target
 
 	feature_map = RawFeatureVector(feature_dim)
 	backend = QuantumInstance(Aer.get_backend('statevector_simulator'),
 		seed_simulator=seed, seed_transpiler=seed)
 	
-	qsvm = QSVM(feature_map, quantum_instance=backend, lambda2=0.25)
+	qsvm = QSVM(feature_map, quantum_instance=backend, lambda2=2)
 	qsvm.train(train_features, train_labels)
 
 	# Compute the accuracies for quick probe for overtraining
 	valid_accuracy = qsvm.test(valid_features, valid_labels)
-	train_accuracy = qsvm.test(train_features,train_labels)
+	train_accuracy = qsvm.test(train_features, train_labels)
 	
 	print(f'Test Accuracy = {valid_accuracy}')
 	print(f'Training Accuracy = {train_accuracy}')
@@ -74,7 +74,6 @@ def save_model_log(qdata_loader, qsvm_model, runtime, train_accuracy,
 	print(f'Test Accuracy: {valid_accuracy}, '
 	      f'Training Accuracy: {train_accuracy}')
 	print('-------------------------------------------\n')
-	sys.stdout = original_stdout
 	
 	qsvm_model.save_model('qsvm_output/' + args.output_file)
 

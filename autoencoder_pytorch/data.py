@@ -16,13 +16,20 @@ class AE_data():
         self.nevents     = nevents
         self.data_folder = data_folder
 
-        self.train_data = self.get_numpy_data("train")[:train_events, :]
-        self.valid_data = self.get_numpy_data("valid")[:valid_events, :]
-        self.test_data  = self.get_numpy_data("test")[:test_events, :]
+        self.train_target = self.get_numpy_target("train")
+        self.valid_target = self.get_numpy_target("valid")
+        self.test_target  = self.get_numpy_target("test")
 
-        self.train_target = self.get_numpy_target("train")[:train_events]
-        self.valid_target = self.get_numpy_target("valid")[:valid_events]
-        self.test_target  = self.get_numpy_target("test")[:test_events]
+        self.train_data = self.get_numpy_data("train")
+        self.valid_data = self.get_numpy_data("valid")
+        self.test_data  = self.get_numpy_data("test")
+
+        self.train_data, self.train_target = \
+            self.get_dataset(self.train_data, self.train_target, nevents)
+        self.valid_data, self.valid_target = \
+            self.get_dataset(self.valid_data, self.valid_target, nevents)
+        self.test_data, self.test_target = \
+            self.get_dataset(self.test_data, self.test_target, nevents)
 
         self.nfeats = self.train_data.shape[1]
 
@@ -112,3 +119,15 @@ class AE_data():
         data_bkg = data[bkg_mask, :]
 
         return data_sig, data_bkg
+
+    @staticmethod
+    def get_dataset(data, target, nevents):
+        if nevents < 0: return data, target
+
+        nevents = int(nevents/2)
+        data_sig, data_bkg = split_sig_bkg(data, target)
+
+        data   = np.vstack((data_sig[:nevents, :], data_bkg[:nevents, :]))
+        target = np.concatenate((np.ones(nevents), np.zeros(nevents)))
+
+        return data, target

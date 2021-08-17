@@ -44,7 +44,7 @@ class AE_vanilla(nn.Module):
         self.all_train_loss  = []
         self.all_valid_loss  = []
 
-        self.early_stopping_limit = 10
+        self.early_stopping_limit = 15
         self.epochs_no_improve    = 0
 
         self.encoder = \
@@ -209,12 +209,12 @@ class AE_vanilla(nn.Module):
         plt.plot(epochs, self.all_train_loss,
             color="gray", label="Training Loss (average)")
         plt.plot(epochs, self.all_valid_loss,
-            color="chartreuse", label="Validation Loss")
+            color="navy", label="Validation Loss")
         plt.xlabel("Epochs"); plt.ylabel("Loss")
 
         plt.text(np.min(epochs), np.max(self.all_train_loss),
             f"Min: {self.best_valid_loss:.2e}", verticalalignment='top',
-            horizontalalignment='left', color='green', fontsize=15,
+            horizontalalignment='left', color='blue', fontsize=15,
             bbox={'facecolor': 'white', 'alpha': 0.8, 'pad': 5})
 
         plt.legend()

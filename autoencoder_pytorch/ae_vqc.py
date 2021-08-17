@@ -125,3 +125,16 @@ class AE_vqc(AE_classifier):
     def meas_all_3_qbits(y):
         return qml.expval(qml.Hermitian(y, wires=[0]) @
             qml.Hermitian(y, wires = [1]) @ qml.Hermitian(y, wires=[2]))
+
+
+    @torch.no_grad()
+    def predict(self, x_data):
+        # Compute the prediction of the autoencoder, given input np array x.
+        x_data = torch.from_numpy(x_data).to(self.device)
+        self.eval()
+        latent, classif, recon = self.forward(x_data.float())
+
+        latent  = latent.cpu().numpy()
+        classif = classif.cpu().numpy().reshape((-1,1))
+        recon   = recon.cpu().numpy()
+        return latent, recon, classif

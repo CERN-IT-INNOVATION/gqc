@@ -46,8 +46,8 @@ def main():
         "enc_activ"    : 'nn.Tanh()',
         "dec_activ"    : 'nn.Tanh()',
         "vqc_specs"    : vqc_specs,
-        "loss_weight"  : 1,
-        "weight_sink"  : 1,
+        "loss_weight"  : 0.021,
+        "weight_sink"  : 0.820,
         "adam_betas"   : (0.9, 0.999),
     }
     outdir = "./trained_models/" + args.outdir + '/'

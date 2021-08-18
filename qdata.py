@@ -49,12 +49,12 @@ class qdata:
 
         return np.concatenate((data_sig, data_bkg), axis=1)
 
-    def get_kfolded_data(self, datat, nevt):
+    def get_kfolded_data(self, datat):
         if datat == 'valid':
             return self.fold(self.get_kfold_latent_space(datat), 
-            self.ae_kfold_data.valid_target, nevt)
+            self.ae_kfold_data.valid_target, self.nvalid)
         if datat == 'test':
             return self.fold(self.get_kfold_latent_space(datat), 
-            self.ae_kfold_data.test_target, nevt)
+            self.ae_kfold_data.test_target, self.ntest)
 
         raise TypeError("Given data type does not exist!")

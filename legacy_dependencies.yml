@@ -183,8 +183,6 @@ dependencies:
   - nss=3.67=hb5efdd6_0
   - numba=0.53.1=py38h8b71fd7_1
   - numexpr=2.7.3=py38h51da96c_0
-  - numpy=1.20.3=py38hf144106_0
-  - numpy-base=1.20.3=py38h74d4b33_0
   - olefile=0.46=pyh9f0ad1d_1
   - openssl=1.1.1k=h7f98852_0
   - optuna=2.8.0=pyhd8ed1ab_0
@@ -314,6 +312,7 @@ dependencies:
     - multitasking==0.0.9
     - networkx==2.5.1
     - ntlm-auth==1.5.0
+    - numpy==1.19.5
     - osqp==0.6.2.post0
     - pennylane==0.16.0
     - ply==3.11

@@ -45,7 +45,7 @@ def main():
 	backend = QuantumInstance(Aer.get_backend('statevector_simulator'),
 		seed_simulator=seed, seed_transpiler=seed)
 	
-	qsvm = QSVM(feature_map, quantum_instance=backend, lambda2=0.3)
+	qsvm = QSVM(feature_map, quantum_instance=backend, lambda2=10)
 	qsvm.train(train_features, train_labels)
 
 	# Compute the accuracies for quick probe for overtraining

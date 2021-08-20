@@ -80,9 +80,14 @@ def sig_vs_bkg(data_sig, data_bkg, model_path, output_folder):
     plots_folder = os.path.dirname(model_path) + "/" + output_folder + "/"
     if not os.path.exists(plots_folder): os.makedirs(plots_folder)
 
+    plt.rc('xtick', labelsize=0); plt.rc('ytick', labelsize=0)
+    plt.rc('axes', titlesize=25); plt.rc('axes', labelsize=25)
+    plt.rc('legend', fontsize=22)
+
     for i in range(data_sig.shape[1]):
         xmax = max(np.amax(data_sig[:,i]),np.amax(data_bkg[:,i]))
         xmin = min(np.amin(data_sig[:,i]),np.amin(data_bkg[:,i]))
+        fig = plt.figure(figsize=(12, 10))
 
         hSig,_,_ = plt.hist(x=data_sig[:,i], density=1,
             range = (xmin,xmax), bins=50, alpha=0.8, histtype='step',
@@ -92,8 +97,7 @@ def sig_vs_bkg(data_sig, data_bkg, model_path, output_folder):
             linewidth=2.5,label='Bkg', color='gray', hatch='xxx')
 
         plt.legend()
-        plt.xlabel(f'Latent feature {i}')
-        plt.savefig(plots_folder + 'Feature '+ str(i) + '.pdf')
+        fig.savefig(plots_folder + 'Feature '+ str(i) + '.pdf')
         plt.close()
 
     print(f"Latent plots were saved to {plots_folder}.")
@@ -134,11 +138,11 @@ def roc_plots(sig, bkg, model_path, output_folder):
     for feature in range(data.shape[1]):
         fpr, tpr, mean_auc, std_auc = compute_auc(data, target, feature)
         fig = plt.figure(figsize=(12, 10))
-        plt.title(f"Feature {feature}")
         plt.plot(fpr, tpr,
             label=f"AUC: {mean_auc:.3f} ± {std_auc:.3f}", color='navy')
         plt.plot([0, 1], [0, 1], ls="--", color='gray')
 
+        plt.xlabel("False Positive Rate"); plt.ylabel("True Positive Rate")
         plt.xlim([0.0, 1.0]); plt.ylim([0.0, 1.0])
         plt.legend()
 

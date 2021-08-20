@@ -34,7 +34,7 @@ def main():
 	start_time  = time.time()
 	feature_dim = 16
 	qdata_loader = qd.qdata(args.data_folder, args.norm, args.nevents,
-	 	args.model_path, train_events=200, valid_events=50, test_events=720)
+	 	args.model_path, train_events=576, valid_events=720, test_events=720)
 
 	train_features = qdata_loader.get_latent_space('train')
 	train_labels   = qdata_loader.ae_data.train_target

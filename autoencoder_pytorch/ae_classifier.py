@@ -75,6 +75,10 @@ class AE_classifier(AE_vanilla):
         class_loss = self.class_loss_function(classif.flatten(), y_data.float())
         recon_loss = self.recon_loss_function(recon, x_data.float())
 
+        if len(x_data) > 10000:
+            print(f"Raw latent loss:{class_loss}")
+            print(f"Raw recon loss:{recon_loss}")
+
         return self.recon_loss_weight*recon_loss + \
                self.class_loss_weight*class_loss
 

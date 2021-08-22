@@ -95,6 +95,10 @@ class AE_variational(AE_vanilla):
         laten_loss = self.laten_loss_function(latent_log_probs,comparison_probs)
         recon_loss = self.recon_loss_function(recon, x_data.float())
 
+        if len(x_data) > 10000:
+            print(f"Raw latent loss:{laten_loss}")
+            print(f"Raw recon loss:{recon_loss}")
+
         return self.recon_loss_weight*recon_loss + \
                self.laten_loss_weight*laten_loss
 

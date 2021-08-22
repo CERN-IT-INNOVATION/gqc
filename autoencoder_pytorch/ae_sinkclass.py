@@ -138,9 +138,14 @@ class AE_sinkclass(AE_vanilla):
         latent_noise      = torch.cat([latent_noise, y_data_trans], 1)
         latent            = torch.cat([latent, y_data_trans], 1)
 
-        class_loss = self.class_loss_function(classif.flatten(), y_data)
+        class_loss = self.class_loss_function(classif.flatten(), y_data.float())
         laten_loss = self.laten_loss_function(latent, latent_noise)
         recon_loss = self.recon_loss_function(recon, x_data.float())
+
+        if len(x_data) > 10000:
+            print(f"Raw laten loss:{laten_loss}")
+            print(f"Raw class loss:{class_loss}")
+            print(f"Raw recon loss:{recon_loss}")
 
         return recon_loss + \
                self.laten_loss_weight*laten_loss + \

@@ -80,7 +80,7 @@ def sig_vs_bkg(data_sig, data_bkg, model_path, output_folder):
     plots_folder = os.path.dirname(model_path) + "/" + output_folder + "/"
     if not os.path.exists(plots_folder): os.makedirs(plots_folder)
 
-    plt.rc('xtick', labelsize=0); plt.rc('ytick', labelsize=0)
+    plt.rc('xtick', labelsize=23); plt.rc('ytick', labelsize=23)
     plt.rc('axes', titlesize=25); plt.rc('axes', labelsize=25)
     plt.rc('legend', fontsize=22)
 

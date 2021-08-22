@@ -113,6 +113,10 @@ class AE_sinkhorn(AE_vanilla):
         laten_loss = self.laten_loss_function(latent, latent_noise)
         recon_loss = self.recon_loss_function(recon, x_data.float())
 
+        if len(x_data) > 10000:
+            print(f"Raw latent loss:{laten_loss}")
+            print(f"Raw recon loss:{recon_loss}")
+
         return self.recon_loss_weight*recon_loss + \
                self.laten_loss_weight*laten_loss
 

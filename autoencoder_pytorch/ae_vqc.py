@@ -48,10 +48,6 @@ class AE_vqc(AE_classifier):
             qml.qnode(self.qdevice, interface="torch")(self.construct_vqc)
         self.wshape  = {"theta": self.nparams}
 
-        self.encoder = \
-            self.construct_encoder(self.hp['ae_layers'] + [8], self.enc_activ)
-        self.decoder = \
-            self.construct_decoder(self.hp['ae_layers'] + [8], self.dec_activ)
         self.classifier = qml.qnn.TorchLayer(self.vqc_circuit, self.wshape)
 
     @staticmethod

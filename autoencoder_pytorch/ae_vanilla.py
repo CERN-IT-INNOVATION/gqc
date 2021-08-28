@@ -63,7 +63,7 @@ class AE_vanilla(nn.Module):
             enc_layers.append(nn.Linear(layers[idx], layers[idx+1]))
             if idx == len(layers) - 2 and en_activ is None: break
             if idx == len(layers) - 2: enc_layers.append(en_activ); break
-            enc_layers.append(nn.ELU(True))
+            enc_layers.append(nn.ReLU(True))
 
         return nn.Sequential(*enc_layers)
 

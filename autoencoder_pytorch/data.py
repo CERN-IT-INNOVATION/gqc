@@ -16,13 +16,23 @@ class AE_data():
         self.nevents     = nevents
         self.data_folder = data_folder
 
-        self.train_data = self.get_numpy_data("train")[:train_events, :]
-        self.valid_data = self.get_numpy_data("valid")[:valid_events, :]
-        self.test_data  = self.get_numpy_data("test")[:test_events, :]
+        self.train_target = self.get_numpy_target("train")
+        self.valid_target = self.get_numpy_target("valid")
+        self.test_target  = self.get_numpy_target("test")
 
-        self.train_target = self.get_numpy_target("train")[:train_events]
-        self.valid_target = self.get_numpy_target("valid")[:valid_events]
-        self.test_target  = self.get_numpy_target("test")[:test_events]
+        self.train_data = self.get_numpy_data("train")
+        self.valid_data = self.get_numpy_data("valid")
+        self.test_data  = self.get_numpy_data("test")
+
+        if train_events > 0:
+            self.train_data, self.train_target = \
+            self.get_dataset(self.train_data, self.train_target, train_events)
+        if valid_events > 0:
+            self.valid_data, self.valid_target = \
+            self.get_dataset(self.valid_data, self.valid_target, valid_events)
+        if test_events > 0:
+            self.test_data, self.test_target = \
+            self.get_dataset(self.test_data, self.test_target, test_events)
 
         self.nfeats = self.train_data.shape[1]
 
@@ -84,11 +94,9 @@ class AE_data():
         """
         Convert numpy arrays of training/validation/testing data into pytroch
         objects ready to be used in training the autoencoder.
-
         @device     :: String if the training is done on cpu or gpu.
         @batch_size :: Int of the batch size used in training.
         @shuffle    :: Bool of whether to shuffle the data or not.
-
         @returns :: Pytorch objects to be passed to the autoencoder for training.
         """
         dataset = self.get_pytorch_dataset(data_type)
@@ -112,3 +120,13 @@ class AE_data():
         data_bkg = data[bkg_mask, :]
 
         return data_sig, data_bkg
+
+    def get_dataset(self,data, target, nevents):
+        nevents = int(int(nevents)/2)
+        if nevents < 0: return data, target
+
+        data_sig, data_bkg = self.split_sig_bkg(data, target)
+        data   = np.vstack((data_sig[:nevents, :], data_bkg[:nevents, :]))
+        target = np.concatenate((np.ones(nevents), np.zeros(nevents)))
+
+        return data, target

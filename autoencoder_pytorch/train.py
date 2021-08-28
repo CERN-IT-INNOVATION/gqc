@@ -23,6 +23,10 @@ parser.add_argument("--norm", type=str,
     help="The name of the normalisation that you'll to use.")
 parser.add_argument("--nevents", type=str,
     help="The number of events of the norm file.")
+parser.add_argument("--train_events", type=str,
+    help="The exact number of training events to use < nevents.")
+parser.add_argument("--valid_events", type=str,
+    help="The exact number of validation events to use < nevents.")
 parser.add_argument("--aetype", type=str,
     help="The type of autoencoder that you will use, i.e., vanilla etc..")
 parser.add_argument('--lr', type=float, default=2e-03,
@@ -37,24 +41,28 @@ parser.add_argument('--outdir', type=str, default='',
 def main():
     args   = parser.parse_args()
     device = util.define_torch_device()
-    vqc_specs   = [["zzfm", 0, 4], ["2local", 0, 20, 4, "linear"],
-                   ["zzfm", 4, 8], ["2local", 20, 40, 4, "linear"]]
+    vqc_specs = [["zzfm", 0, 4], ["2local", 0, 20, 4, "linear"],
+                 ["zzfm", 4, 8], ["2local", 20, 40, 4, "linear"],
+                 ["zzfm", 8, 12], ["2local", 40, 60, 4, "linear"],
+                 ["zzfm", 12, 16], ["2local", 60, 80, 4, "linear"]]
+
     hyperparams   = {
         "lr"           : args.lr,
         "ae_layers"    : [64, 52, 44, 32, 24, 16],
-        "class_layers" : [32, 64, 128, 64, 32, 16, 8, 1],
+        "class_layers" : [128, 64, 32, 16, 8, 1],
         "enc_activ"    : 'nn.Tanh()',
         "dec_activ"    : 'nn.Tanh()',
         "vqc_specs"    : vqc_specs,
-        "loss_weight"  : 0.021,
-        "weight_sink"  : 0.820,
+        "loss_weight"  : 1,
+        "weight_sink"  : 1,
         "adam_betas"   : (0.9, 0.999),
     }
     outdir = "./trained_models/" + args.outdir + '/'
     if not os.path.exists(outdir): os.makedirs(outdir)
 
     # Load the data.
-    ae_data = data.AE_data(args.data_folder, args.norm, args.nevents)
+    ae_data = data.AE_data(args.data_folder, args.norm, args.nevents,
+        args.train_events, args.valid_events)
     train_loader = ae_data.get_loader("train", device, args.batch, True)
     valid_loader = ae_data.get_loader("valid", device, None, True)
 

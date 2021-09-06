@@ -120,10 +120,10 @@ class AE_data():
 
         return data_sig, data_bkg
 
-    def get_dataset(self,data, target, nevents):
-        nevents = int(nevents/2)
+    def get_dataset(self, data, target, nevents):
         if nevents < 0: return data, target
 
+        nevents = int(nevents/2)
         data_sig, data_bkg = self.split_sig_bkg(data, target)
         data   = np.vstack((data_sig[:nevents, :], data_bkg[:nevents, :]))
         target = np.concatenate((np.ones(nevents), np.zeros(nevents)))

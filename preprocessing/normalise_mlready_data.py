@@ -1,12 +1,12 @@
-# Imports an .npy file as constructed in prepare_mlready_data.npy or any
-# .npy file that contains a 2D matrix with number of events and features.
-# Sklearn is then used to normalize the data sets. Each normalized copy
-# is saved as an .npy file. There's also the option of splitting the
-# data sets into training and testing subsamples.
-import argparse
-import os
+# Imports two .npy files as constructed in prepare_mlready_data.npy or any two
+# .npy files that contain 2D matrices with number of events and features for
+# signal and background, respectively.
+# Ane equal number of signal and background events are selected and then
+# sklearn is used to normalize the data sets. Finally, the normalised data
+# is split into training, validation, and testing subsets.
+
+import argparse, os, glob
 import numpy as np
-import glob
 import matplotlib.pyplot as plt
 
 from sklearn.preprocessing import MinMaxScaler
@@ -27,10 +27,17 @@ parser.add_argument("--data_sig", type=str, required=True,
     help="Path to the .npy file containing sig data to be normalized.")
 parser.add_argument("--data_bkg", type=str, required=True,
     help="Path to the .npy file containing bkg data to be normalized.")
-parser.add_argument('--maxdata', type=int, default=-1,
-    help='The maximum train samples to use for signal. bkg will be equal.')
-parser.add_argument('--valid_percent', type=float, default=-1,
-    help='Percentage of total data that will make validation and test data.')
+parser.add_argument("--norm_name", type=str, required=True,
+    help="Choose which way to normalise the data."
+         "Available options: vanilla (no norm), minmax, maxabs, std, robust, "
+         "power, quantile.")
+parser.add_argument("--maxdata", type=int, default=-1,
+    help="The maximum train samples to use for signal. bkg will be equal.")
+parser.add_argument("--valid_percent", type=float, default=-1,
+    help="Percentage of total data that will make validation and test data,\
+          These two data sets will be equal in size.\
+          Example: if you give 0.1 then 10\% of the data will be validation,\
+          10\% of the data will be test, and 80\% will be training.")
 
 def main():
     print('Normalizing the sig data file: ' + args.data_sig)
@@ -41,34 +48,48 @@ def main():
 
     all_data = np.vstack((data_sig, data_bkg))
     all_targ = np.concatenate((np.ones(args.maxdata), np.zeros(args.maxdata)))
-    
-    # print("\n\033[92mSaving all (raw) no norm data...\033[0m")
-    # split_and_save(all_data, all_targ, fnn("no",args.maxdata))
-    print("\n\033[92mApplying minmax normalization...\033[0m")
-    apply_norm(MinMaxScaler(), fnn("minmax", args.maxdata), all_data, all_targ)
-    # print("\n\033[92mApplying maxabs normalization...\033[0m")
-    # apply_norm(MaxAbsScaler(), fnn("maxabs", args.maxdata), all_data, all_targ)
-    # print("\n\033[92mApplying standard normalization...\033[0m")
-    # apply_norm(StandardScaler(), fnn("std", args.maxdata), all_data, all_targ)
-    # print("\n\033[92mApplying robust normalization...\033[0m")
-    # apply_norm(RobustScaler(), fnn("robust", args.maxdata), all_data, all_targ)
-    # print("\n\033[92mApplying power normalization...\033[0m")
-    # apply_norm(PowerTransformer(),fnn("power",args.maxdata), all_data, all_targ)
-    # print("\n\033[92mApplying quantile normalization...\033[0m")
-    # apply_norm(QuantileTransformer(), fnn("quant",args.maxdata), all_data, all_targ)
 
-    # print("\n\033[92mApplying personalized normalization...\033[0m")
-    # apply_personalized_norm(all_data, all_targ, args.maxdata)
+    choose_norm(args.norm_name)
 
-def fnn(norm, maxdata):
-    # Format the name of a normalization.
-    return f"{norm}_norm_{maxdata:.2e}"
+def choose_norm(norm_name):
+    """
+    Normalise the mlready data.
+    @norm_name :: Name of the normalisation to be applied, chosen by user.
+    """
+    if norm_name == "vanilla":
+        print("\n\033[92mSaving all (raw) no norm data...\033[0m")
+        split_and_save(all_data, all_targ, f"no_norm_{args.maxdata}")
+    elif norm_name == "minmax":
+        print("\n\033[92mApplying minmax normalization...\033[0m")
+        apply_norm(MinMaxScaler(), f"minmax_{args.maxdata:.2e}",
+            all_data, all_targ)
+    elif norm_name == "maxabs":
+        print("\n\033[92mApplying maxabs normalization...\033[0m")
+        apply_norm(MaxAbsScaler(), f"maxabs_{args.maxdata:.2e}",
+            all_data, all_targ)
+    elif norm_name == "std":
+        print("\n\033[92mApplying standard normalization...\033[0m")
+        apply_norm(StandardScaler(), f"std_{args.maxdata:.2e}",
+            all_data, all_targ)
+    elif norm_name == "robust":
+        print("\n\033[92mApplying robust normalization...\033[0m")
+        apply_norm(RobustScaler(), f"robust_{args.maxdata:.2e}",
+            all_data, all_targ)
+    elif norm_name == "power":
+        print("\n\033[92mApplying power normalization...\033[0m")
+        apply_norm(PowerTransformer(), f"power_{args.maxdata:.2e}",
+            all_data, all_targ)
+    elif norm_name == "quantile":
+        print("\n\033[92mApplying quantile normalization...\033[0m")
+        apply_norm(QuantileTransformer(), f"quantile_{args.maxdata:.2e}",
+            all_data, all_targ)
+    else:
+        raise TypeError("Specified normalisation type does not exist!!!")
 
 def apply_norm(norm_method, norm_name, data, target):
     """
     Apply a specific normalization to the whole data set. Save the normalized
     data set into a separate numpy array specifying the norm name.
-
     @norm_method :: The normalization method sklearn object.
     @norm_name   :: String of the normalization name.
     @data        :: 2D numpy array of the features to be normalized.
@@ -81,28 +102,16 @@ def apply_norm(norm_method, norm_name, data, target):
     plot_sig_bkg(data_norm[sig_mask, :], data_norm[bkg_mask, :], norm_name)
     split_and_save(data_norm, target, norm_name)
 
-def apply_personalized_norm(data, target, maxdata):
-    """
-    Apply normalization to data that was constructed by applying a specific
-    type of normalization to each feature individually.
-
-    @data    :: 2D numpy array containing the features.
-    @target  :: 1D numpy array that is 0 for each bkg event and 1 for sig.
-    """
-    norm_name = f"personalized_robust_maxabs_norm_{maxdata:.2e}"
-    if check_norm_exists(norm_name): return
-    data_norm = data
-    for jet_nb in range(8): data_norm = normalize_jet(data_norm, jet_nb)
-    data_norm = normalize_met(data_norm)
-    data_norm = normalize_lep(data_norm)
-    plot_roc_auc(data_norm, target, norm_name)
-    sig_mask = (target == 1); bkg_mask = (target == 0)
-    plot_sig_bkg(data_norm[sig_mask, :], data_norm[bkg_mask, :], norm_name)
-    split_and_save(data_norm, target, norm_name)
-
 def split_and_save(data, target, name):
-    # Splits a given data set into training, testing, and validation samples
-    # that then are saved with corresponding names in .npy files.
+    """
+    Splits a given data set into training, testing, and validation samples
+    that then are saved with corresponding names in .npy files.
+    @data   :: 2D numpy array of the features to be normalized.
+    @target :: 1D numpy array with 0 for each bkg event and 1 for the sig.
+    @name   :: String containing the name of the normalisation and the
+        number of total signal/background events in the data object.
+
+    """
     save_dir = os.path.dirname(args.data_sig) + "/"
     print("Splitting data into training, validation, and testing sets.")
     x_train, x_valid, y_train, y_valid = train_test_split(data, target,
@@ -124,12 +133,11 @@ def plot_sig_bkg(input_sig, input_bkg, norm_name):
     """
     Plot a histogram for the signal normalized data and a histogram for the
     background normalized data and then overlay them.
-
     @input_sig :: 2D numpy array containing the signal data.
     @input_bkg :: 2D numpy array containing the background data.
     @norm_name :: String name of the normalization that was applied.
 
-    @returns :: Saves the plots in a folder where the signal data is located.
+    returns :: Saves the plots in a folder where the signal data is located.
     """
     save_dir = os.path.dirname(args.data_sig) + "/"
     sig_bkg_plot_dir = save_dir + 'sig_bkg_' + norm_name + '_plots/'
@@ -160,12 +168,11 @@ def plot_sig_bkg(input_sig, input_bkg, norm_name):
 def plot_roc_auc(data, target, norm_name):
     """
     Compute the roc curve of a given 2D dataset of features.
-
     @data      :: 2D array, each column is a feature and each row an event.
     @target    :: 1D array, each element is 0 or 1 corresponding to bkg or sig.
     @norm_name :: String of the name of the normalization.
 
-    @returns :: Prints and saves the the roc curve along with an indication
+    returns :: Prints and saves the the roc curve along with an indication
         of the AUC on top of it.
     """
     print(f"Plotting the ROC curves for {norm_name} normalization...")
@@ -199,49 +206,12 @@ def plot_roc_auc(data, target, norm_name):
     with open(roc_auc_plot_dir + 'auc_sum.txt', 'w') as auc_sum_file:
         auc_sum_file.write(f"{auc_sum:.3f}")
 
-def normalize_jet(data, jet_nb):
-    # Normalize the jeat features using a specific norm for each feat.
-    pt = 0 + jet_nb*8; eta = pt+1;
-    en = 3 + jet_nb*8; phi = en  ; px = en+1; pz = en+4;
-    data[:,pt]  = RobustScaler().fit_transform(data[:,pt].reshape(-1, 1))[:,0]
-    data[:,en]  = RobustScaler().fit_transform(data[:,en].reshape(-1, 1))[:,0]
-    data[:,pt]  = MaxAbsScaler().fit_transform(data[:,pt].reshape(-1, 1))[:,0]
-    data[:,en]  = MaxAbsScaler().fit_transform(data[:,en].reshape(-1, 1))[:,0]
-    data[:,eta:phi] = MaxAbsScaler().fit_transform(data[:,pt+1:en])
-    data[:,px:pz]   = MaxAbsScaler().fit_transform(data[:,en+1:en+4])
-
-    return data
-
-def normalize_met(data):
-    # Normalize the metadata features using a specific norm for each feat.
-    phi = 7*8; pt = phi+1; px=phi+2; py=phi+3;
-    data[:,phi] = MaxAbsScaler().fit_transform(data[:,phi].reshape(-1,1))[:,0]
-    data[:,pt]  = RobustScaler().fit_transform(data[:,pt].reshape(-1,1))[:,0]
-    data[:,pt]  = MaxAbsScaler().fit_transform(data[:,pt].reshape(-1,1))[:,0]
-    data[:,px]  = MaxAbsScaler().fit_transform(data[:,px].reshape(-1,1))[:,0]
-    data[:,py]  = MaxAbsScaler().fit_transform(data[:,py].reshape(-1,1))[:,0]
-
-    return data
-
-def normalize_lep(data):
-    # Normalize the lepton features using a specific norm for each feat.
-    pt = 7*8+4; eta = pt+1; phi= pt+2; en = pt+3
-    px = pt+4; py = pt+5; pz = pt+6
-    data[:,pt]  = RobustScaler().fit_transform(data[:,pt].reshape(-1,1))[:,0]
-    data[:,pt]  = MaxAbsScaler().fit_transform(data[:,pt].reshape(-1,1))[:,0]
-    data[:,eta] = MaxAbsScaler().fit_transform(data[:,eta].reshape(-1,1))[:,0]
-    data[:,phi] = MaxAbsScaler().fit_transform(data[:,phi].reshape(-1,1))[:,0]
-    data[:,en]  = RobustScaler().fit_transform(data[:,en].reshape(-1,1))[:,0]
-    data[:,en]  = MaxAbsScaler().fit_transform(data[:,en].reshape(-1,1))[:,0]
-    data[:,px]  = MaxAbsScaler().fit_transform(data[:,px].reshape(-1,1))[:,0]
-    data[:,py]  = MaxAbsScaler().fit_transform(data[:,py].reshape(-1,1))[:,0]
-    data[:,pz]  = MaxAbsScaler().fit_transform(data[:,pz].reshape(-1,1))[:,0]
-
-    return data
-
 def check_norm_exists(norm_name):
-    # Quick helper method that checks if the normalization exists and returns 1
-    # if it does but 0 if it does not.
+    """
+    Quick helper method that checks if the normalise data files already  exists
+    and returns 1 if it does but 0 if it does not.
+    @norm_name :: The name of the normalisation.
+    """
     if glob.glob(os.path.dirname(args.data_sig) + '/*' + norm_name + "*.npy"):
         print(f"\033[93mWarning: Files with name ∋ \"{norm_name}\" "
               "exists so not producing it again.\033[0m")
@@ -249,8 +219,14 @@ def check_norm_exists(norm_name):
     return 0
 
 def varname(index):
-    # Gets the name of what variable is currently considered based on the index
-    # in the data.
+    """
+    The variables in the currently analysed arrays follow a certain order.
+    This method gets the name of the variable given its index in the data.
+    @index :: The index for which the name is returned.
+
+    returns :: None if the index is not valid or string of the variable name
+        if the given index is valid.
+    """
     jet_feats=["$p_t$","$\\eta$","$\\phi$","Energy","$p_x$","$p_y$","$p_z$",
         "btag"]
     jet_nvars=len(jet_feats); num_jets = 7

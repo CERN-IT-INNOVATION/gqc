@@ -23,9 +23,9 @@ parser.add_argument("--norm", type=str,
     help="The name of the normalisation that you'll to use.")
 parser.add_argument("--nevents", type=str,
     help="The number of events of the norm file.")
-parser.add_argument("--train_events", type=str,
+parser.add_argument("--train_events", type=str, default=0,
     help="The exact number of training events to use < nevents.")
-parser.add_argument("--valid_events", type=str,
+parser.add_argument("--valid_events", type=str, default=0,
     help="The exact number of validation events to use < nevents.")
 parser.add_argument("--aetype", type=str,
     help="The type of autoencoder that you will use, i.e., vanilla etc..")
@@ -48,8 +48,8 @@ def main():
 
     hyperparams   = {
         "lr"           : args.lr,
-        "ae_layers"    : [64, 52, 44, 32, 24, 16],
-        "class_layers" : [128, 64, 32, 16, 8, 1],
+        "ae_layers"    : [128, 256, 128, 64, 32, 32],
+        "class_layers" : [16, 8, 4, 1],
         "enc_activ"    : 'nn.Tanh()',
         "dec_activ"    : 'nn.Tanh()',
         "vqc_specs"    : vqc_specs,

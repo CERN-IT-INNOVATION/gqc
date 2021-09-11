@@ -1,11 +1,9 @@
 # Reads in one signal and one background .h5 file containing the simulated
-# signal and background data of a studied pp process. Selects the interesting
-# variables, applies selection cuts on the raw data, formats it, and casts it
-# into a flat 2D array that is saved in the x_data_ray.npy file.
+# signal and background data of the studied ttHbb process.
+# Selects the interesting variables, applies selection cuts on the raw data,
+# formats it, and casts it into a flat 2D array that is saved in the
+# x_data_ray.npy file.
 
-# Caution, you need to either have a lot of ram or a lot of swap memory to run
-# this script. Pandas is not the best tool for working with large datasets.
-# This should be changed in the future, but it is good enough for now.
 import argparse, os, glob, itertools
 import pandas as pd
 import numpy as np
@@ -17,47 +15,55 @@ pd.options.mode.chained_assignment = None  # default='warn'
 
 
 parser = argparse.ArgumentParser()
-parser.add_argument("--infile_prefix", type=str, required=True, action="store",
-    help="The prefix of .h5 files (which should have Sig.h5 or Bkg.h5 after).")
-parser.add_argument("--outdir", type=str, action="store", default="data/",
+parser.add_argument("--sig_file", type=str, required=True, action="store",
+    help="The name of the signal .h5 file (including the extension).")
+parser.add_argument("--bkg_file", type=str, required=True, action="store",
+    help="The name of the background .h5 file (including the extension).")
+parser.add_argument("--outdir", type=str, action="store",
+    default="./ml_ready_unnormalised_data/",
     help="The output directory.")
 parser.add_argument("--datatype", type=str, required=True,
     choices=["cms_0l","cms_1l","cms_2l","delphes_1l","delphes_2l","delphes_had"
              "mass_1l", "class_2016_1l", "class_2016_2l", "cms_2017_1l",
              "cms_2017_2l"], help="Choose where the data comes from..")
-args = parser.parse_args()
 
 def main():
+    # Specify the variables of choice and the selection cuts.
     features = data_features_definitions.opts()
     features.update(data_features_definitions.choose_data_type(args.datatype))
-
-    # Specify which variables are interesting for the imported data and specify
-    # the selection criteria.
     globals().update(features)
     globals()['selection'] = "nleps == 1 & (nbtags >= 2) & (njets >= 4)"
     globals()['njets'] = 7
-
-    # Load .h5 data. Create the output directory.
-    data_sig = load_files(args.infile_prefix + "Sig.h5")
-    data_bkg = load_files(args.infile_prefix + "Bkg.h5")
+.
+    data_sig = load_files(args.sig_file)
+    data_bkg = load_files(args.bkg_file)
     if not os.path.exists(args.outdir): os.makedirs(args.outdir)
 
-    # Preprocess the data and create flat arrays.
     sig, y_sig = make_flat_numpy_array(data_sig)
     bkg, y_bkg = make_flat_numpy_array(data_bkg, False)
 
-    # Save to .npy arrays.
     np.save(os.path.join(args.outdir, "x_data_sig"), sig)
     np.save(os.path.join(args.outdir, "x_data_bkg"), bkg)
 
 def read_single_file(path):
-    # Load a single .h5 file with chunksize 10000.
-    print("Loading hdf file {0}...".format(path))
+    """
+    Load a single .h5 file with chunksize 1000000 (i.e. only put into RAM
+    1000000 elements of the .h5 file at a time).
+    @path :: String path to the data.
+
+    returns :: The loaded Pandas data frame object.
+    """
+    print(f"Loading h5 file {path}...")
     return pd.read_hdf(path, chunksize="1000000")
 
 def load_files(path):
-    # Load a single file specified by path or load all .h5 files in the folder
-    # specified by path.
+    """
+    Load a single file specified by path or load all .h5 files in the folder
+    specified by path.
+    @path :: String path to the data.
+
+    returns :: The loaded Pandas data frame object.
+    """
     if path.endswith(".h5"): return read_single_file(path)
 
     file_paths = sorted(glob.glob(path + '/data*.h5'))
@@ -65,13 +71,18 @@ def load_files(path):
         if file_paths.index(path) == 0: data = read_single_file(path)
         else: data = itertools.chain(data, read_single_file(path))
 
-    print("All data is loaded!")
+    print("Data has been loaded!")
 
     return data
 
-def map_jet_values(data):
-    # Map the jet btag from being 0-10 to being 0 when there are no jets
-    # and being one when there are any jets.
+def map_jet_btag_values(data):
+    """
+    Map the jet btag from being 0-10 to being 0 when there are no jets
+    and being one when there are any number of jets.
+    @data :: Pandas data frame object containing the data.
+
+    returns :: The modified pandas data frame object.
+    """
     for idx in range(10):
         data["jets_btag_" + str(idx)] = (data['jets_btag_{0}'.format(idx)]>1)
         data["jets_btag_" + str(idx)] = \
@@ -82,11 +93,10 @@ def map_jet_values(data):
 def jet_formatting(data, flats):
     """
     Formatting the jets features.
+    @data  :: Pandas data frame object containing the data.
+    @flats :: Array containing the values of the different data features in 2D.
 
-    @data  :: The pandas hdf data file, already loaded.
-    @flats :: Array containing the values of different features, 2D flatly.
-
-    @returns :: The updated flats array.
+    returns :: The updated flats array.
     """
     print('Formatting jets...')
 
@@ -103,11 +113,10 @@ def jet_formatting(data, flats):
 def lep_formatting(data, flats):
     """
     Formatting the lepton features.
+    @data  :: Pandas data frame object containing the data.
+    @flats :: Array containing the values of the different data features in 2D.
 
-    @data  :: The pandas hdf data file, already loaded.
-    @flats :: Array containing the values of different features, 2D flatly.
-
-    @returns :: The updated flats array.
+    returns :: The updated flats array.
     """
     print('Formatting leptons...')
 
@@ -124,11 +133,10 @@ def lep_formatting(data, flats):
 def met_formatting(data, flats):
     """
     Formatting the meta features.
+    @data  :: Pandas data frame object containing the data.
+    @flats :: Array containing the values of the different data features in 2D.
 
-    @data  :: The pandas hdf data file, already loaded.
-    @flats :: Array containing the values of different features, flatly.
-
-    @returns :: The updated flats array.
+    returns :: The updated flats array.
     """
     print('Formatting missing energy features...')
 
@@ -145,14 +153,16 @@ def met_formatting(data, flats):
 
 def make_flat_features(flats, is_signal=True):
     """
-    Make the flats object constructed earlier into a flat 2D array, and generate
-    vector of 1s or 0s depending on the type of data (signal or bkg).
+    Make a 2D flat array of all the selected features, with a row per event
+    and the columns being each features (variable).
+    @flats     :: 3D array, with each class of features being a 2D array.
+    @is_signal :: Bool of whether we are dealing with sig or bkg events.
 
-    @flats     :: The flats array as constructed in make_flat_numpy_array.
-    @is_signal :: Bool of whether we are dealing with signal or background.
-
-    @returns :: A 2D matrix, containing rows as many as the number of events
-        and columns as many as features.
+    returns :: A 2D matrix, containing rows for each event and columns for
+        each feature selected to be part of the final data set.
+        Also returns a 1D array filled with 0s for each bkg events and 1s for
+        each signal event. The position of the 0 or 1 matches the row number
+        in the 2D array mentioned earlier.
     """
     print('\n-----------\nMaking flat features...')
     flat_array = np.hstack(flats)
@@ -165,22 +175,20 @@ def make_flat_features(flats, is_signal=True):
 
 def make_flat_numpy_array(data, is_signal=True):
     """
-    Take the loaded .h5 datasets and save the important features chunk by
-    chunk. The flats 2D array elements are as follows:
-    [0] - The jets features.
-    [2] - The lepton features.
-    [1] - The meta features.
+    Take the loaded .h5 dataset and save the features of interest chunk by
+    chunk.
 
     @data      :: The .h5 imported data.
     @is_signal :: Bool of whether the data is signal (True) or background.
 
-    @returns   :: A python list containing the feature arrays (flats).
+    @returns   :: A 2D python list containing the events (rows) and features
+        (columns) pre-selected and formatted.
     """
     chunk_nb = 0; flats = [np.array([]), np.array([]), np.array([])]
     for chunk in data:
         chunk_nb += 1
         print("\n----------\nProcessing chunk number {0}.\n".format(chunk_nb))
-        chunk = map_jet_values(chunk)
+        chunk = map_jet_btag_values(chunk)
 
         if selection is not None: chunk = chunk.query(selection)
         if jet_feats is not None: flats = jet_formatting(chunk, flats)
@@ -190,4 +198,5 @@ def make_flat_numpy_array(data, is_signal=True):
     return make_flat_features(flats, is_signal)
 
 if __name__ == "__main__":
+    args = parser.parse_args()
     main()

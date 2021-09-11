@@ -24,13 +24,13 @@ class AE_data():
         self.valid_data = self.get_numpy_data("valid")
         self.test_data  = self.get_numpy_data("test")
 
-        if train_events > 0:
+        if int(train_events) > 0:
             self.train_data, self.train_target = \
             self.get_dataset(self.train_data, self.train_target, train_events)
-        if valid_events > 0:
+        if int(valid_events) > 0:
             self.valid_data, self.valid_target = \
             self.get_dataset(self.valid_data, self.valid_target, valid_events)
-        if test_events > 0:
+        if int(test_events) > 0:
             self.test_data, self.test_target = \
             self.get_dataset(self.test_data, self.test_target, test_events)
 

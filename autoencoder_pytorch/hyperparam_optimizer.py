@@ -60,11 +60,11 @@ def optuna_train(train_loader, valid_loader, model, epochs, trial):
         trial.report(train_loss.item(), epoch)
         if trial.should_prune(): raise optuna.TrialPruned()
 
-    if model.hp["ae_type"] in ["classifier", "classvqc", "sinkclass"]:
-        return min(model.all_class_loss)
+    # if model.hp["ae_type"] in ["classifier", "classvqc", "sinkclass"]:
+        # return min(model.all_class_loss)
 
-    if model.hp["ae_type"] in ["variational", "sinkhorn"]:
-        return min(model.all_recon_loss)
+    # if model.hp["ae_type"] in ["variational", "sinkhorn"]:
+        # return min(model.all_recon_loss)
 
     return model.best_valid_loss
 
@@ -79,8 +79,8 @@ def optuna_objective(trial):
                    ["zzfm", 4, 8], ["2local", 20, 40, 4, "linear"]]
     hyperparams   = {
         "lr"           : args.lr,
-        "ae_layers"    : [64, 52, 44, 32, 24, 16],
-        "class_layers" : [32, 64, 128, 64, 32, 16, 8, 1],
+        "ae_layers"    : [128, 256, 128, 64, 32, 32],
+        "class_layers" : [16, 8, 4, 1],
         "enc_activ"    : 'nn.Tanh()',
         "dec_activ"    : 'nn.Tanh()',
         "vqc_specs"    : vqc_specs,
@@ -90,8 +90,8 @@ def optuna_objective(trial):
     }
     # Define parameters to be optimized by optuna.
     lr             = trial.suggest_loguniform('lr', *args.lr)
-    loss_weight    = trial.suggest_uniform('loss_weight', 0, 1)
-    weight_sink    = trial.suggest_uniform('weight_sink', 0, 1)
+    loss_weight    = trial.suggest_uniform('loss_weight', 1, 1)
+    weight_sink    = trial.suggest_uniform('weight_sink', 1, 1)
     batch          = trial.suggest_categorical('batch', args.batch)
     hyperparams.update({"lr": lr, "loss_weight": loss_weight})
 

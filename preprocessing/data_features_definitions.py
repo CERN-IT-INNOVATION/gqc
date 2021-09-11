@@ -1,13 +1,12 @@
-# Select certain features depending on data_type.
+# Select variables from the full root trees depending on the type of data
+# specified by the user.
 
 def choose_data_type(user_choice):
     """
     Determines which data type is used in the formatting.
-
     @user_choice :: String of the data type given by the user.
-
-    @returns     :: Dictionary containing formatting specifications for the
-                    particular data type that is being used.
+    returns      :: Dictionary containing formatting specifications for the
+        particular data type that is being used.
     """
 
     switcher = {

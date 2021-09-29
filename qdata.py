@@ -20,6 +20,7 @@ class qdata:
         self.ntest  = self.ae_data.test_data.shape[0]
 
         self.kfolds = kfolds
+        print('Loading k-folds for testing and validation:')
         self.ae_kfold_data = aedata.AE_data(data_folder, norm_name, nevents,
             0, kfolds*valid_events, kfolds*test_events)
 

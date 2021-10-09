@@ -29,12 +29,14 @@ parser.add_argument("--norm", type=str, default='minmax',
     help = "The name of the normalisation that you'll to use.")
 parser.add_argument("--nevents", type=str, default='7.20e+05',
     help = "The number of events of the norm file.")
-parser.add_argument('--model_path', type=str, required= True, 
+parser.add_argument('--model_path', type=str, required = True, 
 	help = "The path to the Auto-Encoder model.")
 parser.add_argument('--output_folder', required = True,
 	help = 'The name of the model to be saved.')
-#TODO output_folder to follow some expressive convention including model info
-#like the AE implementation.
+	#output_folder to follow some expressive convention including model info
+	#like the AE implementation.
+parser.add_argument('--display_name', type = str, default = 'QSVM (8 qubits)', 
+	help = 'QSVM display name on the ROC plot.')
 
 args = parser.parse_args()
 
@@ -76,11 +78,10 @@ def main():
 	print(f'Total runtime: {runtime:.2f} sec.')
 	
 	save_model_log(qdata_loader, qsvm, runtime, train_accuracy, test_accuracy)
+	
 	y_scores = compute_model_scores(model = qsvm, data_folds = test_folds)
-	'''
-    models_names_dict = {'QSVM (4 qubits)': y_scores}
-	'''
-	#generate_plots(models_names_dict, qdata_loader)
+	models_names_dict = {args.display_name : y_scores}
+	generate_plots(models_names_dict, qdata_loader)
 
 
 def save_model_log(qdata_loader, qsvm_model, runtime, train_accuracy,
@@ -104,19 +105,6 @@ def save_model_log(qdata_loader, qsvm_model, runtime, train_accuracy,
 	save_qsvm(model = qsvm_model, path = 'qsvm/trained_models/' + args.output_folder
 				+ '/qsvm_model')
 
-def compute_model_scores(model, data_folds) -> np.ndarray:
-	'''Computing the model scores on all the test data folds to construct
-	performance metrics of the model, e.g., ROC curve and AUC.'''
-	
-	print('Computing model scores on the test data folds...')
-	model_scores = np.array([model.decision_function(fold) for fold in data_folds])
-	
-	path = 'qsvm/trained_models/' + args.output_folder
-	print('Saving model scores array in: ' + path)
-	np.save(path + '/y_score_list.npy', model_scores)
-	
-	return model_scores
-
 
 def save_qsvm(model, path):
 	'''
@@ -129,13 +117,28 @@ def save_qsvm(model, path):
 		 pickle.dump(large_object, fileobj, protocol=5)
 	'''
 	joblib.dump(model, path)
-	print('Trained model saved in: qsvm/trained_models/'+args.output_folder+'\n')
+	print('Trained model saved in: ' + path +'\n')
 
 def load_qsvm(path):
 	'''Load model from pickle file, i.e., deserialisation.'''
 	return joblib.load(path)
 
+def compute_model_scores(model, data_folds) -> np.ndarray:
+	'''Computing the model scores on all the test data folds to construct
+	performance metrics of the model, e.g., ROC curve and AUC.'''
+	
+	print('Computing model scores on the test data folds...')
+	model_scores = np.array([model.decision_function(fold) for fold in data_folds])
+	
+	path = 'qsvm/trained_models/' + args.output_folder + '/y_score_list.npy'
+	print('Saving model scores array in: ' + path)
+	np.save(path, model_scores)
+	
+	return model_scores
+
 def generate_plots(model_dictionary, qdata_loader):
+	#TODO: Have the mean ROC (solid line) + the individual ROCs per fold (thiner line)
+	# + 1 std band (transparent)
     f1 = plt.figure(1,figsize=(10,10))
 
     plt.rc('xtick', labelsize=20)   # fontsize of the tick labels
@@ -150,12 +153,10 @@ def generate_plots(model_dictionary, qdata_loader):
         #computation of auc +/- 1sigma
         auc = np.array([metrics.roc_auc_score(
 				qdata_loader.ae_data.test_target, y_score) for y_score in y_scores])
-        auc_mean,auc_std = np.mean(auc), np.std(auc)
-        print()
-        print("\n"+model_name+" AUC's: \n", auc)
+        auc_mean, auc_std = np.mean(auc), np.std(auc)
+        print("\n\n"+model_name+" AUC's: \n", auc)
         print(f'AUC (mean) = {auc_mean} +/- {auc_std}')
         y_scores_flat = y_scores.flatten()
-
         fpr,tpr,_ = metrics.roc_curve(np.tile(qdata_loader.ae_data.test_target,
 					qdata_loader.kfolds), y_scores_flat)
         plt.plot(fpr,tpr,label = model_name+fr': AUC = {auc_mean:.3f} $\pm$ {auc_std:.3f}')
@@ -171,7 +172,7 @@ def generate_plots(model_dictionary, qdata_loader):
     plt.ylim([0.0, 1.0])
     plt.tight_layout()
     plt.legend()
-    f1.savefig('qsvm/' + args.output_folder + "/roc_plot.pdf")
+    f1.savefig('qsvm/trained_models/' + args.output_folder + "/roc_plot.pdf")
     plt.close()
 
 

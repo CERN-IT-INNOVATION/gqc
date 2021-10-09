@@ -1,4 +1,0 @@
-Validation Accuracy mean = 0.5813, std = 0.0495,for k=5 validation datasets
-5-folds Total Runtime = 725.7538621425629
--------------------------------------------
-

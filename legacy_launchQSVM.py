@@ -4,7 +4,7 @@ from qiskit import Aer
 from qiskit.aqua import QuantumInstance
 from qiskit.aqua.algorithms import QSVM
 import numpy as np
-import time, sys, argparse
+import time, argparse
 import qdata as qd
 from datetime import datetime
 import warnings

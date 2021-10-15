@@ -1,7 +1,7 @@
 # Imports two .npy files as constructed in prepare_mlready_data.npy or any two
 # .npy files that contain 2D matrices with number of events and features for
 # signal and background, respectively.
-# Ane equal number of signal and background events are selected and then
+# An equal number of signal and background events are selected and then
 # sklearn is used to normalize the data sets. Finally, the normalised data
 # is split into training, validation, and testing subsets.
 

@@ -1,8 +1,9 @@
-# Plot the different things with respect to a trained autoencoder model
-# such as the epochs vs loss plot.
-import matplotlib.pyplot as plt
-import numpy as np
+# Plot different figures related to the auto-encoder such as the latent
+# space variables, the ROC curves of the latent space variables, etc.
 import argparse, os
+import numpy as np
+import matplotlib.pyplot as plt
+
 import torch
 import torch.nn as nn
 from sklearn import metrics
@@ -43,37 +44,63 @@ def main():
     print(model.compute_loss(ae_data.valid_data, ae_data.valid_target).item())
     print("TEST LOSS:")
     print(model.compute_loss(ae_data.test_data, ae_data.test_target).item())
-    # print('----------------------------------\n')
+    print('----------------------------------\n')
 
     # Compute the signal and background latent spaces and decoded data.
     model_sig = model.predict(test_sig)
     model_bkg = model.predict(test_bkg)
 
+    # Do the plots.
     if len(model_sig) == 3:
         roc_plots(model_sig[2], model_bkg[2], args.model_path, 'classif_roc')
 
     sig_vs_bkg(model_sig[0], model_bkg[0], args.model_path, 'latent_plots')
     roc_plots(model_sig[0], model_bkg[0], args.model_path, 'latent_roc')
-    input_vs_reco(test_sig,test_bkg,model_sig[1],model_bkg[1],args.model_path)
+    input_reco(test_sig,test_bkg,model_sig[1],model_bkg[1],args.model_path)
 
-def input_vs_reco(input_sig, input_bkg, output_sig, output_bkg, model_path):
-    # Plot the background and the signal distributions for the input data and
-    # the reconstructed data, overlaid.
+def input_reco(input_sig, input_bkg, reco_sig, reco_bkg, model_path):
+    """
+    Plots the input data overlaid with the reconstruction data for both sig
+    and bkg on the same plot.
+    @input_sig  :: Numpy array containing the input signal data.
+    @input_bkg  :: Numpy array containing the input background data.
+    @reco_sig   :: Numpy array containing the reconstructed signal data.
+    @reco_bkg   :: Numpy array containing the reconstructed background data.
+    @model_path :: String containing the path to where the model is saved.
+    """
     plots_folder = os.path.dirname(model_path) + '/input_vs_reco/'
     if not os.path.exists(plots_folder): os.makedirs(plots_folder)
 
     for idx in range(input_sig.shape[1]):
         plt.figure(figsize=(12,10))
 
-        ratio_plotter(input_bkg[:,idx], output_bkg[:,idx], idx, 'gray',
+        input_vs_reco(input_bkg[:,idx], reco_bkg[:,idx], idx, 'gray',
             class_label='Background')
-        ratio_plotter(input_sig[:,idx], output_sig[:,idx], idx, 'navy',
+        input_vs_reco(input_sig[:,idx], reco_sig[:,idx], idx, 'navy',
             class_label='Signal')
 
         plt.savefig(plots_folder + util.varname(idx) + '.pdf')
         plt.close()
 
-    print(f"Ratio plots were saved to {plots_folder}.")
+    print(f"Input vs reco plots were saved to {plots_folder}.")
+
+def input_vs_reco(input_data, reco_data, ifeature, color, class_label=''):
+    # Plots two overlaid histograms.
+    plt.rc('xtick', labelsize=23); plt.rc('ytick', labelsize=23)
+    plt.rc('axes', titlesize=25); plt.rc('axes', labelsize=25)
+    plt.rc('legend', fontsize=22)
+
+    prange = (np.amin(input_data, axis=0), np.amax(input_data, axis=0))
+    plt.hist(x=input_data, bins=60, range=prange, alpha=0.8, histtype='step',
+        linewidth=2.5, label=class_label, density=True, color=color)
+    plt.hist(x=reco_data, bins=60, range=prange, alpha=0.8, histtype='step',
+        linewidth=2.5, label='Rec. ' + class_label, linestyle='dashed',
+        density=True, color=color)
+
+    plt.xlabel(util.varname(ifeature) + ' (normalized)'); plt.ylabel('Density')
+    plt.xlim(*prange)
+    plt.gca().set_yscale("log")
+    plt.legend()
 
 def sig_vs_bkg(data_sig, data_bkg, model_path, output_folder):
     # Makes the plots of the latent space data produced by the encoder.
@@ -103,8 +130,9 @@ def sig_vs_bkg(data_sig, data_bkg, model_path, output_folder):
     print(f"Latent plots were saved to {plots_folder}.")
 
 def compute_auc(data, target, feature):
-    # Divides the full data into chunks, computes auc for each chunk, then
-    # computes the mean and the standard devation of these aucs.
+    """
+
+    """
     data, target  = shuffle(data, target, random_state=0)
     data_chunks   = np.array_split(data, 5)
     target_chunks = np.array_split(target, 5)
@@ -123,7 +151,9 @@ def compute_auc(data, target, feature):
     return fpr, tpr, mean_auc, std_auc
 
 def roc_plots(sig, bkg, model_path, output_folder):
-    # Plot roc curves given data and target.
+    """
+
+    """
     plots_folder = os.path.dirname(model_path) + "/" + output_folder + "/"
     if not os.path.exists(plots_folder): os.makedirs(plots_folder)
 
@@ -154,24 +184,6 @@ def roc_plots(sig, bkg, model_path, output_folder):
         auc_sum_file.write(f"{auc_sum:.3f}")
 
     print(f"Latent roc plots were saved to {plots_folder}.")
-
-def ratio_plotter(input_data, output_data, ifeature, color, class_label=''):
-    # Plots two overlaid histograms.
-    plt.rc('xtick', labelsize=23); plt.rc('ytick', labelsize=23)
-    plt.rc('axes', titlesize=25); plt.rc('axes', labelsize=25)
-    plt.rc('legend', fontsize=22)
-
-    prange = (np.amin(input_data, axis=0), np.amax(input_data, axis=0))
-    plt.hist(x=input_data, bins=60, range=prange, alpha=0.8, histtype='step',
-        linewidth=2.5, label=class_label, density=True, color=color)
-    plt.hist(x=output_data, bins=60, range=prange, alpha=0.8, histtype='step',
-        linewidth=2.5, label='Rec. ' + class_label, linestyle='dashed',
-        density=True, color=color)
-
-    plt.xlabel(util.varname(ifeature) + ' (normalized)'); plt.ylabel('Density')
-    plt.xlim(*prange)
-    plt.gca().set_yscale("log")
-    plt.legend()
 
 if __name__ == '__main__':
     main()

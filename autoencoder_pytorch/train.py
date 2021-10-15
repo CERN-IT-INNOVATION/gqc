@@ -1,13 +1,10 @@
-# Runs the autoencoder(s). The normalized or standardized data is imported,
-# the atuencoder model is defined imported, given a number of layers,
-# a learning rate, a device (gpu or cpu), and encoder and decoder activation
-# functions (legacy version had sigmoids). The model is then trained and
-# a loss plot is saved, along with the model that showed the lowest loss
-# during training and validation and its architecture.
+# Runs the autoencoder. The normalized or standardized data is imported,
+# and the autoencoder model is defined, given the specified options.
+# The model is then trained and a loss plot is saved, along with the
+# architecture of the model, its hyperparameters, and the best model weights.
 
-import time, argparse
+import time, argparse, os
 import numpy as np
-import os
 
 import torch.nn as nn
 
@@ -22,7 +19,7 @@ parser.add_argument("--data_folder", type=str,
 parser.add_argument("--norm", type=str,
     help="The name of the normalisation that you'll to use.")
 parser.add_argument("--nevents", type=str,
-    help="The number of events of the norm file.")
+    help="The number of signal events of the norm file.")
 parser.add_argument("--train_events", type=str, default=0,
     help="The exact number of training events to use < nevents.")
 parser.add_argument("--valid_events", type=str, default=0,
@@ -30,15 +27,16 @@ parser.add_argument("--valid_events", type=str, default=0,
 parser.add_argument("--aetype", type=str,
     help="The type of autoencoder that you will use, i.e., vanilla etc..")
 parser.add_argument('--lr', type=float, default=2e-03,
-    help='The learning rate.')
-parser.add_argument('--batch', type=int, default=128,
-    help='The batch size.')
-parser.add_argument('--epochs', type=int, default=85,
-    help='The number of training epochs.')
-parser.add_argument('--outdir', type=str, default='',
-    help='Flag the file in a certain way for easier labeling.')
+    help="The learning rate.")
+parser.add_argument("--batch", type=int, default=128,
+    help="The batch size.")
+parser.add_argument("--epochs", type=int, default=85,
+    help="The number of training epochs.")
+parser.add_argument("--outdir", type=str, default="",
+    help="Flag the file in a certain way for easier labeling.")
 
 def main():
+    # Set the hyperparameters and other properties.
     args   = parser.parse_args()
     device = util.define_torch_device()
     vqc_specs = [["zzfm", 0, 4], ["2local", 0, 20, 4, "linear"],
@@ -48,8 +46,8 @@ def main():
 
     hyperparams   = {
         "lr"           : args.lr,
-        "ae_layers"    : [128, 256, 128, 64, 32, 32],
-        "class_layers" : [16, 8, 4, 1],
+        "ae_layers"    : [64, 44, 32, 24, 16],
+        "class_layers" : [128, 64, 32, 16, 8, 1],
         "enc_activ"    : 'nn.Tanh()',
         "dec_activ"    : 'nn.Tanh()',
         "vqc_specs"    : vqc_specs,

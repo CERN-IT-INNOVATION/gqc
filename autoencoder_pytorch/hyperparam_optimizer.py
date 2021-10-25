@@ -1,4 +1,6 @@
 # Uses the optuna library to optimize the hyperparameters for a given AE.
+# Note: need to improve. Optuna has a ton of features that could make the
+# hyperparameter search more robust.
 import argparse, os, time
 
 import optuna
@@ -29,8 +31,18 @@ parser.add_argument('--batch', type=int, nargs="+",
 parser.add_argument('--epochs', type=int,
     help='The number of training epochs.')
 
-def optuna_train(train_loader, valid_loader, model, epochs, trial):
-    # Training method for the autoencoder that was defined above.
+def optuna_train(train_loader, valid_loader, model, epochs, trial, woptim=True):
+    """
+    Training the autoencoder in a way that is compatible with optuna.
+    @train_loader :: Pytorch loader object containing training data.
+    @train_loader :: Pytorch loader object containing validation data.
+    @model        :: The ae model to be trained.
+    @epochs       :: The number of epochs to train the model for.
+    @trial        :: The optuna trial object, used in pruning.
+
+    @returns :: The best loss depending on various factors, such as if the
+        weights in the loss are optimised, type of ae that is optimised, etc.
+    """
     print(tcols.OKCYAN+"Training the AE model to be optimized..." +tcols.ENDC)
     model.instantiate_adam_optimizer()
     model.network_summary(); model.optimizer_summary()
@@ -60,18 +72,23 @@ def optuna_train(train_loader, valid_loader, model, epochs, trial):
         trial.report(train_loss.item(), epoch)
         if trial.should_prune(): raise optuna.TrialPruned()
 
-    # if model.hp["ae_type"] in ["classifier", "classvqc", "sinkclass"]:
-        # return min(model.all_class_loss)
+    if woptim:
+        if model.hp["ae_type"] in ["classifier", "classvqc", "sinkclass"]:
+            return min(model.all_class_loss)
 
-    # if model.hp["ae_type"] in ["variational", "sinkhorn"]:
-        # return min(model.all_recon_loss)
+        if model.hp["ae_type"] in ["variational", "sinkhorn"]:
+            return min(model.all_recon_loss)
 
     return model.best_valid_loss
 
 def optuna_objective(trial):
     """
     Wrapper of the normal training such that it agrees with what optuna
-    is trying to do.
+    is trying to do. The data and model are loaded and the hyperparameter
+    ranges to be explored by optuna are set.
+    @trial   :: Optuna trial object.
+
+    @returns :: The minimum validation loss.
     """
     args   = parser.parse_args()
     device = util.define_torch_device()
@@ -110,7 +127,7 @@ def optuna_objective(trial):
     return min_valid
 
 if __name__ == '__main__':
-    # Start the optuna study.
+    # Create and start optuna study for the hyperparameter search.
     print('\n')
     sampler = optuna.samplers.TPESampler()
     study = optuna.create_study(study_name="loss-weight-optimizer",
@@ -121,8 +138,8 @@ if __name__ == '__main__':
 
     comp_trials = study.get_trials(deepcopy=False, states=[TrialState.COMPLETE])
     print("Study statistics: ")
-    print("  Number of finished trials: ", len(study.trials))
-    print("  Number of complete trials: ", len(comp_trials))
+    print("Number of finished trials: ", len(study.trials))
+    print("Number of complete trials: ", len(comp_trials))
 
     print("Best trial:")
     trial = study.best_trial

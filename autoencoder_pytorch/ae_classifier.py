@@ -15,7 +15,7 @@ from terminal_colors import tcols
 seed = 100
 torch.manual_seed(seed)
 
-# Diagnosis tools. Enable in case you need.
+# Diagnosis tools. Enable in case you need. Disabled to increase performance.
 torch.autograd.set_detect_anomaly(False)
 torch.autograd.profiler.profile(enabled=False)
 
@@ -44,27 +44,38 @@ class AE_classifier(AE_vanilla):
 
     @staticmethod
     def construct_classifier(layers):
-        # Construct the classifier layers.
+        """
+        Construct the classifier neural network.
+        @layers   :: Array of number of nodes for each layer.
+
+        @returns  :: Pytorch sequence of layers making the classifier NN.
+        """
         dnn_layers = []
-        # dnn_layers.append(nn.BatchNorm1d(layers[0]))
 
         for idx in range(len(layers)):
             dnn_layers.append(nn.Linear(layers[idx], layers[idx+1]))
             if idx == len(layers) - 2: dnn_layers.append(nn.Sigmoid()); break
-
-            # dnn_layers.append(nn.BatchNorm1d(layers[idx+1]))
-            # dnn_layers.append(nn.Dropout(0.5))
             dnn_layers.append(nn.ReLU(True))
 
         return nn.Sequential(*dnn_layers)
 
     def forward(self, x):
+        """
+        Forward pass through the ae and the classifier.
+        """
         latent        = self.encoder(x)
         class_output  = self.classifier(latent)
         reconstructed = self.decoder(latent)
         return latent, class_output, reconstructed
 
     def compute_loss(self, x_data, y_data):
+        """
+        Compute the loss of a forward pass through the ae and classifier.
+        Combine the two losses and return the one loss.
+        @x_data  :: Numpy array of the original input data.
+
+        @returns :: Float of the computed combined loss function value.
+        """
         if type(x_data) is np.ndarray:
             x_data = torch.from_numpy(x_data).to(self.device)
         if type(y_data) is np.ndarray:
@@ -74,10 +85,6 @@ class AE_classifier(AE_vanilla):
 
         class_loss = self.class_loss_function(classif.flatten(), y_data.float())
         recon_loss = self.recon_loss_function(recon, x_data.float())
-
-        # if len(x_data) > 10000:
-            # print(f"Raw latent loss:{class_loss}")
-            # print(f"Raw recon loss:{recon_loss}")
 
         return self.recon_loss_weight*recon_loss + \
                self.class_loss_weight*class_loss

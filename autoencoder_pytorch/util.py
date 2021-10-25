@@ -15,7 +15,14 @@ from ae_sinkclass import AE_sinkclass
 from terminal_colors import tcols
 
 def choose_ae_model(ae_type, device, hyperparams):
-    # Picks and loads one of the implemented autencoder models.
+    """
+    Picks and loads one of the implemented autoencoder models.
+    @ae_type     :: String of the type of autoencoder that you want to load.
+    @device      :: String of the device to load it on: 'cpu' or 'gpu'.
+    @hyperparams :: Dictionary of the hyperparameters to load with.
+
+    @returns :: The loaded autoencoder model with the given hyperparams.
+    """
     switcher = {
         "vanilla"    : lambda: AE_vanilla(device, hyperparams),
         "classifier" : lambda: AE_classifier(device, hyperparams),
@@ -41,7 +48,14 @@ def define_torch_device():
     return device
 
 def import_hyperparams(model_path):
-    # Import hyperparameters from json file that stores them.
+    """
+    Import hyperparameters from json file that stores them.
+    @model_path :: String of the path to a trained pytorch model folder to
+         import hyperparameters from the json file inside that folder.
+
+    @returns :: Imported dictionary of hyperparams from .json file inside the
+        trained model folder.
+    """
     file_path = os.path.join(model_path, "hyperparameters.json")
     hyperparams_file = open(file_path,)
     hyperparams = json.load(hyperparams_file)
@@ -52,30 +66,31 @@ def import_hyperparams(model_path):
 def varname(index):
     # Gets the name of what variable is currently considered based on the index
     # in the data array.
-    jet_feats = ["$p_t$","$\\eta$","$\\phi$","Energy","$p_x$","$p_y$","$p_z$",
-        "btag"]
-    jet_nvars = len(jet_feats); num_jets = 7
-    met_feats = ["$\\phi$","$p_t$","$p_x$","$p_y$"]
-    met_nvars = len(met_feats)
-    lep_feats = ["$p_t$","$\\eta$","$\\phi$","Energy","$p_x$","$p_y$","$p_z$"]
-    lep_nvars = len(lep_feats)
+    # I really hate this method, need to find a better way of assigning names.
 
-    if (index < jet_nvars * num_jets):
-        jet = index // jet_nvars + 1
-        var = index % jet_nvars
-        varstring = "Jet " + str(jet) + " " + jet_feats[var]
+    jet_feat = ["$p_T$","$\\eta$","$\\phi$", "E","$p_x$","$p_y$","$p_z$","btag"]
+    jet_nvar = len(jet_feat); num_jets = 7
+    met_feat = ["$\\phi$","$p_t$","$p_x$","$p_y$"]
+    met_nvar = len(met_feat)
+    lep_feat = ["$p_t$","$\\eta$","$\\phi$","Energy","$p_x$","$p_y$","$p_z$"]
+    lep_nvar = len(lep_feat)
+
+    if (index < jet_nvar * num_jets):
+        jet = index // jet_nvar + 1
+        var = index % jet_nvar
+        varstring = "Jet " + str(jet) + " " + jet_feat[var]
         return varstring
-    index -= jet_nvars * num_jets;
+    index -= jet_nvar * num_jets;
 
-    if (index < met_nvars):
-        var = index % met_nvars;
-        varstring = "MET " + met_feats[var];
+    if (index < met_nvar):
+        var = index % met_nvar;
+        varstring = "MET " + met_feat[var];
         return varstring
-    index -= met_nvars;
+    index -= met_nvar;
 
-    if (index < lep_nvars):
-        var = index % lep_nvars
-        varstring = "Lepton " + lep_feats[var]
+    if (index < lep_nvar):
+        var = index % lep_nvar
+        varstring = "Lepton " + lep_feat[var]
         return varstring;
 
     return None

@@ -5,3 +5,5 @@ The workflow of the auto-encoder framework is depicted in the following diagram.
 
 ![Autoencoder Workflow](ae_workflow.png)
 
+For more details, please see the code and comments therein.
+

@@ -48,7 +48,9 @@ class AE_sinkhorn(AE_vanilla):
 
     def construct_noise_gen_input(self):
         """
-        Construct the input to the noise generator, which is not trivial.
+        Construct the input layers to the noise generator. The raw data is fed
+        to a layer and then reshaped to a dimension compatible to the noise
+        generator. The same is done for the target data.
         """
         input_layers = self.hp["noise_gen_input_layers"]
         labels_dim   = self.hp["labels_dimension"]
@@ -76,7 +78,13 @@ class AE_sinkhorn(AE_vanilla):
         self.noise_gen = nn.Sequential(*noise_gen_layers)
 
     def generate_noise(self, x, y):
-        # Use the noise generator nn to generate noise.
+        """
+        Generate noise from input data and target vectors.
+        @x :: Numpy array of input data.
+        @y :: Numpy array of input target.
+
+        @returns :: Combined target + data noise array.
+        """
         x_data = self.noise_gen_input_data(x)
         y_data = self.noise_gen_input_labl(y)
 
@@ -87,6 +95,10 @@ class AE_sinkhorn(AE_vanilla):
         return xy_outp
 
     def transform_target_data(self, y_batch):
+        """
+        Transform the target data to be compatible with the requirements
+        of the noise generator (onehot mapping).
+        """
         batch_size = y_batch.shape[0]
         y_map   = torch.FloatTensor(batch_size, self.hp["labels_dimension"])
         y_map   = y_map.to(self.device)
@@ -97,6 +109,16 @@ class AE_sinkhorn(AE_vanilla):
                .to(self.device)
 
     def compute_loss(self, x_data, y_data):
+        """
+        Compute the loss of a forward pass through the sinkhorn ae.
+        Combine the reconstruction loss with the Wasserstein distance between
+        the generated latent space distributions and the generated gaussian
+        noise to obtain the total loss which is then propagated backwards.
+        @x_data  :: Numpy array of the original input data.
+        @y_data  :: Numpy array of the original target data.
+
+        @returns :: Float of the computed combined loss function value.
+        """
         if type(x_data) is np.ndarray:
             x_data = torch.from_numpy(x_data).to(self.device)
         if type(y_data) is np.ndarray:
@@ -113,16 +135,18 @@ class AE_sinkhorn(AE_vanilla):
         laten_loss = self.laten_loss_function(latent, latent_noise)
         recon_loss = self.recon_loss_function(recon, x_data.float())
 
-        if len(x_data) > 10000:
-            print(f"Raw latent loss:{laten_loss}")
-            print(f"Raw recon loss:{recon_loss}")
-
         return self.recon_loss_weight*recon_loss + \
                self.laten_loss_weight*laten_loss
 
     @staticmethod
     def print_losses(epoch, epochs, train_loss, valid_losses):
-
+        """
+        Prints the training and validation losses in a nice format.
+        @epoch      :: Int of the current epoch.
+        @epochs     :: Int of the total number of epochs.
+        @train_loss :: The computed training loss pytorch object.
+        @valid_loss :: The computed validation loss pytorch object.
+        """
         print(f"Epoch : {epoch + 1}/{epochs}, "
               f"Train loss (average) = {train_loss.item():.8f}")
         print(f"Epoch : {epoch + 1}/{epochs}, "
@@ -134,8 +158,14 @@ class AE_sinkhorn(AE_vanilla):
 
     @torch.no_grad()
     def valid(self, valid_loader, outdir):
-        # Evaluate the validation loss for the model and save if new minimum.
+        """
+        Evaluate the validation combined loss for the model and save the model
+        if a new minimum in this combined and weighted loss is found.
+        @valid_loader :: Pytorch data loader with the validation data.
+        @outdir       :: Output folder where to save the model.
 
+        @returns :: Pytorch loss object of the validation loss.
+        """
         x_data_valid, y_data_valid = iter(valid_loader).next()
         x_data_valid = x_data_valid.to(self.device)
         y_data_valid = y_data_valid.to(self.device)
@@ -158,20 +188,14 @@ class AE_sinkhorn(AE_vanilla):
 
         return valid_loss, recon_loss, laten_loss
 
-    def train_all_batches(self, train_loader):
-
-        batch_loss_sum = 0
-        nb_of_batches  = 0
-        for batch in train_loader:
-            x_batch, y_batch = batch
-            batch_loss       = self.train_batch(x_batch, y_batch)
-            batch_loss_sum   += batch_loss
-            nb_of_batches    += 1
-
-        return batch_loss_sum/nb_of_batches
-
     def train_autoencoder(self, train_loader, valid_loader, epochs, outdir):
-
+        """
+        Train the end-to-end Sinkhorn autoencoder.
+        @train_loader :: Pytorch data loader with the training data.
+        @valid_loader :: Pytorch data loader with the validation data.
+        @epochs       :: The number of epochs to train for.
+        @outdir       :: The output dir where to save the training results.
+        """
         self.instantiate_adam_optimizer()
         self.network_summary(); self.optimizer_summary()
         print(tcols.OKCYAN)

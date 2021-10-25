@@ -1,5 +1,5 @@
 # Just like the classifier ae, but with a vqc attached that does the
-# classification.
+# classification. This is still work in progress.
 
 import numpy as np
 import torch

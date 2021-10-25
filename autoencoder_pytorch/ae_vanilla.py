@@ -55,7 +55,7 @@ class AE_vanilla(nn.Module):
     def construct_encoder(layers, enc_activ):
         """
         Construct the encoder.
-        @layers   :: Array of number of nodes for each layer.
+        @layers    :: Array of number of nodes for each layer.
         @enc_activ :: Pytorch object for encoder activation function.
 
         @returns  :: Pytorch sequence of layers making the encoder.
@@ -247,7 +247,7 @@ class AE_vanilla(nn.Module):
 
     def train_autoencoder(self, train_loader, valid_loader, epochs, outdir):
         """
-        Train the auto-encoder defined in this calls.
+        Train the vanilla autoencoder.
         @train_loader :: Pytorch data loader with the training data.
         @valid_loader :: Pytorch data loader with the validation data.
         @epochs       :: The number of epochs to train for.
@@ -325,7 +325,7 @@ class AE_vanilla(nn.Module):
     @torch.no_grad()
     def predict(self, x_data):
         """
-        Compute the prediction of the autoencoder, given input np array x.
+        Compute the prediction of the autoencoder.
         @x_data :: Input array to pass through the autoencoder.
         """
         x_data = torch.from_numpy(x_data).to(self.device)

@@ -73,6 +73,7 @@ class AE_classifier(AE_vanilla):
         Compute the loss of a forward pass through the ae and classifier.
         Combine the two losses and return the one loss.
         @x_data  :: Numpy array of the original input data.
+        @y_data  :: Numpy array of the original target data.
 
         @returns :: Float of the computed combined loss function value.
         """
@@ -91,7 +92,13 @@ class AE_classifier(AE_vanilla):
 
     @staticmethod
     def print_losses(epoch, epochs, train_loss, valid_losses):
-
+        """
+        Prints the training and validation losses in a nice format.
+        @epoch      :: Int of the current epoch.
+        @epochs     :: Int of the total number of epochs.
+        @train_loss :: The computed training loss pytorch object.
+        @valid_loss :: The computed validation loss pytorch object.
+        """
         print(f"Epoch : {epoch + 1}/{epochs}, "
               f"Train loss (average) = {train_loss.item():.8f}")
         print(f"Epoch : {epoch + 1}/{epochs}, "
@@ -102,6 +109,9 @@ class AE_classifier(AE_vanilla):
               f"Valid class loss (no weight) = {valid_losses[2].item():.8f}")
 
     def network_summary(self):
+        """
+        Prints summary of entire AE + classifier network.
+        """
         print(tcols.OKGREEN + "Encoder summary:" + tcols.ENDC)
         self.print_summary(self.encoder)
         print('\n')
@@ -114,8 +124,14 @@ class AE_classifier(AE_vanilla):
 
     @torch.no_grad()
     def valid(self, valid_loader, outdir):
-        # Evaluate the validation loss for the model and save if new minimum.
+        """
+        Evaluate the validation combined loss for the model and save the model
+        if a new minimum in this combined and weighted loss is found.
+        @valid_loader :: Pytorch data loader with the validation data.
+        @outdir       :: Output folder where to save the model.
 
+        @returns :: Pytorch loss object of the validation loss.
+        """
         x_data_valid, y_data_valid = iter(valid_loader).next()
         x_data_valid = x_data_valid.to(self.device)
         y_data_valid = y_data_valid.to(self.device)
@@ -134,7 +150,12 @@ class AE_classifier(AE_vanilla):
         return valid_loss, recon_loss, class_loss
 
     def train_all_batches(self, train_loader):
+        """
+        Train the autoencoder on all the batches.
+        @train_loader :: Pytorch loader object with the training data.
 
+        @returns :: The normalised training loss over all the batches.
+        """
         batch_loss_sum = 0
         nb_of_batches  = 0
         for batch in train_loader:
@@ -146,7 +167,13 @@ class AE_classifier(AE_vanilla):
         return batch_loss_sum/nb_of_batches
 
     def train_autoencoder(self, train_loader, valid_loader, epochs, outdir):
-
+        """
+        Train the classifier autoencoder.
+        @train_loader :: Pytorch data loader with the training data.
+        @valid_loader :: Pytorch data loader with the validation data.
+        @epochs       :: The number of epochs to train for.
+        @outdir       :: The output dir where to save the training results.
+        """
         self.instantiate_adam_optimizer()
         self.network_summary(); self.optimizer_summary()
         print(tcols.OKCYAN)
@@ -170,7 +197,10 @@ class AE_classifier(AE_vanilla):
 
     @torch.no_grad()
     def predict(self, x_data):
-        # Compute the prediction of the autoencoder, given input np array x.
+        """
+        Compute the prediction of the autoencoder.
+        @x_data :: Input array to pass through the autoencoder.
+        """
         x_data = torch.from_numpy(x_data).to(self.device)
         self.eval()
         latent, classif, recon = self.forward(x_data.float())

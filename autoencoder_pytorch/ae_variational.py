@@ -53,7 +53,11 @@ class AE_variational(AE_vanilla):
     @staticmethod
     def construct_encoder(layers, en_activ=None):
         """
-        Construct the encoder layers.
+        Construct the variational encoder.
+        @layers    :: Array of number of nodes for each layer.
+        @enc_activ :: Pytorch object for encoder activation function.
+
+        @returns  :: Pytorch sequence of layers making the encoder.
         """
         enc_layers = []
         layer_nbs = range(len(layers))
@@ -66,7 +70,12 @@ class AE_variational(AE_vanilla):
         return nn.Sequential(*enc_layers)
 
     def reparametrize(self, mu, log_var):
-        # Implementation of the reparametrization trick.
+        """
+        Implement the reparametrization trick to be able to sample from the
+        produced encoder distributions (latent space).
+        @mu      :: The mean of the encoder distribution.
+        @log_var :: The log of the variance of the encoder distribution.
+        """
         std = torch.exp(0.5*log_var)
         eps = self.desired_latent_dist.sample(std.shape).to(self.device)
         latent_space_sample = mu + eps*log_var
@@ -74,6 +83,9 @@ class AE_variational(AE_vanilla):
         return latent_space_sample
 
     def forward(self, x):
+        """
+        Forward pass through the variational ae.
+        """
         pre_latent_x = self.encoder(x)
         mu      = self.encode_mean(pre_latent_x)
         log_var = self.encode_logvar(pre_latent_x)
@@ -84,6 +96,15 @@ class AE_variational(AE_vanilla):
         return latent, reconstructed
 
     def compute_loss(self, x_data, y_data):
+        """
+        Compute the loss of a forward pass through the variational ae.
+        Combine the reconstruction loss with the KL divergence loss to get
+        the total loss which is then propagated backwards..
+        @x_data  :: Numpy array of the original input data.
+        @y_data  :: Numpy array of the original target data.
+
+        @returns :: Float of the computed combined loss function value.
+        """
         if type(x_data) is np.ndarray:
             x_data = torch.from_numpy(x_data).to(self.device)
         latent, recon = self.forward(x_data.float())
@@ -95,16 +116,18 @@ class AE_variational(AE_vanilla):
         laten_loss = self.laten_loss_function(latent_log_probs,comparison_probs)
         recon_loss = self.recon_loss_function(recon, x_data.float())
 
-        if len(x_data) > 10000:
-            print(f"Raw latent loss:{laten_loss}")
-            print(f"Raw recon loss:{recon_loss}")
-
         return self.recon_loss_weight*recon_loss + \
                self.laten_loss_weight*laten_loss
 
     @staticmethod
     def print_losses(epoch, epochs, train_loss, valid_losses):
-
+        """
+        Prints the training and validation losses in a nice format.
+        @epoch      :: Int of the current epoch.
+        @epochs     :: Int of the total number of epochs.
+        @train_loss :: The computed training loss pytorch object.
+        @valid_loss :: The computed validation loss pytorch object.
+        """
         print(f"Epoch : {epoch + 1}/{epochs}, "
               f"Train loss (average) = {train_loss.item():.8f}")
         print(f"Epoch : {epoch + 1}/{epochs}, "
@@ -116,8 +139,14 @@ class AE_variational(AE_vanilla):
 
     @torch.no_grad()
     def valid(self, valid_loader, outdir):
-        # Evaluate the validation loss for the model and save if new minimum.
+        """
+        Evaluate the validation combined loss for the model and save the model
+        if a new minimum in this combined and weighted loss is found.
+        @valid_loader :: Pytorch data loader with the validation data.
+        @outdir       :: Output folder where to save the model.
 
+        @returns :: Pytorch loss object of the validation loss.
+        """
         x_data_valid, y_data_valid = iter(valid_loader).next()
         x_data_valid = x_data_valid.to(self.device)
         self.eval()
@@ -138,7 +167,13 @@ class AE_variational(AE_vanilla):
         return valid_loss, recon_loss, laten_loss
 
     def train_autoencoder(self, train_loader, valid_loader, epochs, outdir):
-
+        """
+        Train the variational autoencoder.
+        @train_loader :: Pytorch data loader with the training data.
+        @valid_loader :: Pytorch data loader with the validation data.
+        @epochs       :: The number of epochs to train for.
+        @outdir       :: The output dir where to save the training results.
+        """
         self.instantiate_adam_optimizer()
         self.network_summary(); self.optimizer_summary()
         print(tcols.OKCYAN)

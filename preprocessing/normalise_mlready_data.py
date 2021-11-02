@@ -21,6 +21,8 @@ from sklearn.preprocessing import minmax_scale
 from sklearn.model_selection import train_test_split
 from sklearn import metrics
 
+from terminal_colors import tcols
+
 parser = argparse.ArgumentParser(formatter_class=argparse.
     ArgumentDefaultsHelpFormatter)
 parser.add_argument("--data_sig", type=str, required=True,
@@ -40,8 +42,10 @@ parser.add_argument("--valid_percent", type=float, default=-1,
           10\% of the data will be test, and 80\% will be training.")
 
 def main():
-    print('Normalizing the sig data file: ' + args.data_sig)
-    print('Normalizing the bkg data file: ' + args.data_bkg)
+    print(tcols.HEADER)
+    print("Normalizing the sig data file: {args.data_sig}")
+    print(f"Normalizing the bkg data file: {args.data_bkg}")
+    print(tcols.ENDC)
 
     data_sig = np.load(args.data_sig)[:args.maxdata, :]
     data_bkg = np.load(args.data_bkg)[:args.maxdata, :]
@@ -49,42 +53,46 @@ def main():
     all_data = np.vstack((data_sig, data_bkg))
     all_targ = np.concatenate((np.ones(args.maxdata), np.zeros(args.maxdata)))
 
-    choose_norm(args.norm_name)
+    choose_norm(args.norm_name, all_data, all_targ)
 
-def choose_norm(norm_name):
+def choose_norm(norm_name, all_data, all_targ):
     """
     Normalise the mlready data.
     @norm_name :: Name of the normalisation to be applied, chosen by user.
     """
+    print(tcols.OKBLUE)
     if norm_name == "vanilla":
-        print("\n\033[92mSaving all (raw) no norm data...\033[0m")
+        print("\nSaving all (raw) no norm data...")
         split_and_save(all_data, all_targ, f"no_norm_{args.maxdata}")
     elif norm_name == "minmax":
-        print("\n\033[92mApplying minmax normalization...\033[0m")
+        print("\nApplying minmax normalization...")
         apply_norm(MinMaxScaler(), f"minmax_{args.maxdata:.2e}",
             all_data, all_targ)
     elif norm_name == "maxabs":
-        print("\n\033[92mApplying maxabs normalization...\033[0m")
+        print("\nApplying maxabs normalization...")
         apply_norm(MaxAbsScaler(), f"maxabs_{args.maxdata:.2e}",
             all_data, all_targ)
     elif norm_name == "std":
-        print("\n\033[92mApplying standard normalization...\033[0m")
+        print("\nApplying standard normalization...")
         apply_norm(StandardScaler(), f"std_{args.maxdata:.2e}",
             all_data, all_targ)
     elif norm_name == "robust":
-        print("\n\033[92mApplying robust normalization...\033[0m")
+        print("\nApplying robust normalization...")
         apply_norm(RobustScaler(), f"robust_{args.maxdata:.2e}",
             all_data, all_targ)
     elif norm_name == "power":
-        print("\n\033[92mApplying power normalization...\033[0m")
+        print("\nApplying power normalization...")
         apply_norm(PowerTransformer(), f"power_{args.maxdata:.2e}",
             all_data, all_targ)
     elif norm_name == "quantile":
-        print("\n\033[92mApplying quantile normalization...\033[0m")
+        print("\nApplying quantile normalization...")
         apply_norm(QuantileTransformer(), f"quantile_{args.maxdata:.2e}",
             all_data, all_targ)
     else:
+        print(tcols.ENDC)
         raise TypeError("Specified normalisation type does not exist!!!")
+
+    print(tcols.ENDC)
 
 def apply_norm(norm_method, norm_name, data, target):
     """
@@ -113,14 +121,19 @@ def split_and_save(data, target, name):
 
     """
     save_dir = os.path.dirname(args.data_sig) + "/"
+    print(tcols.OKBLUE)
     print("Splitting data into training, validation, and testing sets.")
+    print(tcols.ENDC)
+
     x_train, x_valid, y_train, y_valid = train_test_split(data, target,
         test_size=args.valid_percent, shuffle=True, stratify=target)
     test_percent = float(x_valid.shape[0]/x_train.shape[0])
     x_train, x_test, y_train, y_test = train_test_split(x_train, y_train,
         test_size=test_percent, shuffle=True, stratify=y_train)
 
+    print(tcols.OKGREEN)
     print("Saving data to: ", save_dir)
+    print(tcols.ENDC)
     np.save(save_dir + "x_data_" + name + "_train", x_train)
     np.save(save_dir + "x_data_" + name + "_test",  x_test)
     np.save(save_dir + "x_data_" + name + "_valid", x_valid)

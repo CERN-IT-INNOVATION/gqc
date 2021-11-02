@@ -45,7 +45,7 @@ class AE_data():
         @data_type :: String with the type of data to be imported, either
                       train, test, or valid.
         """
-        return "x_data_" + self.norm_name + "_norm_" + self.nevents + "_" + \
+        return "x_data_" + self.norm_name + self.nevents + "_" + \
             data_type + ".npy"
 
     def get_target_file(self, data_type):
@@ -54,7 +54,7 @@ class AE_data():
         @data_type :: String with the type of data to be imported, either
                       train, test, or valid.
         """
-        return "y_data_" + self.norm_name + "_norm_" + self.nevents + "_" + \
+        return "y_data_" + self.norm_name + self.nevents + "_" + \
             data_type + ".npy"
 
     def get_numpy_data(self, data_type):

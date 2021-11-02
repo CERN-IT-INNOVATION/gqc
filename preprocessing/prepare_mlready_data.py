@@ -22,10 +22,6 @@ parser.add_argument("--bkg_file", type=str, required=True, action="store",
 parser.add_argument("--outdir", type=str, action="store",
     default="./ml_ready_unnormalised_data/",
     help="The output directory.")
-parser.add_argument("--datatype", type=str, required=True,
-    choices=["cms_0l","cms_1l","cms_2l","delphes_1l","delphes_2l","delphes_had"
-             "mass_1l", "class_2016_1l", "class_2016_2l", "cms_2017_1l",
-             "cms_2017_2l"], help="Choose where the data comes from..")
 
 def main():
     # Specify the variables of choice and the selection cuts.
@@ -34,7 +30,7 @@ def main():
     globals().update(features)
     globals()['selection'] = "nleps == 1 & (nbtags >= 2) & (njets >= 4)"
     globals()['njets'] = 7
-.
+
     data_sig = load_files(args.sig_file)
     data_bkg = load_files(args.bkg_file)
     if not os.path.exists(args.outdir): os.makedirs(args.outdir)

@@ -7,7 +7,6 @@
 import argparse, os, glob, itertools
 import pandas as pd
 import numpy as np
-import data_features_definitions
 
 # Disable the pandas warning when working on a copy. Re-enable if you care
 # about what you do to a dataframe copy making it back to original.
@@ -23,14 +22,15 @@ parser.add_argument("--outdir", type=str, action="store",
     default="./ml_ready_unnormalised_data/",
     help="The output directory.")
 
-def main():
-    # Specify the variables of choice and the selection cuts.
-    features = data_features_definitions.opts()
-    features.update(data_features_definitions.choose_data_type(args.datatype))
-    globals().update(features)
-    globals()['selection'] = "nleps == 1 & (nbtags >= 2) & (njets >= 4)"
-    globals()['njets'] = 7
+# Variables of choice and selection cuts.
+jet_feats = ["pt", "eta", "phi", "en", "px", "py", "pz", "btag"]
+lep_feats = ["pt","eta","phi","en","px","py","pz"]
+met_feats = ["phi", "pt", "px", "py"]
+njets = 7
+nleps = 1
+selection = "nleps == 1 & (nbtags >= 2) & (njets >= 4)"
 
+def main():
     data_sig = load_files(args.sig_file)
     data_bkg = load_files(args.bkg_file)
     if not os.path.exists(args.outdir): os.makedirs(args.outdir)

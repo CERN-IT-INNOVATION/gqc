@@ -31,8 +31,9 @@ nleps = 1
 selection = "nleps == 1 & (nbtags >= 2) & (njets >= 4)"
 
 def main():
-    data_sig = load_files(args.sig_file)
-    data_bkg = load_files(args.bkg_file)
+    data_sig = read_single_file(args.sig_file, "1000000")
+    data_bkg = read_single_file(args.bkg_file, "1000000")
+    print("Data has been loaded!")
     if not os.path.exists(args.outdir): os.makedirs(args.outdir)
 
     sig, y_sig = make_flat_numpy_array(data_sig)
@@ -41,35 +42,16 @@ def main():
     np.save(os.path.join(args.outdir, "x_data_sig"), sig)
     np.save(os.path.join(args.outdir, "x_data_bkg"), bkg)
 
-def read_single_file(path):
+def read_single_file(path, chunksize):
     """
-    Load a single .h5 file with chunksize 1000000 (i.e. only put into RAM
-    1000000 elements of the .h5 file at a time).
-    @path :: String path to the data.
+    Load a single .h5 file with a certain chunksize.
+    @path       :: String path to the data.
+    @chunksize  :: String of the number of rows imported at once into RAM.
 
     returns :: The loaded Pandas data frame object.
     """
     print(f"Loading h5 file {path}...")
-    return pd.read_hdf(path, chunksize="1000000")
-
-def load_files(path):
-    """
-    Load a single file specified by path or load all .h5 files in the folder
-    specified by path.
-    @path :: String path to the data.
-
-    returns :: The loaded Pandas data frame object.
-    """
-    if path.endswith(".h5"): return read_single_file(path)
-
-    file_paths = sorted(glob.glob(path + '/data*.h5'))
-    for path in file_paths:
-        if file_paths.index(path) == 0: data = read_single_file(path)
-        else: data = itertools.chain(data, read_single_file(path))
-
-    print("Data has been loaded!")
-
-    return data
+    return pd.read_hdf(path, chunksize=chunksize)
 
 def map_jet_btag_values(data):
     """

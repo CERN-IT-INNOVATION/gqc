@@ -8,9 +8,9 @@ import numpy as np
 
 import torch.nn as nn
 
-import util
-import data
-from terminal_colors import tcols
+from . import util
+from . import data
+from .terminal_colors import tcols
 
 parser = argparse.ArgumentParser(formatter_class=argparse.
     ArgumentDefaultsHelpFormatter)

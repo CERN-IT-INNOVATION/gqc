@@ -10,10 +10,9 @@ from pennylane.templates import AngleEmbedding
 
 import matplotlib.pyplot as plt
 
-
-from ae_classifier import AE_classifier
-import vqc_forms
-from terminal_colors import tcols
+from . import vqc_forms
+from .ae_classifier import AE_classifier
+from .terminal_colors import tcols
 
 seed = 100
 torch.manual_seed(seed)

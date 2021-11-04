@@ -7,6 +7,7 @@
 import argparse, os, glob, itertools
 import pandas as pd
 import numpy as np
+
 from terminal_colors import tcols
 
 # Disable the pandas warning when working on a copy. Re-enable if you care

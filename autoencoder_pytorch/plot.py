@@ -9,9 +9,9 @@ import torch.nn as nn
 from sklearn import metrics
 from sklearn.utils import shuffle
 
-import util
-import data
-from terminal_colors import tcols
+from . import util
+from . import data
+from .terminal_colors import tcols
 
 parser = argparse.ArgumentParser(formatter_class=argparse.
     ArgumentDefaultsHelpFormatter)

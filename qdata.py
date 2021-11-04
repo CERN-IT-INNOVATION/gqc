@@ -1,8 +1,8 @@
 # Loads the data that is subsequently fed to the quantum ml networks.
 import numpy as np
-from autoencoder_pytorch import data as aedata
-from autoencoder_pytorch import util as aeutil
-from autoencoder_pytorch.terminal_colors import tcols
+from autoencoders import data as aedata
+from autoencoders import util as aeutil
+from autoencoders.terminal_colors import tcols
 
 class qdata:
     def __init__(self, data_folder, norm_name, nevents, model_path,

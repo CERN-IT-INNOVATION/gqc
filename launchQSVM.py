@@ -1,21 +1,23 @@
+import time,  argparse, sys, os, warnings, joblib
+import numpy as np
+import matplotlib.pyplot as plt
+from datetime import datetime
+
 from qiskit import Aer
 from qiskit.utils import QuantumInstance
 from qiskit.utils import algorithm_globals
-from sklearn.svm import SVC
 from qiskit_machine_learning.kernels import QuantumKernel
-import numpy as np
-import matplotlib.pyplot as plt
+
+from sklearn.svm import SVC
 from sklearn import metrics
-import time,  argparse, sys, os, warnings
-from datetime import datetime
-import joblib
+
 
 import qdata as qd
 from qsvm.feature_map_circuits import u2Reuploading
 warnings.filterwarnings('ignore', category=DeprecationWarning)#for aqua
 
 seed = 12345
-algorithm_globals.random_seed = seed #ensure same global behaviour
+algorithm_globals.random_seed = seed # ensure same global behaviour
 
 #TODO: Include hyperparameter optimisation for C (maybe splitting of 
 # is needed)

@@ -7,10 +7,6 @@ __pycache__
 trained_models/
 logs/
 *.log
-submit_cpu.sh
-submit_gpu.sh
-submit_optim_gpu.sh
-submit_qsvm_cpu.sh
 ._*
 *.pyc
 *DS_Store*

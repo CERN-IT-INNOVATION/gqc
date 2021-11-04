@@ -3,7 +3,6 @@ data/
 *.h5
 *.root
 *.out
-Tests_qiskit/
 __pycache__
 trained_models/
 logs/
@@ -12,3 +11,6 @@ submit_cpu.sh
 submit_gpu.sh
 submit_optim_gpu.sh
 submit_qsvm_cpu.sh
+._*
+*.pyc
+*DS_Store*

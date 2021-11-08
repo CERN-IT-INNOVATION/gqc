@@ -47,7 +47,7 @@ def define_torch_device():
     print("\033[92mUsing device:\033[0m", device)
     return device
 
-def import_hyperparams(model_path):
+def import_hyperparams(hyperparams_file):
     """
     Import hyperparameters from json file that stores them.
     @model_path :: String of the path to a trained pytorch model folder to
@@ -56,8 +56,7 @@ def import_hyperparams(model_path):
     @returns :: Imported dictionary of hyperparams from .json file inside the
         trained model folder.
     """
-    file_path = os.path.join(model_path, "hyperparameters.json")
-    hyperparams_file = open(file_path,)
+    hyperparams_file = open(hyperparams_file)
     hyperparams = json.load(hyperparams_file)
     hyperparams_file.close()
 
@@ -65,8 +64,8 @@ def import_hyperparams(model_path):
 
 def varname(index):
     # Gets the name of what variable is currently considered based on the index
-    # in the data array.
-    # I really hate this method, need to find a better way of assigning names.
+    # in the data array. Make sure the ordering is the same if data changes.
+    # Check the plots for consistency.
 
     jet_feat = ["$p_T$","$\\eta$","$\\phi$", "E","$p_x$","$p_y$","$p_z$","btag"]
     jet_nvar = len(jet_feat); num_jets = 7

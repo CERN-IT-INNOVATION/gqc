@@ -1,0 +1,56 @@
+# Run the hyperparameter optimization of a chosen autoencoder.
+# This is all classical hyperparameter optimisation.
+import argparse, sys
+sys.path.append("..")
+
+from autoencoders.hyperparam_optimizer import main
+sys.path.append(os.path.join('..', 'autoencoders'))
+parser = argparse.ArgumentParser(formatter_class=argparse.
+    ArgumentDefaultsHelpFormatter)
+parser.add_argument("--data_folder", type=str,
+    help="The folder where the data is stored on the system..")
+parser.add_argument("--norm", type=str,
+    help="The name of the normalisation that you'll to use.")
+parser.add_argument("--nevents", type=str,
+    help="The number of events of the norm file.")
+parser.add_argument("--aetype", type=str,
+    help="The type of autoencoder that you will use, i.e., vanilla etc..")
+parser.add_argument('--lr', type=float, nargs=2,
+    help='The learning rate range [min max].')
+parser.add_argument('--batch', type=int, nargs="+",
+    help='The batch options, e.g., [128 256 512].')
+parser.add_argument('--epochs', type=int,
+    help='The number of training epochs.')
+parser.add_argument('--study_name', type=str, default='optuna_study',
+    help='The name of the optuna study.')
+parser.add_argument('--ntrials', type=int, default=1,
+    help='Number of trials optuna should run.')
+args = parser.parse_args()
+
+vqc_specs = [["zzfm", 0, 4], ["2local", 0, 20, 4, "linear"],
+             ["zzfm", 4, 8], ["2local", 20, 40, 4, "linear"],
+             ["zzfm", 8, 12], ["2local", 40, 60, 4, "linear"],
+             ["zzfm", 12, 16], ["2local", 60, 80, 4, "linear"]]
+
+args = {
+    "data_folder"  : args.data_folder,
+    "norm"         : args.norm,
+    "nevents"      : args.nevents,
+    "aetype"       : args.aetype,
+    "ae_layers"    : [64, 44, 32, 24, 16],
+    "class_layers" : [128, 64, 32, 16, 8, 1],
+    "batch"        : args.batch,
+    "lr"           : args.lr,
+    "epochs"       : args.epochs,
+    "enc_activ"    : 'nn.Tanh()',
+    "dec_activ"    : 'nn.Tanh()',
+    "vqc_specs"    : vqc_specs,
+    "loss_weight"  : 1,
+    "weight_sink"  : 1,
+    "adam_betas"   : (0.9, 0.999),
+    "study_name"   : args.study_name,
+    "ntrials"      : args.ntrials
+}
+
+main(args)
+

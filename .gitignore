@@ -1,10 +1,9 @@
-data/
 *.npy
 *.h5
 *.root
 *.out
 __pycache__
-trained_models/
+trained_aes/
 logs/
 *.log
 ._*

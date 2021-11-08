@@ -43,7 +43,7 @@ parser.add_argument("--valid_percent", type=float, default=-1,
 
 def main():
     print(tcols.HEADER)
-    print("Normalizing the sig data file: {args.data_sig}")
+    print(f"Normalizing the sig data file: {args.data_sig}")
     print(f"Normalizing the bkg data file: {args.data_bkg}")
     print(tcols.ENDC)
 

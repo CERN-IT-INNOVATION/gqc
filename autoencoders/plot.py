@@ -1,42 +1,29 @@
 # Plot different figures related to the autoencoder such as the latent
 # space variables, the ROC curves of the latent space variables, etc.
-import argparse, os
+import os
 import numpy as np
 import matplotlib.pyplot as plt
 
-import torch
-import torch.nn as nn
 from sklearn import metrics
 from sklearn.utils import shuffle
 
 from . import util
 from . import data
-from .terminal_colors import tcols
 
-parser = argparse.ArgumentParser(formatter_class=argparse.
-    ArgumentDefaultsHelpFormatter)
-parser.add_argument("--data_folder", type=str,
-    help="The folder where the data is stored on the system..")
-parser.add_argument("--norm", type=str,
-    help="The name of the normalisation that you'll to use.")
-parser.add_argument("--nevents", type=str,
-    help="The number of events of the norm file.")
-parser.add_argument('--model_path', type=str, required=True,
-    help="The path to the saved model.")
-
-def main():
-    args   = parser.parse_args()
+def main(args):
     device = 'cpu'
-    hp     = util.import_hyperparams(args.model_path)
+    model_folder = os.path.dirname(args['model_path'])
+    hp_file      = os.path.join(model_folder, 'hyperparameters.json')
+    hp           = util.import_hyperparams(hp_file)
 
     # Import the data.
-    ae_data = data.AE_data(args.data_folder, args.norm, args.nevents)
+    ae_data = data.AE_data(args['data_folder'], args['norm'], args['nevents'])
     test_sig, test_bkg = \
         ae_data.split_sig_bkg(ae_data.test_data, ae_data.test_target)
 
     # Import the model.
     model = util.choose_ae_model(hp['ae_type'], device, hp)
-    model.load_model(args.model_path)
+    model.load_model(args['model_path'])
 
     # Compute loss function results for the test and validation datasets.
     print('\n----------------------------------')
@@ -52,11 +39,11 @@ def main():
 
     # Do the plots.
     if len(model_sig) == 3:
-        roc_plots(model_sig[2], model_bkg[2], args.model_path, 'classif_roc')
+        roc_plots(model_sig[2], model_bkg[2], args['model_path'], 'classif_roc')
 
-    sig_vs_bkg(model_sig[0], model_bkg[0], args.model_path, 'latent_plots')
-    roc_plots(model_sig[0], model_bkg[0], args.model_path, 'latent_roc')
-    input_reco(test_sig,test_bkg,model_sig[1],model_bkg[1],args.model_path)
+    sig_vs_bkg(model_sig[0], model_bkg[0], args['model_path'], 'latent_plots')
+    roc_plots(model_sig[0], model_bkg[0], args['model_path'], 'latent_roc')
+    input_reco(test_sig, test_bkg, model_sig[1],model_bkg[1],args['model_path'])
 
 def input_reco(input_sig, input_bkg, recon_sig, recon_bkg, model_path):
     """
@@ -206,6 +193,3 @@ def roc_plots(sig, bkg, model_path, output_folder):
         auc_sum_file.write(f"{auc_sum:.3f}")
 
     print(f"Latent roc plots were saved to {plots_folder}.")
-
-if __name__ == '__main__':
-    main()

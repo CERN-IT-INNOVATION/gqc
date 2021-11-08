@@ -1,14 +1,17 @@
-'''
-Module where all tested quantum circuits are defined using qiskit.
-To be used for the classifiers and expressibility and entanglement studies.
-'''
+# Module where all tested quantum circuits are defined using qiskit.
+# To be used for the classifiers and expressibility and entanglement studies.
 
-from qiskit.aqua.components.feature_maps.raw_feature_vector import RawFeatureVector
-from qiskit.aqua.circuits import StateVectorCircuit
 from qiskit.circuit import QuantumCircuit, ParameterVector
 import numpy as np
 
-def u2Reuploading(nqubits=8, nfeatures=16):
+def u2Reuploading(nqubits=8, nfeatures=16) -> QuantumCircuit:
+	"""
+	Constructs the u2Reuploading feature map.
+	@nqubits   :: Int number of qubits used.
+	@nfeatures :: Number of variables in the dataset to be processed.
+
+	returns :: The quantum circuit object form qiskit.
+	"""
 	x = ParameterVector('x', nfeatures)
 	qc = QuantumCircuit(nqubits)
 	for feature, qubit in zip(range(0, 2*nqubits, 2), range(nqubits)):
@@ -25,86 +28,3 @@ def u2Reuploading(nqubits=8, nfeatures=16):
 
 	return qc
 
-# Test feature map with good expressibility and entanglement capability from the work: https://zenodo.org/record/4298781
-# Circuit 14:
-
-def get_circuit14(nqubits=4, nfeatures=16, reps=1):
-	x = ParameterVector('x', nfeatures)
-	qc = QuantumCircuit(nqubits)
-	# Ry rotations for the first 4 features
-	for irep in range(reps):
-	# transform all [0,1] (autoencoder) features to [0,2pi] range
-	# maybe better results
-		for i in range(4):
-			qc.ry(x[i], i)
-		qc.barrier()
-		qc.crx(x[4], 3, 0)
-		qc.crx(x[5], 2, 3)
-		qc.crx(x[6], 1, 2)
-		qc.crx(x[7], 0, 1)
-		qc.barrier()
-		for i, iq in zip(range(8, 12), range(4)):
-			qc.ry(x[i], iq)
-		qc.barrier()
-		qc.crx(x[12], 3, 2)
-		qc.crx(x[13], 0, 3)
-		qc.crx(x[14], 1, 0)
-		qc.crx(x[15], 2, 1)
-		qc.barrier()
-	return qc
-
-
-# Circuit 14 but with input data functionality 'x' to be used in FeatureMap class:
-
-def get_circuitInputs(x, nqubits=4, nfeatures=16, reps=1):
-	qc = QuantumCircuit(nqubits)
-	# Ry rotations for the first 4 features
-	for irep in range(reps):
-		for i in range(4):
-			qc.ry(x[i], i)
-		qc.barrier()
-		qc.crx(x[4], 3, 0)
-		qc.crx(x[5], 2, 3)
-		qc.crx(x[6], 1, 2)
-		qc.crx(x[7], 0, 1)
-		qc.barrier()
-		for i, iq in zip(range(8, 12), range(4)):
-			qc.ry(x[i], iq)
-		qc.barrier()
-		qc.crx(x[12], 3, 2)
-		qc.crx(x[13], 0, 3)
-		qc.crx(x[14], 1, 0)
-		qc.crx(x[15], 2, 1)
-		qc.barrier()
-	return qc
-
-
-class customFeatureMap(RawFeatureVector):
-	def construct_circuit(self, x, qr=None, inverse=False):
-		"""
-		Extend amplitude encoding circuit.
-
-		Args:
-		    x (numpy.ndarray): 1-D to-be-encoded data.
-		    qr (QuantumRegister): the QuantumRegister object for the circuit, if None,
-		                          generate new registers with name q.
-		    inverse (bool): inverse
-		Returns:
-		    QuantumCircuit: a quantum circuit transform data x.
-		Raises:
-		    TypeError: invalid input
-		    ValueError: invalid input
-		"""
-		if len(x) != self._feature_dimension:
-		    raise ValueError("Unexpected feature vector dimension.")
-
-		state_vector = np.pad(x, (0, (1 << self.num_qubits) - len(x)), 'constant')
-
-		svc = StateVectorCircuit(state_vector)
-
-		# Add additional gates after amplitude encoding circuit
-		qc = svc.construct_circuit(register=qr)
-
-		qc += get_circuitInputs(x, nqubits=4, nfeatures=16, reps=1)
-		# qc += svc.construct_circuit(register=qr)
-		return qc

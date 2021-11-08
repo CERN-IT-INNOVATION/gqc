@@ -107,10 +107,12 @@ class AE_vanilla(nn.Module):
         reconstructed = self.decoder(latent)
         return latent, reconstructed
 
-    def compute_loss(self, x_data):
+    def compute_loss(self, x_data, y_data):
         """
         Compute the loss of a forward pass through the ae.
         @x_data  :: Numpy array of the original input data.
+        @y_data  :: Dummy argument to make this main class compatible with
+                    the more complex classes that it parents.
 
         @returns :: Float of the computed loss function value.
         """
@@ -315,9 +317,8 @@ class AE_vanilla(nn.Module):
     def load_model(self, model_path):
         """
         Loads the weights of a trained model saved in a .pt file.
-        @model_pathr :: Directory where a trained model was saved.
+        @model_path :: Directory where a trained model was saved.
         """
-        model_path = os.path.join(model_path, 'best_model.pt')
         if not os.path.exists(model_path): raise FileNotFoundError("∄ path.")
         self.load_state_dict(
             torch.load(model_path, map_location=torch.device(self.device)))

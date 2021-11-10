@@ -240,7 +240,7 @@ def plot_roc_auc(data, target, norm_name):
         auc_sum_file.write(f"{auc_sum:.3f}")
 
 
-def check_norm_exists(norm_name):
+def check_norm_exists(norm_name) -> bool:
     """
     Quick helper method that checks if the normalise data files already
     exists and returns 1 if it does but 0 if it does not.

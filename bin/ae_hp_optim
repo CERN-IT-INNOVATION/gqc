@@ -1,10 +1,10 @@
 # Run the hyperparameter optimization of a chosen autoencoder.
 # This is all classical hyperparameter optimisation.
-from autoencoders.hyperparam_optimizer import main
 import argparse
 import sys
 sys.path.append("..")
 
+from autoencoders.hyperparam_optimizer import main
 parser = argparse.ArgumentParser(formatter_class=argparse.
                                  ArgumentDefaultsHelpFormatter)
 parser.add_argument("--data_folder", type=str,

@@ -10,22 +10,22 @@ from sklearn.utils import shuffle
 from . import util
 from . import data
 
+
 def main(args):
     device = 'cpu'
     model_folder = os.path.dirname(args['model_path'])
-    hp_file      = os.path.join(model_folder, 'hyperparameters.json')
-    hp           = util.import_hyperparams(hp_file)
+    hp_file = os.path.join(model_folder, 'hyperparameters.json')
+    hp = util.import_hyperparams(hp_file)
 
-    # Import the data.
+    # Data loading.
     ae_data = data.AE_data(args['data_folder'], args['norm'], args['nevents'])
     test_sig, test_bkg = \
         ae_data.split_sig_bkg(ae_data.test_data, ae_data.test_target)
 
-    # Import the model.
+    # AE model loading.
     model = util.choose_ae_model(hp['ae_type'], device, hp)
     model.load_model(args['model_path'])
 
-    # Compute loss function results for the test and validation datasets.
     print('\n----------------------------------')
     print("VALID LOSS:")
     print(model.compute_loss(ae_data.valid_data, ae_data.valid_target).item())
@@ -33,17 +33,16 @@ def main(args):
     print(model.compute_loss(ae_data.test_data, ae_data.test_target).item())
     print('----------------------------------\n')
 
-    # Compute the signal and background latent spaces and decoded data.
-    model_sig = model.predict(test_sig)
-    model_bkg = model.predict(test_bkg)
+    sig = model.predict(test_sig)
+    bkg = model.predict(test_bkg)
 
-    # Do the plots.
-    if len(model_sig) == 3:
-        roc_plots(model_sig[2], model_bkg[2], args['model_path'], 'classif_roc')
+    sig_vs_bkg(sig[0], bkg[0], args['model_path'], 'latent_plots')
+    roc_plots(sig[0], bkg[0], args['model_path'], 'latent_roc')
+    input_reco(test_sig, test_bkg, sig[1], bkg[1], args['model_path'])
 
-    sig_vs_bkg(model_sig[0], model_bkg[0], args['model_path'], 'latent_plots')
-    roc_plots(model_sig[0], model_bkg[0], args['model_path'], 'latent_roc')
-    input_reco(test_sig, test_bkg, model_sig[1],model_bkg[1],args['model_path'])
+    if len(sig) == 3:
+        roc_plots(sig[2], bkg[2], args['model_path'], 'classif_roc')
+
 
 def input_reco(input_sig, input_bkg, recon_sig, recon_bkg, model_path):
     """
@@ -56,45 +55,50 @@ def input_reco(input_sig, input_bkg, recon_sig, recon_bkg, model_path):
     @model_path :: String containing the path to where the model is saved.
     """
     plots_folder = os.path.dirname(model_path) + '/input_vs_reco/'
-    if not os.path.exists(plots_folder): os.makedirs(plots_folder)
+    if not os.path.exists(plots_folder):
+        os.makedirs(plots_folder)
 
     for idx in range(input_sig.shape[1]):
-        plt.figure(figsize=(12,10))
+        plt.figure(figsize=(12, 10))
 
-        input_vs_reco(input_bkg[:,idx], recon_bkg[:,idx], idx, 'gray',
-            class_label='Background')
+        input_vs_reco(input_bkg[:, idx], recon_bkg[:, idx], idx, 'gray',
+                      class_label='Background')
         input_vs_reco(input_sig[:,idx], recon_sig[:,idx], idx, 'navy',
-            class_label='Signal')
+                      class_label='Signal')
 
         plt.savefig(plots_folder + util.varname(idx) + '.pdf')
         plt.close()
 
     print(f"Input vs reco plots were saved to {plots_folder}.")
 
+
 def input_vs_reco(input_data, recon_data, ifeature, color, class_label=''):
     """
     Plots the input against the reconstructed data.
     @input_data  :: Numpy array of the input data.
     @recon_data  :: Numpy array of the reconstructed ae data.
-    @ifeature    :: The number of the feature to be plotted.
-    @color       :: The color of the two histograms that are plotted.
+    @ifeature    :: Int the number of the features to be plotted.
+    @color       :: String for the color of the two plotted histograms.
     @class_label :: String for either signal or background.
     """
-    plt.rc('xtick', labelsize=23); plt.rc('ytick', labelsize=23)
-    plt.rc('axes', titlesize=25); plt.rc('axes', labelsize=25)
+    plt.rc('xtick', labelsize=23)
+    plt.rc('ytick', labelsize=23)
+    plt.rc('axes', titlesize=25)
+    plt.rc('axes', labelsize=25)
     plt.rc('legend', fontsize=22)
 
     prange = (np.amin(input_data, axis=0), np.amax(input_data, axis=0))
     plt.hist(x=input_data, bins=60, range=prange, alpha=0.8, histtype='step',
-        linewidth=2.5, label=class_label, density=True, color=color)
+             linewidth=2.5, label=class_label, density=True, color=color)
     plt.hist(x=recon_data, bins=60, range=prange, alpha=0.8, histtype='step',
-        linewidth=2.5, label='Rec. ' + class_label, linestyle='dashed',
-        density=True, color=color)
+             linewidth=2.5, label='Rec. ' + class_label, linestyle='dashed',
+             density=True, color=color)
 
     plt.xlabel(util.varname(ifeature) + ' (normalized)'); plt.ylabel('Density')
     plt.xlim(*prange)
     plt.gca().set_yscale("log")
     plt.legend()
+
 
 def sig_vs_bkg(data_sig, data_bkg, model_path, output_folder):
     """
@@ -116,29 +120,34 @@ def sig_vs_bkg(data_sig, data_bkg, model_path, output_folder):
         xmin = min(np.amin(data_sig[:,i]),np.amin(data_bkg[:,i]))
         fig = plt.figure(figsize=(12, 10))
 
-        hSig,_,_ = plt.hist(x=data_sig[:,i], density=1,
-            range = (xmin,xmax), bins=50, alpha=0.8, histtype='step',
-            linewidth=2.5, label='Sig', color='navy')
-        hBkg,_,_ = plt.hist(x=data_bkg[:,i], density=1,
-            range = (xmin,xmax), bins=50, alpha=0.4, histtype='step',
-            linewidth=2.5,label='Bkg', color='gray', hatch='xxx')
-
+        hSig, _, _ = plt.hist(x=data_sig[:, i], density=1,
+                              range=(xmin, xmax), bins=50, alpha=0.8,
+                              histtype='step', linewidth=2.5, label='Sig',
+                              color='navy')
+        hBkg, _, _ = plt.hist(x=data_bkg[:, i], density=1,
+                              range=(xmin, xmax), bins=50, alpha=0.4,
+                              histtype='step', linewidth=2.5, label='Bkg',
+                              color='gray', hatch='xxx')
         plt.legend()
         fig.savefig(plots_folder + 'Feature '+ str(i) + '.pdf')
         plt.close()
 
     print(f"Latent plots were saved to {plots_folder}.")
 
-def compute_auc(data, target, feature):
+
+def compute_auc(data, target, feature) -> tuple(list, list, float, float):
     """
     Split a data set into 5, compute the AUC for each, and then calculate the
     mean and stardard deviation of these.
     @data    :: Numpy array of the whole data (all features).
     @target  :: Numpy array of the target.
     @feature :: The number of the feature to compute the AUC for.
+
+    returns :: The ROC curve coordiantes, the AUC, and the standard deviation
+        on the AUC.
     """
-    data, target  = shuffle(data, target, random_state=0)
-    data_chunks   = np.array_split(data, 5)
+    data, target = shuffle(data, target, random_state=0)
+    data_chunks = np.array_split(data, 5)
     target_chunks = np.array_split(target, 5)
 
     aucs = []
@@ -149,10 +158,11 @@ def compute_auc(data, target, feature):
 
     aucs = np.array(aucs)
     mean_auc = aucs.mean()
-    std_auc  = aucs.std()
+    std_auc = aucs.std()
     fpr, tpr, thresholds = metrics.roc_curve(target, data[:, feature])
 
     return fpr, tpr, mean_auc, std_auc
+
 
 def roc_plots(sig, bkg, model_path, output_folder):
     """
@@ -161,7 +171,7 @@ def roc_plots(sig, bkg, model_path, output_folder):
     @sig           :: Numpy array containing the signal data.
     @bkg           :: Numpy array containing the background data.
     @model_path    :: String of the path to a trained ae model.
-    @output_folder :: String of the name to the output folder to save the plots.
+    @output_folder :: String of the name to the output folder to save plots.
     """
     plots_folder = os.path.dirname(model_path) + "/" + output_folder + "/"
     if not os.path.exists(plots_folder): os.makedirs(plots_folder)
@@ -170,7 +180,7 @@ def roc_plots(sig, bkg, model_path, output_folder):
     plt.rc('axes', titlesize=25); plt.rc('axes', labelsize=25)
     plt.rc('legend', fontsize=22)
 
-    data   = np.vstack((sig, bkg))
+    data = np.vstack((sig, bkg))
     target = np.concatenate((np.ones(sig.shape[0]),np.zeros(bkg.shape[0])))
 
     auc_sum = 0.
@@ -178,7 +188,7 @@ def roc_plots(sig, bkg, model_path, output_folder):
         fpr, tpr, mean_auc, std_auc = compute_auc(data, target, feature)
         fig = plt.figure(figsize=(12, 10))
         plt.plot(fpr, tpr,
-            label=f"AUC: {mean_auc:.3f} ± {std_auc:.3f}", color='navy')
+                 label=f"AUC: {mean_auc:.3f} ± {std_auc:.3f}", color='navy')
         plt.plot([0, 1], [0, 1], ls="--", color='gray')
 
         plt.xlabel("False Positive Rate"); plt.ylabel("True Positive Rate")

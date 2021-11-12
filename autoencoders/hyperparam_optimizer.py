@@ -9,11 +9,12 @@ from .terminal_colors import tcols
 def main(args):
     sampler = optuna.samplers.TPESampler()
     pruner = optuna.pruners.HyperbandPruner()
-    name = args['study_name']
+    name = args["study_name"]
 
-    study = optuna.create_study(study_name=name, sampler=sampler,
-                                direction='minimize', pruner=pruner)
-    study.optimize(lambda trial: objective(trial, args), n_trials=args['ntri'])
+    study = optuna.create_study(
+        study_name=name, sampler=sampler, direction="minimize", pruner=pruner
+    )
+    study.optimize(lambda trial: objective(trial, args), n_trials=args["ntri"])
 
     trials = study.get_trials(deepcopy=False, states=[TrialState.COMPLETE])
     print("Study statistics: ")
@@ -30,8 +31,9 @@ def main(args):
         print("{}: {}".format(key, value))
 
 
-def optuna_train(train_loader, valid_loader, model, epochs, trial, woptim) \
-                -> float:
+def optuna_train(
+    train_loader, valid_loader, model, epochs, trial, woptim
+) -> float:
     """
     Training the autoencoder in a way that is compatible with optuna.
     @train_loader :: Pytorch loader object containing training data.
@@ -44,7 +46,9 @@ def optuna_train(train_loader, valid_loader, model, epochs, trial, woptim) \
         the weights in the loss are optimised, type of ae that is
         optimised, etc.
     """
-    print(tcols.OKCYAN+"Training the AE model to be optimized..."+tcols.ENDC)
+    print(
+        tcols.OKCYAN + "Training the AE model to be optimized..." + tcols.ENDC
+    )
     model.instantiate_adam_optimizer()
     model.network_summary()
     model.optimizer_summary()
@@ -97,23 +101,25 @@ def objective(trial, args) -> float:
     """
     device = util.define_torch_device()
     # Define parameters to be optimized by optuna.
-    lr = trial.suggest_loguniform('lr', *args['lr'])
-    loss_weight = trial.suggest_uniform('loss_weight', 1, 1)
-    weight_sink = trial.suggest_uniform('weight_sink', 1, 1)
-    batch = trial.suggest_categorical('batch', args['batch'])
-    args.update({"lr": lr, "loss_weight": loss_weight,
-                 "weight_sink": weight_sink})
+    lr = trial.suggest_loguniform("lr", *args["lr"])
+    loss_weight = trial.suggest_uniform("loss_weight", 1, 1)
+    weight_sink = trial.suggest_uniform("weight_sink", 1, 1)
+    batch = trial.suggest_categorical("batch", args["batch"])
+    args.update(
+        {"lr": lr, "loss_weight": loss_weight, "weight_sink": weight_sink}
+    )
 
     # Load the data.
-    ae_data = data.AE_data(args['data_folder'], args['norm'], args['nevents'])
+    ae_data = data.AE_data(args["data_folder"], args["norm"], args["nevents"])
     train_loader = ae_data.get_loader("train", device, batch, True)
     valid_loader = ae_data.get_loader("valid", device, None, True)
 
     # Define the model and prepare the output folder.
-    (args['ae_layers']).insert(0, ae_data.nfeats)
-    model = util.choose_ae_model(args['aetype'], device, args)
+    (args["ae_layers"]).insert(0, ae_data.nfeats)
+    model = util.choose_ae_model(args["aetype"], device, args)
 
-    min_valid = \
-        optuna_train(train_loader, valid_loader, model, args['epochs'], trial)
+    min_valid = optuna_train(
+        train_loader, valid_loader, model, args["epochs"], trial
+    )
 
     return min_valid

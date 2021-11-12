@@ -26,9 +26,10 @@ setup(
     license="MIT",
     python_requires=">=3.9",
     zip_safe=False,
-    setup_requires='black',
-    packages=find_packages(include=['autoencoders', 'autoencoders.*',
-                                    'qsvm', 'qsvm.*']),
+    setup_requires="black",
+    packages=find_packages(
+        include=["autoencoders", "autoencoders.*", "qsvm", "qsvm.*"]
+    ),
     classifiers=[
         "Environment :: Console",
         "Intended Audience :: Physicists, Developers",
@@ -36,5 +37,6 @@ setup(
         "Operating System :: OS Independent",
         "Programming Language :: Python",
         "Programming Language :: Python :: 3.9",
-        "Programming Language :: Python :: 3 :: Only"]
-    )
+        "Programming Language :: Python :: 3 :: Only",
+    ],
+)

@@ -75,30 +75,45 @@ def varname(index) -> str:
 
     returns :: The variable name.
     """
-    jet_feat = ["$p_T$", "$\\eta$", "$\\phi$", "E", "$p_x$", "$p_y$", "$p_z$",
-                "btag"]
+    jet_feat = [
+        "$p_T$",
+        "$\\eta$",
+        "$\\phi$",
+        "E",
+        "$p_x$",
+        "$p_y$",
+        "$p_z$",
+        "btag",
+    ]
     num_jets = 7
     met_feat = ["$\\phi$", "$p_t$", "$p_x$", "$p_y$"]
-    lep_feat = ["$p_t$", "$\\eta$", "$\\phi$", "Energy", "$p_x$", "$p_y$",
-                "$p_z$"]
+    lep_feat = [
+        "$p_t$",
+        "$\\eta$",
+        "$\\phi$",
+        "Energy",
+        "$p_x$",
+        "$p_y$",
+        "$p_z$",
+    ]
     jet_nvar = len(jet_feat)
     met_nvar = len(met_feat)
     lep_nvar = len(lep_feat)
 
-    if (index < jet_nvar * num_jets):
+    if index < jet_nvar * num_jets:
         jet = index // jet_nvar + 1
         var = index % jet_nvar
         varstring = "Jet " + str(jet) + " " + jet_feat[var]
         return varstring
     index -= jet_nvar * num_jets
 
-    if (index < met_nvar):
+    if index < met_nvar:
         var = index % met_nvar
         varstring = "MET " + met_feat[var]
         return varstring
     index -= met_nvar
 
-    if (index < lep_nvar):
+    if index < lep_nvar:
         var = index % lep_nvar
         varstring = "Lepton " + lep_feat[var]
         return varstring

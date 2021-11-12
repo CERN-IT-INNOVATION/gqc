@@ -17,13 +17,27 @@ pd.options.mode.chained_assignment = None  # default='warn'
 
 
 parser = argparse.ArgumentParser()
-parser.add_argument("--sig_file", type=str, required=True, action="store",
-                    help="The name of the signal .h5 file.")
-parser.add_argument("--bkg_file", type=str, required=True, action="store",
-                    help="The name of the background .h5 file.")
-parser.add_argument("--outdir", type=str, action="store",
-                    default="./ml_ready_unnormalised_data/",
-                    help="The output directory name.")
+parser.add_argument(
+    "--sig_file",
+    type=str,
+    required=True,
+    action="store",
+    help="The name of the signal .h5 file.",
+)
+parser.add_argument(
+    "--bkg_file",
+    type=str,
+    required=True,
+    action="store",
+    help="The name of the background .h5 file.",
+)
+parser.add_argument(
+    "--outdir",
+    type=str,
+    action="store",
+    default="./ml_ready_unnormalised_data/",
+    help="The output directory name.",
+)
 
 # Variables of choice and selection cuts on some of these variables.
 # Consistent with https://arxiv.org/abs/2104.07692.
@@ -101,7 +115,7 @@ def map_jet_btag_values(data) -> np.ndarray:
     returns :: The modified pandas data frame object.
     """
     for idx in range(10):
-        data["jets_btag_" + str(idx)] = (data[f"jets_btag_{idx}"] > 1)
+        data["jets_btag_" + str(idx)] = data[f"jets_btag_{idx}"] > 1
         data["jets_btag_" + str(idx)] = data[f"jets_btag_{idx}"].astype(float)
 
     return data
@@ -145,10 +159,12 @@ def met_formatting(data, flats) -> np.ndarray:
     """
     print(tcols.OKBLUE + "Formatting missing energy features..." + tcols.ENDC)
 
-    data["met_px"] = data["met_" + met_feats[1]] * \
-        np.cos(data["met_"+met_feats[0]])
-    data["met_py"] = data["met_" + met_feats[1]] * \
-        np.sin(data["met_"+met_feats[0]])
+    data["met_px"] = data["met_" + met_feats[1]] * np.cos(
+        data["met_" + met_feats[0]]
+    )
+    data["met_py"] = data["met_" + met_feats[1]] * np.sin(
+        data["met_" + met_feats[0]]
+    )
     meta = data[["met_%s" % feat for feat in met_feats]].values
     if flats[1].size == 0:
         flats[1] = meta
@@ -171,8 +187,13 @@ def lep_formatting(data, flats) -> np.ndarray:
     print(tcols.OKBLUE + "Formatting leptons..." + tcols.ENDC)
 
     number_lep_feats = len(lep_feats)
-    lepsa = data[["leps_%s_%d" % (feat, lep) for lep in range(nleps)
-                  for feat in lep_feats]].values
+    lepsa = data[
+        [
+            "leps_%s_%d" % (feat, lep)
+            for lep in range(nleps)
+            for feat in lep_feats
+        ]
+    ].values
     if flats[2].size == 0:
         flats[2] = lepsa
     else:

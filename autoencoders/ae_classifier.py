@@ -19,26 +19,26 @@ torch.autograd.profiler.profile(enabled=False)
 
 
 class AE_classifier(AE_vanilla):
-    def __init__(self, device='cpu', hparams={}):
+    def __init__(self, device="cpu", hparams={}):
 
         super().__init__(device, hparams)
         new_hp = {
             "ae_type": "classifier",
             "class_layers": [128, 64, 32, 16, 8, 1],
             "adam_betas": (0.9, 0.999),
-            "loss_weight": 0.5
+            "loss_weight": 0.5,
         }
         self.hp.update(new_hp)
         self.hp.update((k, hparams[k]) for k in self.hp.keys() & hparams.keys())
 
-        self.class_loss_function = nn.BCELoss(reduction='mean')
+        self.class_loss_function = nn.BCELoss(reduction="mean")
 
-        self.recon_loss_weight = 1 - self.hp['loss_weight']
-        self.class_loss_weight = self.hp['loss_weight']
+        self.recon_loss_weight = 1 - self.hp["loss_weight"]
+        self.class_loss_weight = self.hp["loss_weight"]
         self.all_recon_loss = []
         self.all_class_loss = []
 
-        self.class_layers = [self.hp['ae_layers'][-1]] + self.hp['class_layers']
+        self.class_layers = [self.hp["ae_layers"][-1]] + self.hp["class_layers"]
         self.classifier = self.construct_classifier(self.class_layers)
 
     @staticmethod
@@ -52,7 +52,7 @@ class AE_classifier(AE_vanilla):
         dnn_layers = []
 
         for idx in range(len(layers)):
-            dnn_layers.append(nn.Linear(layers[idx], layers[idx+1]))
+            dnn_layers.append(nn.Linear(layers[idx], layers[idx + 1]))
             if idx == len(layers) - 2:
                 dnn_layers.append(nn.Sigmoid())
                 break
@@ -88,8 +88,10 @@ class AE_classifier(AE_vanilla):
         class_loss = self.class_loss_function(classif.flatten(), y_data.float())
         recon_loss = self.recon_loss_function(recon, x_data.float())
 
-        return self.recon_loss_weight*recon_loss + \
-            self.class_loss_weight*class_loss
+        return (
+            self.recon_loss_weight * recon_loss
+            + self.class_loss_weight * class_loss
+        )
 
     @staticmethod
     def print_losses(epoch, epochs, train_loss, valid_losses):
@@ -100,14 +102,22 @@ class AE_classifier(AE_vanilla):
         @train_loss :: The computed training loss pytorch object.
         @valid_loss :: The computed validation loss pytorch object.
         """
-        print(f"Epoch : {epoch + 1}/{epochs}, "
-              f"Train loss (average) = {train_loss.item():.8f}")
-        print(f"Epoch : {epoch + 1}/{epochs}, "
-              f"Valid loss = {valid_losses[0].item():.8f}")
-        print(f"Epoch : {epoch + 1}/{epochs}, "
-              f"Valid recon loss (no weight) = {valid_losses[1].item():.8f}")
-        print(f"Epoch : {epoch + 1}/{epochs}, "
-              f"Valid class loss (no weight) = {valid_losses[2].item():.8f}")
+        print(
+            f"Epoch : {epoch + 1}/{epochs}, "
+            f"Train loss (average) = {train_loss.item():.8f}"
+        )
+        print(
+            f"Epoch : {epoch + 1}/{epochs}, "
+            f"Valid loss = {valid_losses[0].item():.8f}"
+        )
+        print(
+            f"Epoch : {epoch + 1}/{epochs}, "
+            f"Valid recon loss (no weight) = {valid_losses[1].item():.8f}"
+        )
+        print(
+            f"Epoch : {epoch + 1}/{epochs}, "
+            f"Valid class loss (no weight) = {valid_losses[2].item():.8f}"
+        )
 
     def network_summary(self):
         """
@@ -115,13 +125,13 @@ class AE_classifier(AE_vanilla):
         """
         print(tcols.OKGREEN + "Encoder summary:" + tcols.ENDC)
         self.print_summary(self.encoder)
-        print('\n')
+        print("\n")
         print(tcols.OKGREEN + "Classifier summary:" + tcols.ENDC)
         self.print_summary(self.classifier)
-        print('\n')
+        print("\n")
         print(tcols.OKGREEN + "Decoder summary:" + tcols.ENDC)
         self.print_summary(self.decoder)
-        print('\n\n')
+        print("\n\n")
 
     @torch.no_grad()
     def valid(self, valid_loader, outdir) -> list[float]:
@@ -144,8 +154,10 @@ class AE_classifier(AE_vanilla):
         recon_loss = self.recon_loss_function(x_data_valid.float(), recon)
         class_loss = self.class_loss_function(classif.flatten(), y_data_valid)
 
-        valid_loss = self.recon_loss_weight * recon_loss + \
-            self.class_loss_weight * class_loss
+        valid_loss = (
+            self.recon_loss_weight * recon_loss
+            + self.class_loss_weight * class_loss
+        )
 
         self.save_best_loss_model(valid_loss, outdir)
 
@@ -166,7 +178,7 @@ class AE_classifier(AE_vanilla):
             batch_loss_sum += batch_loss
             nb_of_batches += 1
 
-        return batch_loss_sum/nb_of_batches
+        return batch_loss_sum / nb_of_batches
 
     def train_autoencoder(self, train_loader, valid_loader, epochs, outdir):
         """
@@ -180,14 +192,14 @@ class AE_classifier(AE_vanilla):
         self.network_summary()
         self.optimizer_summary()
         print(tcols.OKCYAN)
-        print("Training the " + self.hp['ae_type'] + " AE model...")
+        print("Training the " + self.hp["ae_type"] + " AE model...")
         print(tcols.ENDC)
 
         for epoch in range(epochs):
             self.train()
 
             train_loss = self.train_all_batches(train_loader)
-            valid_losses = self.valid(valid_loader,outdir)
+            valid_losses = self.valid(valid_loader, outdir)
             if self.early_stopping:
                 break
 

@@ -15,6 +15,7 @@ torchinfo = "*"
 geomloss = "*"
 qiskit = "*"
 qiskit-machine-learning = "*"
+black = "*"
 
 [dev-packages]
 

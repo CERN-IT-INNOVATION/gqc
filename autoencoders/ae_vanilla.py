@@ -23,23 +23,23 @@ torch.autograd.profiler.profile(enabled=False)
 
 
 class AE_vanilla(nn.Module):
-    def __init__(self, device='cpu', hpars={}):
+    def __init__(self, device="cpu", hpars={}):
 
         super().__init__()
         self.hp = {
             "ae_type": "vanilla",
             "ae_layers": [67, 64, 52, 44, 32, 24, 16],
             "lr": 0.002,
-            "enc_activ": 'nn.Tanh()',
-            "dec_activ": 'nn.Tanh()',
+            "enc_activ": "nn.Tanh()",
+            "dec_activ": "nn.Tanh()",
         }
         self.device = device
 
-        self.recon_loss_function = nn.MSELoss(reduction='mean')
+        self.recon_loss_function = nn.MSELoss(reduction="mean")
         self.hp.update((k, hpars[k]) for k in self.hp.keys() & hpars.keys())
 
-        exec('self.enc_activ = ' + self.hp["enc_activ"])
-        exec('self.dec_activ = ' + self.hp["dec_activ"])
+        exec("self.enc_activ = " + self.hp["enc_activ"])
+        exec("self.dec_activ = " + self.hp["dec_activ"])
 
         self.best_valid_loss = 9999
         self.all_train_loss = []
@@ -48,10 +48,12 @@ class AE_vanilla(nn.Module):
         self.early_stopping_limit = 15
         self.epochs_no_improve = 0
 
-        self.encoder = \
-            self.construct_encoder(self.hp['ae_layers'], self.enc_activ)
-        self.decoder = \
-            self.construct_decoder(self.hp['ae_layers'], self.dec_activ)
+        self.encoder = self.construct_encoder(
+            self.hp["ae_layers"], self.enc_activ
+        )
+        self.decoder = self.construct_decoder(
+            self.hp["ae_layers"], self.dec_activ
+        )
 
     @staticmethod
     def construct_encoder(layers, enc_activ) -> nn.Sequential:
@@ -65,7 +67,7 @@ class AE_vanilla(nn.Module):
         enc_layers = []
         layer_nbs = range(len(layers))
         for idx in layer_nbs:
-            enc_layers.append(nn.Linear(layers[idx], layers[idx+1]))
+            enc_layers.append(nn.Linear(layers[idx], layers[idx + 1]))
             if idx == len(layers) - 2 and enc_activ is None:
                 break
             if idx == len(layers) - 2:
@@ -87,7 +89,7 @@ class AE_vanilla(nn.Module):
         dec_layers = []
         layer_nbs = reversed(range(len(layers)))
         for idx in layer_nbs:
-            dec_layers.append(nn.Linear(layers[idx], layers[idx-1]))
+            dec_layers.append(nn.Linear(layers[idx], layers[idx - 1]))
             if idx == 1 and dec_activ is None:
                 break
             if idx == 1 and dec_activ:
@@ -104,7 +106,7 @@ class AE_vanilla(nn.Module):
         training method (optional).
         """
         self = self.to(self.device)
-        self.optimizer = optim.Adam(self.parameters(), lr=self.hp['lr'])
+        self.optimizer = optim.Adam(self.parameters(), lr=self.hp["lr"])
 
         # scheduler = optim.lr_scheduler.ExponentialLR(self.optimizer,
         # gamma=0.95)
@@ -140,10 +142,14 @@ class AE_vanilla(nn.Module):
         @train_loss :: The computed training loss pytorch object.
         @valid_loss :: The computed validation loss pytorch object.
         """
-        print(f"Epoch : {epoch + 1}/{epochs}, "
-              f"Train loss (average) = {train_loss.item():.8f}")
-        print(f"Epoch : {epoch + 1}/{epochs}, "
-              f"Valid loss = {valid_loss.item():.8f}")
+        print(
+            f"Epoch : {epoch + 1}/{epochs}, "
+            f"Train loss (average) = {train_loss.item():.8f}"
+        )
+        print(
+            f"Epoch : {epoch + 1}/{epochs}, "
+            f"Valid loss = {valid_loss.item():.8f}"
+        )
 
     @staticmethod
     def print_summary(model):
@@ -152,8 +158,14 @@ class AE_vanilla(nn.Module):
         @model :: Pytorch object of the model to be printed.
         """
         try:
-            summary(model, show_input=True, show_hierarchical=False,
-                    print_summary=True, max_depth=1, show_parent_layers=False)
+            summary(
+                model,
+                show_input=True,
+                show_hierarchical=False,
+                print_summary=True,
+                max_depth=1,
+                show_parent_layers=False,
+            )
         except Exception as e:
             print(e)
             print(tcols.WARNING + "Net summary failed!" + tcols.ENDC)
@@ -164,10 +176,10 @@ class AE_vanilla(nn.Module):
         """
         print(tcols.OKGREEN + "Encoder summary:" + tcols.ENDC)
         self.print_summary(self.encoder)
-        print('\n')
+        print("\n")
         print(tcols.OKGREEN + "Decoder summary:" + tcols.ENDC)
         self.print_summary(self.decoder)
-        print('\n\n')
+        print("\n\n")
 
     def optimizer_summary(self):
         """
@@ -175,7 +187,7 @@ class AE_vanilla(nn.Module):
         """
         print(tcols.OKGREEN + "Optimizer summary:" + tcols.ENDC)
         print(self.optimizer)
-        print('\n\n')
+        print("\n\n")
 
     def save_best_loss_model(self, valid_loss, outdir):
         """
@@ -185,12 +197,15 @@ class AE_vanilla(nn.Module):
         """
         if self.best_valid_loss > valid_loss:
             self.epochs_no_improve = 0
-            print(tcols.OKGREEN + f"New min: {self.best_valid_loss:.2e}" +
-                  tcols.ENDC)
+            print(
+                tcols.OKGREEN
+                + f"New min: {self.best_valid_loss:.2e}"
+                + tcols.ENDC
+            )
 
             self.best_valid_loss = valid_loss
             if outdir is not None:
-                torch.save(self.state_dict(), outdir + 'best_model.pt')
+                torch.save(self.state_dict(), outdir + "best_model.pt")
 
         else:
             self.epochs_no_improve += 1
@@ -264,7 +279,7 @@ class AE_vanilla(nn.Module):
             batch_loss_sum += batch_loss
             nb_of_batches += 1
 
-        return batch_loss_sum/nb_of_batches
+        return batch_loss_sum / nb_of_batches
 
     def train_autoencoder(self, train_loader, valid_loader, epochs, outdir):
         """
@@ -278,7 +293,7 @@ class AE_vanilla(nn.Module):
         self.network_summary()
         self.optimizer_summary()
         print(tcols.OKCYAN)
-        print("Training the " + self.hp['ae_type'] + " AE model...")
+        print("Training the " + self.hp["ae_type"] + " AE model...")
         print(tcols.ENDC)
 
         for epoch in range(epochs):
@@ -299,31 +314,45 @@ class AE_vanilla(nn.Module):
         @outdir :: Directory where to save the loss plot.
         """
         epochs = list(range(len(self.all_train_loss)))
-        plt.plot(epochs, self.all_train_loss,
-                 color="gray", label="Training Loss (average)")
-        plt.plot(epochs, self.all_valid_loss,
-                 color="navy", label="Validation Loss")
+        plt.plot(
+            epochs,
+            self.all_train_loss,
+            color="gray",
+            label="Training Loss (average)",
+        )
+        plt.plot(
+            epochs, self.all_valid_loss, color="navy", label="Validation Loss"
+        )
         plt.xlabel("Epochs")
         plt.ylabel("Loss")
 
-        plt.text(np.min(epochs), np.max(self.all_train_loss),
-                 f"Min: {self.best_valid_loss:.2e}", verticalalignment='top',
-                 horizontalalignment='left', color='blue', fontsize=15,
-                 bbox={'facecolor': 'white', 'alpha': 0.8, 'pad': 5})
+        plt.text(
+            np.min(epochs),
+            np.max(self.all_train_loss),
+            f"Min: {self.best_valid_loss:.2e}",
+            verticalalignment="top",
+            horizontalalignment="left",
+            color="blue",
+            fontsize=15,
+            bbox={"facecolor": "white", "alpha": 0.8, "pad": 5},
+        )
 
         plt.legend()
         plt.savefig(outdir + "loss_epochs.pdf")
         plt.close()
 
-        print(tcols.OKGREEN + f"Loss vs epochs plot saved to {outdir}." +
-              tcols.ENDC)
+        print(
+            tcols.OKGREEN
+            + f"Loss vs epochs plot saved to {outdir}."
+            + tcols.ENDC
+        )
 
     def export_architecture(self, outdir):
         """
         Saves the structure of the nn to a file.
         @outdir :: Directory where to save the architecture of the network.
         """
-        with open(outdir + 'model_architecture.txt', 'w') as model_arch:
+        with open(outdir + "model_architecture.txt", "w") as model_arch:
             print(self, file=model_arch)
 
     def export_hyperparameters(self, outdir):
@@ -331,8 +360,8 @@ class AE_vanilla(nn.Module):
         Saves the hyperparameters of the model to a json file.
         @outdir :: Directory where to save the json file.
         """
-        file_path = os.path.join(outdir, 'hyperparameters.json')
-        params_file = open(file_path, 'w')
+        file_path = os.path.join(outdir, "hyperparameters.json")
+        params_file = open(file_path, "w")
         json.dump(self.hp, params_file)
         params_file.close()
 
@@ -344,7 +373,8 @@ class AE_vanilla(nn.Module):
         if not os.path.exists(model_path):
             raise FileNotFoundError("∄ path.")
         self.load_state_dict(
-            torch.load(model_path, map_location=torch.device(self.device)))
+            torch.load(model_path, map_location=torch.device(self.device))
+        )
 
     @torch.no_grad()
     def predict(self, x_data) -> np.ndarray:

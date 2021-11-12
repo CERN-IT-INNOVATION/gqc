@@ -3,6 +3,7 @@
 import sys
 import os
 import numpy as np
+
 sys.path.append("..")
 
 from .terminal_colors import tcols
@@ -11,18 +12,33 @@ from autoencoders import util as aeutil
 
 
 class qdata:
-    def __init__(self, data_folder, norm_name, nevents, model_path,
-                 train_events=-1, valid_events=-1, test_events=-1, kfolds=0):
+    def __init__(
+        self,
+        data_folder,
+        norm_name,
+        nevents,
+        model_path,
+        train_events=-1,
+        valid_events=-1,
+        test_events=-1,
+        kfolds=0,
+    ):
 
-        device = 'cpu'
+        device = "cpu"
         model_folder = os.path.dirname(model_path)
-        hp_file = os.path.join(model_folder, 'hyperparameters.json')
+        hp_file = os.path.join(model_folder, "hyperparameters.json")
         hp = aeutil.import_hyperparams(hp_file)
 
         print(tcols.OKCYAN + "\nLoading training data:" + tcols.ENDC)
-        self.ae_data = aedata.AE_data(data_folder, norm_name, nevents,
-                                      train_events, valid_events, test_events)
-        self.model = aeutil.choose_ae_model(hp['ae_type'], device, hp)
+        self.ae_data = aedata.AE_data(
+            data_folder,
+            norm_name,
+            nevents,
+            train_events,
+            valid_events,
+            test_events,
+        )
+        self.model = aeutil.choose_ae_model(hp["ae_type"], device, hp)
         self.model.load_model(model_path)
 
         self.ntrain = self.ae_data.trdata.shape[0]
@@ -31,9 +47,14 @@ class qdata:
 
         print(tcols.OKCYAN + "Loading k-folded validation data:" + tcols.ENDC)
         self.kfolds = kfolds
-        self.ae_kfold_data = \
-            aedata.AE_data(data_folder, norm_name, nevents, 0,
-                           kfolds*valid_events, kfolds*test_events)
+        self.ae_kfold_data = aedata.AE_data(
+            data_folder,
+            norm_name,
+            nevents,
+            0,
+            kfolds * valid_events,
+            kfolds * test_events,
+        )
 
     def get_latent_space(self, datat) -> np.ndarray:
         """
@@ -42,11 +63,11 @@ class qdata:
 
         returns :: Output of the ae depending on the given data type.
         """
-        if datat == 'train':
+        if datat == "train":
             return self.model.predict(self.ae_data.trdata)[0]
-        if datat == 'valid':
+        if datat == "valid":
             return self.model.predict(self.ae_data.vadata)[0]
-        if datat == 'test':
+        if datat == "test":
             return self.model.predict(self.ae_data.tedata)[0]
 
         raise TypeError("Given data type does not exist!")
@@ -58,9 +79,9 @@ class qdata:
 
         returns :: The kfolded output of the ae depending on the data.
         """
-        if datat == 'valid':
+        if datat == "valid":
             return self.model.predict(self.ae_kfold_data.vadata)[0]
-        if datat == 'test':
+        if datat == "test":
             return self.model.predict(self.ae_kfold_data.tedata)[0]
 
         raise TypeError("Given data type does not exist!")
@@ -77,10 +98,12 @@ class qdata:
             per fold.
         """
         data_sig, data_bkg = self.ae_data.split_sig_bkg(data, target)
-        data_sig = data_sig.reshape(-1, int(events_per_kfold/2),
-                                    data_sig.shape[1])
-        data_bkg = data_bkg.reshape(-1, int(events_per_kfold/2),
-                                    data_bkg.shape[1])
+        data_sig = data_sig.reshape(
+            -1, int(events_per_kfold / 2), data_sig.shape[1]
+        )
+        data_bkg = data_bkg.reshape(
+            -1, int(events_per_kfold / 2), data_bkg.shape[1]
+        )
 
         return np.concatenate((data_sig, data_bkg), axis=1)
 
@@ -92,11 +115,17 @@ class qdata:
         returns :: Folded data set with a certain number of events
             pre fold.
         """
-        if datat == 'valid':
-            return self.fold(self.get_kfold_latent_space(datat),
-                             self.ae_kfold_data.vatarget, self.nvalid)
-        if datat == 'test':
-            return self.fold(self.get_kfold_latent_space(datat),
-                             self.ae_kfold_data.tetarget, self.ntest)
+        if datat == "valid":
+            return self.fold(
+                self.get_kfold_latent_space(datat),
+                self.ae_kfold_data.vatarget,
+                self.nvalid,
+            )
+        if datat == "test":
+            return self.fold(
+                self.get_kfold_latent_space(datat),
+                self.ae_kfold_data.tetarget,
+                self.ntest,
+            )
 
         raise TypeError("Given data type does not exist!")

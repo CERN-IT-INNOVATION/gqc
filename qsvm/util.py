@@ -14,8 +14,8 @@ def print_accuracies(test_accuracy, train_accuracy):
     @test_accuracy  :: Numpy array of the test data set accuracies.
     @train_accuracy :: Numpy array of the train data set accuracies.
     """
-    print(f'Test Accuracy = {test_accuracy}')
-    print(f'Training Accuracy = {train_accuracy}')
+    print(f"Test Accuracy = {test_accuracy}")
+    print(f"Training Accuracy = {train_accuracy}")
 
 
 def create_output_folder(output_folder):
@@ -24,8 +24,8 @@ def create_output_folder(output_folder):
     @output_folder :: Name of the output folder for this particular
                       version of the qsvm.
     """
-    if not os.path.exists('qsvm_models/' + output_folder):
-        os.makedirs('qsvm_models/' + output_folder)
+    if not os.path.exists("qsvm_models/" + output_folder):
+        os.makedirs("qsvm_models/" + output_folder)
 
 
 def save_qsvm(model, path):
@@ -59,17 +59,19 @@ def save_model(qdata, qsvm, train_acc, test_acc, output_folder, ae_path):
     @ae_path       :: The path to the ae used in reducing the qdata.
     """
     original_stdout = sys.stdout
-    with open('qsvm_models/' + output_folder + '/train.log', 'a+') as file:
+    with open("qsvm_models/" + output_folder + "/train.log", "a+") as file:
         sys.stdout = file
-        print(f'\n---------------------{datetime.now()}----------------------')
-        print('QSVM model:',  output_folder)
-        print('Autoencoder model:', ae_path)
-        print('Data path:', qdata.ae_data.data_folder)
-        print(f'ntrain = {len(qdata.ae_data.trtarget)}, '
-              f'ntest = {len(qdata.ae_data.tetarget)}, '
-              f'C = {qsvm.C}')
-        print(f'Test Accuracy: {test_acc}, Training Accuracy: {train_acc}')
-        print('-------------------------------------------\n')
+        print(f"\n---------------------{datetime.now()}----------------------")
+        print("QSVM model:", output_folder)
+        print("Autoencoder model:", ae_path)
+        print("Data path:", qdata.ae_data.data_folder)
+        print(
+            f"ntrain = {len(qdata.ae_data.trtarget)}, "
+            f"ntest = {len(qdata.ae_data.tetarget)}, "
+            f"C = {qsvm.C}"
+        )
+        print(f"Test Accuracy: {test_acc}, Training Accuracy: {train_acc}")
+        print("-------------------------------------------\n")
         sys.stdout = original_stdout
 
-    save_qsvm(qsvm, 'qsvm_models/' + output_folder + '/qsvm_model')
+    save_qsvm(qsvm, "qsvm_models/" + output_folder + "/qsvm_model")

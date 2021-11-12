@@ -22,31 +22,33 @@ torch.autograd.profiler.profile(enabled=False)
 
 
 class AE_variational(AE_vanilla):
-    def __init__(self, device='cpu', hparams={}):
+    def __init__(self, device="cpu", hparams={}):
 
         super().__init__(device, hparams)
         new_hp = {
             "ae_type": "variational",
             "adam_betas": (0.9, 0.999),
-            "loss_weight": 0.5
+            "loss_weight": 0.5,
         }
 
         self.hp.update(new_hp)
         self.hp.update((k, hparams[k]) for k in self.hp.keys() & hparams.keys())
 
-        self.laten_loss_function = nn.KLDivLoss(reduction='batchmean')
+        self.laten_loss_function = nn.KLDivLoss(reduction="batchmean")
         self.desired_latent_dist = dist.Normal(0, 1)
 
-        self.recon_loss_weight = 1 - self.hp['loss_weight']
-        self.laten_loss_weight = self.hp['loss_weight']
+        self.recon_loss_weight = 1 - self.hp["loss_weight"]
+        self.laten_loss_weight = self.hp["loss_weight"]
 
         del self.encoder
 
-        self.encoder = self.construct_encoder(self.hp['ae_layers'])
-        self.encode_mean = \
-            nn.Linear(self.hp['ae_layers'][-2], self.hp['ae_layers'][-1])
-        self.encode_logvar = \
-            nn.Linear(self.hp['ae_layers'][-2], self.hp['ae_layers'][-1])
+        self.encoder = self.construct_encoder(self.hp["ae_layers"])
+        self.encode_mean = nn.Linear(
+            self.hp["ae_layers"][-2], self.hp["ae_layers"][-1]
+        )
+        self.encode_logvar = nn.Linear(
+            self.hp["ae_layers"][-2], self.hp["ae_layers"][-1]
+        )
 
         self.all_recon_loss = []
         self.all_laten_loss = []
@@ -68,7 +70,7 @@ class AE_variational(AE_vanilla):
             if idx == len(layers) - 2:
                 enc_layers.append(en_activ)
                 break
-            enc_layers.append(nn.Linear(layers[idx], layers[idx+1]))
+            enc_layers.append(nn.Linear(layers[idx], layers[idx + 1]))
             enc_layers.append(nn.ELU(True))
 
         return nn.Sequential(*enc_layers)
@@ -82,9 +84,9 @@ class AE_variational(AE_vanilla):
 
         returns :: The latent space of the variational ae.
         """
-        std = torch.exp(0.5*log_var)
+        std = torch.exp(0.5 * log_var)
         eps = self.desired_latent_dist.sample(std.shape).to(self.device)
-        latent_space_sample = mu + eps*log_var
+        latent_space_sample = mu + eps * log_var
 
         return latent_space_sample
 
@@ -122,8 +124,10 @@ class AE_variational(AE_vanilla):
         laten_loss = self.laten_loss_function(latent_log_probs, comp_probs)
         recon_loss = self.recon_loss_function(recon, x_data.float())
 
-        return self.recon_loss_weight*recon_loss + \
-            self.laten_loss_weight*laten_loss
+        return (
+            self.recon_loss_weight * recon_loss
+            + self.laten_loss_weight * laten_loss
+        )
 
     @staticmethod
     def print_losses(epoch, epochs, train_loss, valid_losses):
@@ -134,14 +138,22 @@ class AE_variational(AE_vanilla):
         @train_loss :: The computed training loss pytorch object.
         @valid_loss :: The computed validation loss pytorch object.
         """
-        print(f"Epoch : {epoch + 1}/{epochs}, "
-              f"Train loss (average) = {train_loss.item():.8f}")
-        print(f"Epoch : {epoch + 1}/{epochs}, "
-              f"Valid loss = {valid_losses[0].item():.8f}")
-        print(f"Epoch : {epoch + 1}/{epochs}, "
-              f"Valid recon loss  (no weight) = {valid_losses[1].item():.8f}")
-        print(f"Epoch : {epoch + 1}/{epochs}, "
-              f"Valid latent loss (no weight) = {valid_losses[2].item():.8f}")
+        print(
+            f"Epoch : {epoch + 1}/{epochs}, "
+            f"Train loss (average) = {train_loss.item():.8f}"
+        )
+        print(
+            f"Epoch : {epoch + 1}/{epochs}, "
+            f"Valid loss = {valid_losses[0].item():.8f}"
+        )
+        print(
+            f"Epoch : {epoch + 1}/{epochs}, "
+            f"Valid recon loss  (no weight) = {valid_losses[1].item():.8f}"
+        )
+        print(
+            f"Epoch : {epoch + 1}/{epochs}, "
+            f"Valid latent loss (no weight) = {valid_losses[2].item():.8f}"
+        )
 
     @torch.no_grad()
     def valid(self, valid_loader, outdir) -> list[float]:
@@ -168,8 +180,10 @@ class AE_variational(AE_vanilla):
         recon_loss = self.recon_loss_function(recon, x_data_valid.float())
         laten_loss = self.laten_loss_function(latent_log_probs, comp_probs)
 
-        valid_loss = self.recon_loss_weight * recon_loss + \
-            self.laten_loss_weight * laten_loss
+        valid_loss = (
+            self.recon_loss_weight * recon_loss
+            + self.laten_loss_weight * laten_loss
+        )
         self.save_best_loss_model(valid_loss, outdir)
 
         return valid_loss, recon_loss, laten_loss
@@ -186,7 +200,7 @@ class AE_variational(AE_vanilla):
         self.network_summary()
         self.optimizer_summary()
         print(tcols.OKCYAN)
-        print("Training the " + self.hp['ae_type'] + " AE model...")
+        print("Training the " + self.hp["ae_type"] + " AE model...")
         print(tcols.ENDC)
 
         for epoch in range(epochs):

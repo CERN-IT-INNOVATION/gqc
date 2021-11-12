@@ -20,7 +20,7 @@ from . import plot
 
 # Warnings are suppressed since qiskit aqua obfuscates the output of this
 # script otherwise (IBM's fault not ours.)
-warnings.filterwarnings('ignore', category=DeprecationWarning)
+warnings.filterwarnings("ignore", category=DeprecationWarning)
 
 seed = 12345
 # Ensure same global behaviour.
@@ -28,23 +28,29 @@ algorithm_globals.random_seed = seed
 
 
 def main(args):
-    qdata = \
-        qd.qdata(args['data_folder'], args['norm'], args['nevents'],
-                 args['model_path'], train_events=6, valid_events=6,
-                 test_events=6, kfolds=5)
-    
-    train_features = qdata.get_latent_space('train')
-    train_labels = qdata.ae_data.trtarget
-    test_features = qdata.get_latent_space('test')
-    test_labels = qdata.ae_data.tetarget
-    test_folds = qdata.get_kfolded_data('test')
+    qdata = qd.qdata(
+        args["data_folder"],
+        args["norm"],
+        args["nevents"],
+        args["model_path"],
+        train_events=6,
+        valid_events=6,
+        test_events=6,
+        kfolds=5,
+    )
 
-    feature_map = u2Reuploading(nqubits=8, nfeatures=args['feature_dim'])
-    backend = Aer.get_backend('aer_simulator_statevector')
-    instance = \
-        QuantumInstance(backend, seed_simulator=seed, seed_transpiler=seed)
-    kernel = \
-        QuantumKernel(feature_map=feature_map, quantum_instance=instance)
+    train_features = qdata.get_latent_space("train")
+    train_labels = qdata.ae_data.trtarget
+    test_features = qdata.get_latent_space("test")
+    test_labels = qdata.ae_data.tetarget
+    test_folds = qdata.get_kfolded_data("test")
+
+    feature_map = u2Reuploading(nqubits=8, nfeatures=args["feature_dim"])
+    backend = Aer.get_backend("aer_simulator_statevector")
+    instance = QuantumInstance(
+        backend, seed_simulator=seed, seed_transpiler=seed
+    )
+    kernel = QuantumKernel(feature_map=feature_map, quantum_instance=instance)
 
     qsvm = SVC(kernel=kernel.evaluate)
     qsvm.fit(train_features, train_labels)
@@ -53,13 +59,19 @@ def main(args):
     test_acc = qsvm.score(test_features, test_labels)
 
     util.print_accuracies(test_acc, train_acc)
-    util.create_output_folder(args['output_folder'])
-    util.save_model(qdata, qsvm, train_acc, test_acc, args['output_folder'],
-                    args['model_path'])
+    util.create_output_folder(args["output_folder"])
+    util.save_model(
+        qdata,
+        qsvm,
+        train_acc,
+        test_acc,
+        args["output_folder"],
+        args["model_path"],
+    )
 
-    scores = compute_model_scores(qsvm, test_folds, args['output_folder'])
-    names_dict = {args['display_name']: scores}
-    plot.roc_plot(names_dict, qdata, args['output_folder'])
+    scores = compute_model_scores(qsvm, test_folds, args["output_folder"])
+    names_dict = {args["display_name"]: scores}
+    plot.roc_plot(names_dict, qdata, args["output_folder"])
 
 
 def compute_model_scores(model, data_folds, output_folder) -> np.ndarray:
@@ -77,10 +89,11 @@ def compute_model_scores(model, data_folds, output_folder) -> np.ndarray:
     print("Computing model scores on the test data folds...")
     print(tcols.ENDC)
 
-    model_scores = \
-        np.array([model.decision_function(fold) for fold in data_folds])
+    model_scores = np.array(
+        [model.decision_function(fold) for fold in data_folds]
+    )
 
-    path = 'qsvm_models/' + output_folder + '/y_score_list.npy'
+    path = "qsvm_models/" + output_folder + "/y_score_list.npy"
 
     print(tcols.OKGREEN)
     print("Saving model scores array in: " + path)

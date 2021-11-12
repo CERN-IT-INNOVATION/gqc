@@ -12,36 +12,35 @@ from . import data
 
 
 def main(args):
-    device = 'cpu'
-    model_folder = os.path.dirname(args['model_path'])
-    hp_file = os.path.join(model_folder, 'hyperparameters.json')
+    device = "cpu"
+    model_folder = os.path.dirname(args["model_path"])
+    hp_file = os.path.join(model_folder, "hyperparameters.json")
     hp = util.import_hyperparams(hp_file)
 
     # Data loading.
-    ae_data = data.AE_data(args['data_folder'], args['norm'], args['nevents'])
-    test_sig, test_bkg = \
-        ae_data.split_sig_bkg(ae_data.tedata, ae_data.tetarget)
+    ae_data = data.AE_data(args["data_folder"], args["norm"], args["nevents"])
+    test_sig, test_bkg = ae_data.split_sig_bkg(ae_data.tedata, ae_data.tetarget)
 
     # AE model loading.
-    model = util.choose_ae_model(hp['ae_type'], device, hp)
-    model.load_model(args['model_path'])
+    model = util.choose_ae_model(hp["ae_type"], device, hp)
+    model.load_model(args["model_path"])
 
-    print('\n----------------------------------')
+    print("\n----------------------------------")
     print("VALID LOSS:")
     print(model.compute_loss(ae_data.vadata, ae_data.vatarget).item())
     print("TEST LOSS:")
     print(model.compute_loss(ae_data.tedata, ae_data.tetarget).item())
-    print('----------------------------------\n')
+    print("----------------------------------\n")
 
     sig = model.predict(test_sig)
     bkg = model.predict(test_bkg)
 
-    sig_vs_bkg(sig[0], bkg[0], args['model_path'], 'latent_plots')
-    roc_plots(sig[0], bkg[0], args['model_path'], 'latent_roc')
-    input_reco(test_sig, test_bkg, sig[1], bkg[1], args['model_path'])
+    sig_vs_bkg(sig[0], bkg[0], args["model_path"], "latent_plots")
+    roc_plots(sig[0], bkg[0], args["model_path"], "latent_roc")
+    input_reco(test_sig, test_bkg, sig[1], bkg[1], args["model_path"])
 
     if len(sig) == 3:
-        roc_plots(sig[2], bkg[2], args['model_path'], 'classif_roc')
+        roc_plots(sig[2], bkg[2], args["model_path"], "classif_roc")
 
 
 def input_reco(input_sig, input_bkg, recon_sig, recon_bkg, model_path):
@@ -54,25 +53,35 @@ def input_reco(input_sig, input_bkg, recon_sig, recon_bkg, model_path):
     @recon_bkg  :: Numpy array containing the reconstructed background data.
     @model_path :: String containing the path to where the model is saved.
     """
-    plots_folder = os.path.dirname(model_path) + '/input_vs_reco/'
+    plots_folder = os.path.dirname(model_path) + "/input_vs_reco/"
     if not os.path.exists(plots_folder):
         os.makedirs(plots_folder)
 
     for idx in range(input_sig.shape[1]):
         plt.figure(figsize=(12, 10))
 
-        input_vs_reco(input_bkg[:, idx], recon_bkg[:, idx], idx, 'gray',
-                      class_label='Background')
-        input_vs_reco(input_sig[:,idx], recon_sig[:,idx], idx, 'navy',
-                      class_label='Signal')
+        input_vs_reco(
+            input_bkg[:, idx],
+            recon_bkg[:, idx],
+            idx,
+            "gray",
+            class_label="Background",
+        )
+        input_vs_reco(
+            input_sig[:, idx],
+            recon_sig[:, idx],
+            idx,
+            "navy",
+            class_label="Signal",
+        )
 
-        plt.savefig(plots_folder + util.varname(idx) + '.pdf')
+        plt.savefig(plots_folder + util.varname(idx) + ".pdf")
         plt.close()
 
     print(f"Input vs reco plots were saved to {plots_folder}.")
 
 
-def input_vs_reco(input_data, recon_data, ifeature, color, class_label=''):
+def input_vs_reco(input_data, recon_data, ifeature, color, class_label=""):
     """
     Plots the input against the reconstructed data.
     @input_data  :: Numpy array of the input data.
@@ -81,20 +90,39 @@ def input_vs_reco(input_data, recon_data, ifeature, color, class_label=''):
     @color       :: String for the color of the two plotted histograms.
     @class_label :: String for either signal or background.
     """
-    plt.rc('xtick', labelsize=23)
-    plt.rc('ytick', labelsize=23)
-    plt.rc('axes', titlesize=25)
-    plt.rc('axes', labelsize=25)
-    plt.rc('legend', fontsize=22)
+    plt.rc("xtick", labelsize=23)
+    plt.rc("ytick", labelsize=23)
+    plt.rc("axes", titlesize=25)
+    plt.rc("axes", labelsize=25)
+    plt.rc("legend", fontsize=22)
 
     prange = (np.amin(input_data, axis=0), np.amax(input_data, axis=0))
-    plt.hist(x=input_data, bins=60, range=prange, alpha=0.8, histtype='step',
-             linewidth=2.5, label=class_label, density=True, color=color)
-    plt.hist(x=recon_data, bins=60, range=prange, alpha=0.8, histtype='step',
-             linewidth=2.5, label='Rec. ' + class_label, linestyle='dashed',
-             density=True, color=color)
+    plt.hist(
+        x=input_data,
+        bins=60,
+        range=prange,
+        alpha=0.8,
+        histtype="step",
+        linewidth=2.5,
+        label=class_label,
+        density=True,
+        color=color,
+    )
+    plt.hist(
+        x=recon_data,
+        bins=60,
+        range=prange,
+        alpha=0.8,
+        histtype="step",
+        linewidth=2.5,
+        label="Rec. " + class_label,
+        linestyle="dashed",
+        density=True,
+        color=color,
+    )
 
-    plt.xlabel(util.varname(ifeature) + ' (normalized)'); plt.ylabel('Density')
+    plt.xlabel(util.varname(ifeature) + " (normalized)")
+    plt.ylabel("Density")
     plt.xlim(*prange)
     plt.gca().set_yscale("log")
     plt.legend()
@@ -109,27 +137,45 @@ def sig_vs_bkg(data_sig, data_bkg, model_path, output_folder):
     @output_folder :: Folder where the figures are saved.
     """
     plots_folder = os.path.dirname(model_path) + "/" + output_folder + "/"
-    if not os.path.exists(plots_folder): os.makedirs(plots_folder)
+    if not os.path.exists(plots_folder):
+        os.makedirs(plots_folder)
 
-    plt.rc('xtick', labelsize=23); plt.rc('ytick', labelsize=23)
-    plt.rc('axes', titlesize=25); plt.rc('axes', labelsize=25)
-    plt.rc('legend', fontsize=22)
+    plt.rc("xtick", labelsize=23)
+    plt.rc("ytick", labelsize=23)
+    plt.rc("axes", titlesize=25)
+    plt.rc("axes", labelsize=25)
+    plt.rc("legend", fontsize=22)
 
     for i in range(data_sig.shape[1]):
-        xmax = max(np.amax(data_sig[:,i]),np.amax(data_bkg[:,i]))
-        xmin = min(np.amin(data_sig[:,i]),np.amin(data_bkg[:,i]))
+        xmax = max(np.amax(data_sig[:, i]), np.amax(data_bkg[:, i]))
+        xmin = min(np.amin(data_sig[:, i]), np.amin(data_bkg[:, i]))
         fig = plt.figure(figsize=(12, 10))
 
-        hSig, _, _ = plt.hist(x=data_sig[:, i], density=1,
-                              range=(xmin, xmax), bins=50, alpha=0.8,
-                              histtype='step', linewidth=2.5, label='Sig',
-                              color='navy')
-        hBkg, _, _ = plt.hist(x=data_bkg[:, i], density=1,
-                              range=(xmin, xmax), bins=50, alpha=0.4,
-                              histtype='step', linewidth=2.5, label='Bkg',
-                              color='gray', hatch='xxx')
+        hSig, _, _ = plt.hist(
+            x=data_sig[:, i],
+            density=1,
+            range=(xmin, xmax),
+            bins=50,
+            alpha=0.8,
+            histtype="step",
+            linewidth=2.5,
+            label="Sig",
+            color="navy",
+        )
+        hBkg, _, _ = plt.hist(
+            x=data_bkg[:, i],
+            density=1,
+            range=(xmin, xmax),
+            bins=50,
+            alpha=0.4,
+            histtype="step",
+            linewidth=2.5,
+            label="Bkg",
+            color="gray",
+            hatch="xxx",
+        )
         plt.legend()
-        fig.savefig(plots_folder + 'Feature '+ str(i) + '.pdf')
+        fig.savefig(plots_folder + "Feature " + str(i) + ".pdf")
         plt.close()
 
     print(f"Latent plots were saved to {plots_folder}.")
@@ -174,32 +220,38 @@ def roc_plots(sig, bkg, model_path, output_folder):
     @output_folder :: String of the name to the output folder to save plots.
     """
     plots_folder = os.path.dirname(model_path) + "/" + output_folder + "/"
-    if not os.path.exists(plots_folder): os.makedirs(plots_folder)
+    if not os.path.exists(plots_folder):
+        os.makedirs(plots_folder)
 
-    plt.rc('xtick', labelsize=23); plt.rc('ytick', labelsize=23)
-    plt.rc('axes', titlesize=25); plt.rc('axes', labelsize=25)
-    plt.rc('legend', fontsize=22)
+    plt.rc("xtick", labelsize=23)
+    plt.rc("ytick", labelsize=23)
+    plt.rc("axes", titlesize=25)
+    plt.rc("axes", labelsize=25)
+    plt.rc("legend", fontsize=22)
 
     data = np.vstack((sig, bkg))
-    target = np.concatenate((np.ones(sig.shape[0]),np.zeros(bkg.shape[0])))
+    target = np.concatenate((np.ones(sig.shape[0]), np.zeros(bkg.shape[0])))
 
-    auc_sum = 0.
+    auc_sum = 0.0
     for feature in range(data.shape[1]):
         fpr, tpr, mean_auc, std_auc = compute_auc(data, target, feature)
         fig = plt.figure(figsize=(12, 10))
-        plt.plot(fpr, tpr,
-                 label=f"AUC: {mean_auc:.3f} ± {std_auc:.3f}", color='navy')
-        plt.plot([0, 1], [0, 1], ls="--", color='gray')
+        plt.plot(
+            fpr, tpr, label=f"AUC: {mean_auc:.3f} ± {std_auc:.3f}", color="navy"
+        )
+        plt.plot([0, 1], [0, 1], ls="--", color="gray")
 
-        plt.xlabel("False Positive Rate"); plt.ylabel("True Positive Rate")
-        plt.xlim([0.0, 1.0]); plt.ylim([0.0, 1.0])
+        plt.xlabel("False Positive Rate")
+        plt.ylabel("True Positive Rate")
+        plt.xlim([0.0, 1.0])
+        plt.ylim([0.0, 1.0])
         plt.legend()
 
         auc_sum += mean_auc
         fig.savefig(plots_folder + f"Feature {feature}.pdf")
         plt.close()
 
-    with open(plots_folder + 'auc_sum.txt', 'w') as auc_sum_file:
+    with open(plots_folder + "auc_sum.txt", "w") as auc_sum_file:
         auc_sum_file.write(f"{auc_sum:.3f}")
 
     print(f"Latent roc plots were saved to {plots_folder}.")

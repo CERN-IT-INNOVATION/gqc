@@ -19,26 +19,26 @@ torch.autograd.profiler.profile(enabled=False)
 
 
 class AE_sinkhorn(AE_vanilla):
-    def __init__(self, device='cpu', hpars={}):
+    def __init__(self, device="cpu", hpars={}):
 
         super().__init__(device, hpars)
         new_hp = {
-            "ae_type":                "sinkhorn",
+            "ae_type": "sinkhorn",
             "noise_gen_input_layers": self.hp["ae_layers"][:2],
-            "labels_dimension":       2,
-            "adam_betas":             (0.9, 0.999),
-            "loss_weight":            0.5
+            "labels_dimension": 2,
+            "adam_betas": (0.9, 0.999),
+            "loss_weight": 0.5,
         }
 
         self.hp.update(new_hp)
         self.hp.update((k, hpars[k]) for k in self.hp.keys() & hpars.keys())
 
-        self.recon_loss_weight = 1 - self.hp['loss_weight']
-        self.laten_loss_weight = self.hp['loss_weight']
+        self.recon_loss_weight = 1 - self.hp["loss_weight"]
+        self.laten_loss_weight = self.hp["loss_weight"]
 
-        self.laten_loss_function = \
-            geomloss.SamplesLoss("sinkhorn", blur=0.05, scaling=0.95,
-                                 diameter=0.01, debias=True)
+        self.laten_loss_function = geomloss.SamplesLoss(
+            "sinkhorn", blur=0.05, scaling=0.95, diameter=0.01, debias=True
+        )
 
         self.encoder = nn.Sequential(*list(self.encoder.children())[:-1])
         self.construct_noise_gen_input()
@@ -58,10 +58,14 @@ class AE_sinkhorn(AE_vanilla):
         labels_dim = self.hp["labels_dimension"]
 
         self.noise_gen_input_data = nn.Sequential(
-            nn.Linear(input_layers[0], input_layers[1]),   nn.LeakyReLU(0.2),
-            nn.Linear(input_layers[1], input_layers[1]*2), nn.LeakyReLU(0.2))
+            nn.Linear(input_layers[0], input_layers[1]),
+            nn.LeakyReLU(0.2),
+            nn.Linear(input_layers[1], input_layers[1] * 2),
+            nn.LeakyReLU(0.2),
+        )
         self.noise_gen_input_labl = nn.Sequential(
-            nn.Linear(labels_dim, input_layers[1]), nn.LeakyReLU(0.2))
+            nn.Linear(labels_dim, input_layers[1]), nn.LeakyReLU(0.2)
+        )
 
     def construct_noise_generator(self):
         """
@@ -71,10 +75,15 @@ class AE_sinkhorn(AE_vanilla):
         """
         noise_gen_layers = []
         input_dim = self.noise_gen_input_data[2].in_features
-        layers = [input_dim*3, input_dim*4, input_dim*3, int(input_dim/4)]
+        layers = [
+            input_dim * 3,
+            input_dim * 4,
+            input_dim * 3,
+            int(input_dim / 4),
+        ]
         layer_nbs = range(len(layers))
         for idx in layer_nbs:
-            noise_gen_layers.append(nn.Linear(layers[idx], layers[idx+1]))
+            noise_gen_layers.append(nn.Linear(layers[idx], layers[idx + 1]))
             if idx == len(layers) - 2:
                 break
             noise_gen_layers.append(nn.LeakyReLU(0.2))
@@ -112,8 +121,9 @@ class AE_sinkhorn(AE_vanilla):
         y_batch = y_batch.to(self.device)
         y_map.zero_()
 
-        return y_map.scatter_(1, y_batch.reshape([-1, 1]).
-                              type(torch.int64), 1).to(self.device)
+        return y_map.scatter_(
+            1, y_batch.reshape([-1, 1]).type(torch.int64), 1
+        ).to(self.device)
 
     def compute_loss(self, x_data, y_data) -> float:
         """
@@ -143,8 +153,10 @@ class AE_sinkhorn(AE_vanilla):
         laten_loss = self.laten_loss_function(latent, latent_noise)
         recon_loss = self.recon_loss_function(recon, x_data.float())
 
-        return self.recon_loss_weight*recon_loss + \
-            self.laten_loss_weight*laten_loss
+        return (
+            self.recon_loss_weight * recon_loss
+            + self.laten_loss_weight * laten_loss
+        )
 
     @staticmethod
     def print_losses(epoch, epochs, train_loss, valid_losses):
@@ -155,14 +167,22 @@ class AE_sinkhorn(AE_vanilla):
         @train_loss :: The computed training loss pytorch object.
         @valid_loss :: The computed validation loss pytorch object.
         """
-        print(f"Epoch : {epoch + 1}/{epochs}, "
-              f"Train loss (average) = {train_loss.item():.8f}")
-        print(f"Epoch : {epoch + 1}/{epochs}, "
-              f"Valid loss = {valid_losses[0].item():.8f}")
-        print(f"Epoch : {epoch + 1}/{epochs}, "
-              f"Valid recon loss (no weight) = {valid_losses[1].item():.8f}")
-        print(f"Epoch : {epoch + 1}/{epochs}, "
-              f"Valid sinkh loss (no weight) = {valid_losses[2].item():.8f}")
+        print(
+            f"Epoch : {epoch + 1}/{epochs}, "
+            f"Train loss (average) = {train_loss.item():.8f}"
+        )
+        print(
+            f"Epoch : {epoch + 1}/{epochs}, "
+            f"Valid loss = {valid_losses[0].item():.8f}"
+        )
+        print(
+            f"Epoch : {epoch + 1}/{epochs}, "
+            f"Valid recon loss (no weight) = {valid_losses[1].item():.8f}"
+        )
+        print(
+            f"Epoch : {epoch + 1}/{epochs}, "
+            f"Valid sinkh loss (no weight) = {valid_losses[2].item():.8f}"
+        )
 
     @torch.no_grad()
     def valid(self, valid_loader, outdir) -> list[float]:
@@ -192,8 +212,10 @@ class AE_sinkhorn(AE_vanilla):
         recon_loss = self.recon_loss_function(recon, x_data_valid.float())
         laten_loss = self.laten_loss_function(latent, latent_noise)
 
-        valid_loss = self.recon_loss_weight * recon_loss + \
-            self.laten_loss_weight * laten_loss
+        valid_loss = (
+            self.recon_loss_weight * recon_loss
+            + self.laten_loss_weight * laten_loss
+        )
         self.save_best_loss_model(valid_loss, outdir)
 
         return valid_loss, recon_loss, laten_loss
@@ -207,16 +229,17 @@ class AE_sinkhorn(AE_vanilla):
         @outdir       :: The output dir where to save the train results.
         """
         self.instantiate_adam_optimizer()
-        self.network_summary(); self.optimizer_summary()
+        self.network_summary()
+        self.optimizer_summary()
         print(tcols.OKCYAN)
-        print("Training the " + self.hp['ae_type'] + " AE model...")
+        print("Training the " + self.hp["ae_type"] + " AE model...")
         print(tcols.ENDC)
 
         for epoch in range(epochs):
             self.train()
 
             train_loss = self.train_all_batches(train_loader)
-            valid_losses = self.valid(valid_loader,outdir)
+            valid_losses = self.valid(valid_loader, outdir)
             if self.early_stopping():
                 break
 

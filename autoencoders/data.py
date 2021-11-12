@@ -8,9 +8,16 @@ import os
 from .terminal_colors import tcols
 
 
-class AE_data():
-    def __init__(self, data_folder, norm_name, nevents, train_events=-1,
-                 valid_events=-1, test_events=-1):
+class AE_data:
+    def __init__(
+        self,
+        data_folder,
+        norm_name,
+        nevents,
+        train_events=-1,
+        valid_events=-1,
+        test_events=-1,
+    ):
 
         self.norm_name = norm_name
         self.nevents = nevents
@@ -25,14 +32,17 @@ class AE_data():
         self.tetarget = self.get_numpy_target("test")
 
         if int(train_events) > 0:
-            self.trdata, self.trtarget = \
-                self.get_data(self.trdata, self.trtarget, train_events)
+            self.trdata, self.trtarget = self.get_data(
+                self.trdata, self.trtarget, train_events
+            )
         if int(valid_events) > 0:
-            self.vadata, self.vatarget = \
-                self.get_data(self.vadata, self.vatarget, valid_events)
+            self.vadata, self.vatarget = self.get_data(
+                self.vadata, self.vatarget, valid_events
+            )
         if int(test_events) > 0:
-            self.tedata, self.tetarget = \
-                self.get_data(self.tedata, self.tetarget, test_events)
+            self.tedata, self.tetarget = self.get_data(
+                self.tedata, self.tetarget, test_events
+            )
 
         self.nfeats = self.trdata.shape[1]
 
@@ -48,8 +58,15 @@ class AE_data():
 
         returns :: The name of the data file to be imported.
         """
-        return "x_data_" + self.norm_name + "_" + self.nevents + "_" + \
-            data_type + ".npy"
+        return (
+            "x_data_"
+            + self.norm_name
+            + "_"
+            + self.nevents
+            + "_"
+            + data_type
+            + ".npy"
+        )
 
     def get_target_file(self, data_type) -> str:
         """
@@ -61,8 +78,15 @@ class AE_data():
 
         returns :: The name of the target file to be imported.
         """
-        return "y_data_" + self.norm_name + "_" + self.nevents + "_" + \
-            data_type + ".npy"
+        return (
+            "y_data_"
+            + self.norm_name
+            + "_"
+            + self.nevents
+            + "_"
+            + data_type
+            + ".npy"
+        )
 
     def get_numpy_data(self, data_type) -> np.ndarray:
         """
@@ -78,8 +102,9 @@ class AE_data():
             data = np.load(path)
         except Exception as e:
             print(f"Exception that occured: {e}")
-            print(tcols.WARNING + data_type + " data file not found!" +
-                  tcols.ENDC)
+            print(
+                tcols.WARNING + data_type + " data file not found!" + tcols.ENDC
+            )
 
         return data
 
@@ -97,8 +122,9 @@ class AE_data():
             data = np.load(path)
         except Exception as e:
             print(f"Exception that occured: {e}")
-            print(tcols.WARNING + data_type + " data file not found!" +
-                  tcols.ENDC)
+            print(
+                tcols.WARNING + data_type + " data file not found!" + tcols.ENDC
+            )
 
         return data
 
@@ -111,9 +137,9 @@ class AE_data():
         returns :: Pytorch data set including both data and target.
         """
         switcher = {
-            'train': lambda: self.make_set(self.trdata, self.trtarget),
-            'valid': lambda: self.make_set(self.vadata, self.vatarget),
-            'test': lambda: self.make_set(self.tedata,  self.tetarget)
+            "train": lambda: self.make_set(self.trdata, self.trtarget),
+            "valid": lambda: self.make_set(self.vadata, self.vatarget),
+            "test": lambda: self.make_set(self.tedata, self.tetarget),
         }
         dataset = switcher.get(data_type, lambda: None)()
         if dataset is None:
@@ -159,17 +185,17 @@ class AE_data():
             training.
         """
         dataset = self.get_pytorch_dataset(data_type)
-        if batch_size is None: batch_size = len(dataset)
+        if batch_size is None:
+            batch_size = len(dataset)
 
-        if device == 'cpu':
-            pytorch_loader = torch.utils.data.DataLoader(dataset,
-                                                         batch_size=batch_size,
-                                                         shuffle=shuffle)
+        if device == "cpu":
+            pytorch_loader = torch.utils.data.DataLoader(
+                dataset, batch_size=batch_size, shuffle=shuffle
+            )
         else:
-            pytorch_loader = torch.utils.data.DataLoader(dataset,
-                                                         batch_size=batch_size,
-                                                         shuffle=shuffle,
-                                                         pin_memory=True)
+            pytorch_loader = torch.utils.data.DataLoader(
+                dataset, batch_size=batch_size, shuffle=shuffle, pin_memory=True
+            )
 
         return pytorch_loader
 
@@ -185,8 +211,8 @@ class AE_data():
         returns :: A numpy array containing the signal events and a numpy
             array containing the background events.
         """
-        sig_mask = (target == 1)
-        bkg_mask = (target == 0)
+        sig_mask = target == 1
+        bkg_mask = target == 0
         data_sig = data[sig_mask, :]
         data_bkg = data[bkg_mask, :]
 
@@ -205,7 +231,7 @@ class AE_data():
         returns :: Two numpy arrays, one with data and one with target,
             containing an equal number of singal and background events.
         """
-        nevents = int(int(nevents)/2)
+        nevents = int(int(nevents) / 2)
         if nevents < 0:
             return data, target
 

@@ -1,12 +1,10 @@
 [![Email: patrick](https://img.shields.io/badge/email-podagiu%40student.ethz.ch-blue?style=flat-square&logo=minutemailer)](mailto:podagiu@student.ethz.ch)
-[![Email: vasilis](https://img.shields.io/badge/email-vbelis%40student.ethz.ch-blue?style=flat-square&logo=minutemailer)](mailto:vasilis.belis@cern.ch)
+[![Email: vasilis](https://img.shields.io/badge/email-vasilis.belis%40cern.ch-blue?style=flat-square&logo=minutemailer)](mailto:vasilis.belis@cern.ch)
 [![Python: version](https://img.shields.io/badge/python-3.9%20%7C%203.10-blue?style=flat-square&logo=python)](https://www.python.org/downloads/)
-[![License: version](https://img.shields.io/badge/license-MIT-purple?style=flat-square)](https://github.com/QML-HEP/ae_qml/blob/main/LICENSE.md)
+[![License: version](https://img.shields.io/badge/license-MIT-purple?style=flat-square)](https://github.com/QML-HEP/ae_qml/blob/main/LICENSE)
 [![Code style: black](https://img.shields.io/badge/code%20style-black-black?style=flat-square&logo=black)](https://github.com/psf/black)
 
 # AE QML
-
----
 
 ### Using autoencoders to train quantum machine learning models for Higgs boson identification.
 

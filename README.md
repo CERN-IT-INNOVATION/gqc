@@ -6,8 +6,6 @@
 
 # AE QML
 
----
-
 ### Using autoencoders to train quantum machine learning models for Higgs boson identification.
 
 

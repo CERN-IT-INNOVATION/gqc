@@ -1,0 +1,19 @@
+# pep8speaks configuration.
+scanner:
+    diff_only: False  
+    linter: flake8  
+
+flake8:  
+    max-line-length: 80  
+    ignore:  # Errors and warnings to ignore
+        - E402  # module level import not at top of file
+        - E731  # do not assign a lambda expression, use a def
+        - C406  # Unnecessary list literal - rewrite as a dict literal.
+        - E741  # ambiguous variable name
+
+no_blank_comment: True
+descending_issues_order: False
+
+message:  
+    opened:  
+        header: "Hello @{name}! Thanks for opening this PR. "

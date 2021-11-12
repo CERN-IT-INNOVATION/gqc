@@ -1,0 +1,22 @@
+[[source]]
+url = "https://pypi.org/simple"
+verify_ssl = true
+name = "pypi"
+
+[packages]
+pandas = "*"
+tables = "*"
+matplotlib = "*"
+scikit-learn = "*"
+torch = "*"
+torchvision = "*"
+torchaudio = "*"
+torchinfo = "*"
+geomloss = "*"
+qiskit = "*"
+qiskit-machine-learning = "*"
+
+[dev-packages]
+
+[requires]
+python_version = "3.9"

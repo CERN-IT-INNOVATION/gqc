@@ -81,7 +81,7 @@ class AE_sinkhorn(AE_vanilla):
 
         self.noise_gen = nn.Sequential(*noise_gen_layers)
 
-    def generate_noise(self, x, y) -> list(float):
+    def generate_noise(self, x, y) -> list[float]:
         """
         Generate noise from input data and target vectors.
         @x :: Numpy array of input data.
@@ -165,7 +165,7 @@ class AE_sinkhorn(AE_vanilla):
               f"Valid sinkh loss (no weight) = {valid_losses[2].item():.8f}")
 
     @torch.no_grad()
-    def valid(self, valid_loader, outdir) -> list(float):
+    def valid(self, valid_loader, outdir) -> list[float]:
         """
         Evaluate the validation combined loss for the model and save
         the model if a new minimum in this combined and weighted loss

@@ -25,9 +25,9 @@ class qdata:
         self.model = aeutil.choose_ae_model(hp['ae_type'], device, hp)
         self.model.load_model(model_path)
 
-        self.ntrain = self.ae_data.train_data.shape[0]
-        self.nvalid = self.ae_data.valid_data.shape[0]
-        self.ntest = self.ae_data.test_data.shape[0]
+        self.ntrain = self.ae_data.trdata.shape[0]
+        self.nvalid = self.ae_data.vadata.shape[0]
+        self.ntest = self.ae_data.tedata.shape[0]
 
         print(tcols.OKCYAN + "Loading k-folded validation data:" + tcols.ENDC)
         self.kfolds = kfolds
@@ -43,11 +43,11 @@ class qdata:
         returns :: Output of the ae depending on the given data type.
         """
         if datat == 'train':
-            return self.model.predict(self.ae_data.train_data)[0]
+            return self.model.predict(self.ae_data.trdata)[0]
         if datat == 'valid':
-            return self.model.predict(self.ae_data.valid_data)[0]
+            return self.model.predict(self.ae_data.vadata)[0]
         if datat == 'test':
-            return self.model.predict(self.ae_data.test_data)[0]
+            return self.model.predict(self.ae_data.tedata)[0]
 
         raise TypeError("Given data type does not exist!")
 
@@ -59,9 +59,9 @@ class qdata:
         returns :: The kfolded output of the ae depending on the data.
         """
         if datat == 'valid':
-            return self.model.predict(self.ae_kfold_data.valid_data)[0]
+            return self.model.predict(self.ae_kfold_data.vadata)[0]
         if datat == 'test':
-            return self.model.predict(self.ae_kfold_data.test_data)[0]
+            return self.model.predict(self.ae_kfold_data.tedata)[0]
 
         raise TypeError("Given data type does not exist!")
 
@@ -94,9 +94,9 @@ class qdata:
         """
         if datat == 'valid':
             return self.fold(self.get_kfold_latent_space(datat),
-                             self.ae_kfold_data.valid_target, self.nvalid)
+                             self.ae_kfold_data.vatarget, self.nvalid)
         if datat == 'test':
             return self.fold(self.get_kfold_latent_space(datat),
-                             self.ae_kfold_data.test_target, self.ntest)
+                             self.ae_kfold_data.tetarget, self.ntest)
 
         raise TypeError("Given data type does not exist!")

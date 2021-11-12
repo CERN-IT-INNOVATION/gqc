@@ -20,7 +20,7 @@ def main(args):
     # Data loading.
     ae_data = data.AE_data(args['data_folder'], args['norm'], args['nevents'])
     test_sig, test_bkg = \
-        ae_data.split_sig_bkg(ae_data.test_data, ae_data.test_target)
+        ae_data.split_sig_bkg(ae_data.tedata, ae_data.tetarget)
 
     # AE model loading.
     model = util.choose_ae_model(hp['ae_type'], device, hp)
@@ -28,9 +28,9 @@ def main(args):
 
     print('\n----------------------------------')
     print("VALID LOSS:")
-    print(model.compute_loss(ae_data.valid_data, ae_data.valid_target).item())
+    print(model.compute_loss(ae_data.vadata, ae_data.vatarget).item())
     print("TEST LOSS:")
-    print(model.compute_loss(ae_data.test_data, ae_data.test_target).item())
+    print(model.compute_loss(ae_data.tedata, ae_data.tetarget).item())
     print('----------------------------------\n')
 
     sig = model.predict(test_sig)
@@ -135,7 +135,7 @@ def sig_vs_bkg(data_sig, data_bkg, model_path, output_folder):
     print(f"Latent plots were saved to {plots_folder}.")
 
 
-def compute_auc(data, target, feature) -> tuple(list, list, float, float):
+def compute_auc(data, target, feature) -> tuple[list, list, float, float]:
     """
     Split a data set into 5, compute the AUC for each, and then calculate the
     mean and stardard deviation of these.

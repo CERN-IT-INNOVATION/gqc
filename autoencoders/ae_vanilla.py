@@ -109,7 +109,7 @@ class AE_vanilla(nn.Module):
         # scheduler = optim.lr_scheduler.ExponentialLR(self.optimizer,
         # gamma=0.95)
 
-    def forward(self, x) -> tuple(np.ndarray, np.ndarray):
+    def forward(self, x) -> tuple[np.ndarray, np.ndarray]:
         """
         Forward pass through the ae.
         """
@@ -208,7 +208,7 @@ class AE_vanilla(nn.Module):
         return 0
 
     @torch.no_grad()
-    def valid(self, valid_loader, outdir) -> list(float):
+    def valid(self, valid_loader, outdir) -> float:
         """
         Evaluate the validation loss for the model and save the model if a
         new minimum is found.
@@ -226,7 +226,7 @@ class AE_vanilla(nn.Module):
 
         return loss
 
-    def train_batch(self, x_batch, y_batch=None) -> list(float):
+    def train_batch(self, x_batch, y_batch=None) -> float:
         """
         Train the model on a batch and evaluate the different kinds of losses.
         Propagate this backwards for minimum train_loss.
@@ -248,7 +248,7 @@ class AE_vanilla(nn.Module):
 
         return loss
 
-    def train_all_batches(self, train_loader) -> list(float):
+    def train_all_batches(self, train_loader) -> float:
         """
         Train the autoencoder on all the batches.
         @train_loader :: Pytorch loader object with the training data.

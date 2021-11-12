@@ -19,7 +19,7 @@ torch.autograd.profiler.profile(enabled=False)
 
 
 class AE_classifier(AE_vanilla):
-    def __init__(self, device = 'cpu', hparams = {}):
+    def __init__(self, device='cpu', hparams={}):
 
         super().__init__(device, hparams)
         new_hp = {
@@ -124,7 +124,7 @@ class AE_classifier(AE_vanilla):
         print('\n\n')
 
     @torch.no_grad()
-    def valid(self, valid_loader, outdir) -> list(float):
+    def valid(self, valid_loader, outdir) -> list[float]:
         """
         Evaluate the validation combined loss for the model and save the model
         if a new minimum in this combined and weighted loss is found.

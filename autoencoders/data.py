@@ -28,13 +28,13 @@ class AE_data():
             self.trdata, self.trtarget = \
                 self.get_data(self.trdata, self.trtarget, train_events)
         if int(valid_events) > 0:
-            self.valid_data, self.valid_target = \
+            self.vadata, self.vatarget = \
                 self.get_data(self.vadata, self.vatarget, valid_events)
         if int(test_events) > 0:
-            self.test_data, self.test_target = \
+            self.tedata, self.tetarget = \
                 self.get_data(self.tedata, self.tetarget, test_events)
 
-        self.nfeats = self.train_data.shape[1]
+        self.nfeats = self.trdata.shape[1]
 
         self.success_message()
 
@@ -111,9 +111,9 @@ class AE_data():
         returns :: Pytorch data set including both data and target.
         """
         switcher = {
-            'train': lambda: self.make_set(self.train_data, self.train_target),
-            'valid': lambda: self.make_set(self.valid_data, self.valid_target),
-            'test': lambda: self.make_set(self.test_data,  self.test_target)
+            'train': lambda: self.make_set(self.trdata, self.trtarget),
+            'valid': lambda: self.make_set(self.vadata, self.vatarget),
+            'test': lambda: self.make_set(self.tedata,  self.tetarget)
         }
         dataset = switcher.get(data_type, lambda: None)()
         if dataset is None:
@@ -138,9 +138,9 @@ class AE_data():
         # Display success message for loading data when called.
         print("\n----------------")
         print(tcols.OKGREEN + "AE data loading complete:" + tcols.ENDC)
-        print(f"Training data size: {self.train_data.shape[0]:.2e}")
-        print(f"Validation data size: {self.valid_data.shape[0]:.2e}")
-        print(f"Test data size: {self.test_data.shape[0]:.2e}")
+        print(f"Training data size: {self.trdata.shape[0]:.2e}")
+        print(f"Validation data size: {self.vadata.shape[0]:.2e}")
+        print(f"Test data size: {self.tedata.shape[0]:.2e}")
         print("----------------\n")
 
     def get_loader(self, data_type, device, batch_size=None, shuffle=True):
@@ -174,7 +174,7 @@ class AE_data():
         return pytorch_loader
 
     @staticmethod
-    def split_sig_bkg(data, target) -> tuple(np.ndarray, np.ndarray):
+    def split_sig_bkg(data, target) -> tuple[np.ndarray, np.ndarray]:
         """
         Split dataset into signal and background samples using the
         target. The target is supposed to be 1 for every signal and 0
@@ -192,14 +192,15 @@ class AE_data():
 
         return data_sig, data_bkg
 
-    def get_data(self, data, target, nevents) -> tuple(np.ndarray, np.ndarray):
+    def get_data(self, data, target, nevents) -> tuple[np.ndarray, np.ndarray]:
         """
         Cut the imported data and target and form new data sets with
         equal numbers of signal and background events.
         @data    :: Numpy array containing the data.
         @target  :: Numpy array containing the target.
-        @nevents :: The number of signal events the data sets should contain,
-                    the number of background events will be the same.
+        @nevents :: The number of signal events the data sets should
+                    contain, the number of background events will be
+                    the same.
 
         returns :: Two numpy arrays, one with data and one with target,
             containing an equal number of singal and background events.

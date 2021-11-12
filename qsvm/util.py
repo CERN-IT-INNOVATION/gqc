@@ -65,8 +65,8 @@ def save_model(qdata, qsvm, train_acc, test_acc, output_folder, ae_path):
         print('QSVM model:',  output_folder)
         print('Autoencoder model:', ae_path)
         print('Data path:', qdata.ae_data.data_folder)
-        print(f'ntrain = {len(qdata.ae_data.train_target)}, '
-              f'ntest = {len(qdata.ae_data.test_target)}, '
+        print(f'ntrain = {len(qdata.ae_data.trtarget)}, '
+              f'ntest = {len(qdata.ae_data.tetarget)}, '
               f'C = {qsvm.C}')
         print(f'Test Accuracy: {test_acc}, Training Accuracy: {train_acc}')
         print('-------------------------------------------\n')

@@ -1,11 +1,26 @@
+__pycache__
+._*
+*.pyc
+*DS_Store*
+
+# Data files.
 *.npy
 *.h5
 *.root
 *.out
-__pycache__
+
+# Ouput
 trained_aes/
+qsvm_models/
+
+# Logs
 logs/
 *.log
-._*
-*.pyc
-*DS_Store*
+
+# Packaging artifacts
+ae_qml.egg-info
+ae_qml.dist-info
+build/
+dist/
+pip-wheel-metadata/
+.eggs

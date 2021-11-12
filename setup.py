@@ -13,10 +13,10 @@ def get_long_description() -> str:
 
 # Suggestion: Add entry points possibly.
 setup(
-    name="qclassifier_study",
+    name="ae_qml",
     author="Vasilis Belis, Patrick Odagiu, Samuel Gonzalez Castillo",
     author_email="podagiu@student.ethz.ch",
-    version="1.0",
+    version="1.0.0",
     description="Study on feature reduction used with quantum classifiers.",
     long_description=get_long_description(),
     long_description_content_type="text/markdown",
@@ -30,17 +30,19 @@ setup(
         include=["autoencoders", "autoencoders.*", "qsvm", "qsvm.*"]
     ),
     install_requires=[
-        "numpy",
-        "pandas",
-        "matplotlib",
-        "scikit-learn",
-        "torch",
-        "torchvision",
-        "torchaudio",
-        "torchinfo",
-        "geomloss",
-        "qiskit",
-        "qiskit-machine-learning",
+        "pyparsing<3",
+        "numpy>=1.21.4",
+        "pandas>=1.3.4",
+        "tables>=3.6.1",
+        "matplotlib>=3.4.3",
+        "scikit-learn>=1.0.1",
+        "torch>=1.10.0",
+        "torchvision>=0.11.1",
+        "torchaudio>=0.10.0",
+        "torchinfo>=1.5.3",
+        "geomloss>=0.2.4",
+        "qiskit>=0.32.0",
+        "qiskit-machine-learning>=0.2.1",
     ],
     classifiers=[
         "Environment :: Console",

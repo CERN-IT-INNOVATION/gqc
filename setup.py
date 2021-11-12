@@ -12,7 +12,6 @@ def get_long_description() -> str:
 
 
 # Suggestion: Add entry points possibly.
-# TODO: Add package data.
 setup(
     name="qclassifier_study",
     author="Vasilis Belis, Patrick Odagiu, Samuel Gonzalez Castillo",
@@ -30,6 +29,19 @@ setup(
     packages=find_packages(
         include=["autoencoders", "autoencoders.*", "qsvm", "qsvm.*"]
     ),
+    install_requires=[
+        "numpy",
+        "pandas",
+        "matplotlib",
+        "scikit-learn",
+        "torch",
+        "torchvision",
+        "torchaudio",
+        "torchinfo",
+        "geomloss",
+        "qiskit",
+        "qiskit-machine-learning",
+    ],
     classifiers=[
         "Environment :: Console",
         "Intended Audience :: Physicists, Developers",

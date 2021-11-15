@@ -8,9 +8,13 @@
 #SBATCH --gres=gpu:1
 #SBATCH --output=trained_models/logs/ae_optim_gpu_%j.log
 
-usage() { echo "Usage: $0 [-n <normalization_name>] [-t <autencoder_type>] [-s <number_of_events>] [-l <learning_rate>] [-b <batch_size>] [-e <number_of_epochs>]" 1>&2; exit 1; }
+# Folder where the data is located.
+# Change for your own configuration.
+DATA_FOLDER=/work/deodagiu/data/ae_input/
 
-while getopts ":n:t:s:l:b:e:" o; do
+usage() { echo "Usage: $0 [-n <normalization_name>] [-t <autencoder_type>] [-s <number_of_events>] [-l <learning_rate>] [-b <batch_size>] [-e <number_of_epochs>] [-w <weight_learning_bool>]" 1>&2; exit 1; }
+
+while getopts ":n:t:s:l:b:e:w:" o; do
     case "${o}" in
     n)
         n=${OPTARG}
@@ -34,6 +38,9 @@ while getopts ":n:t:s:l:b:e:" o; do
     e)
         e=${OPTARG}
         ;;
+    w)
+        w=${OPTARG}
+        ;;
     *)
         usage
         ;;
@@ -41,7 +48,7 @@ while getopts ":n:t:s:l:b:e:" o; do
 done
 shift $((OPTIND-1))
 
-if [ -z "${n}" ] || [ -z "${t}" ] || [ -z "${s}" ] || [ -z "${l}" ] || [ -z "${b}" ] || [ -z "${e}" ]; then
+if [ -z "${n}" ] || [ -z "${t}" ] || [ -z "${s}" ] || [ -z "${l}" ] || [ -z "${b}" ] || [ -z "${e}" ] || [ -z "${w}"]; then
     usage
 fi
 
@@ -54,9 +61,9 @@ echo "The number of events: ${s}"
 echo "Learning rate range: ${l[@]}"
 echo "Batch sizes to probe: ${b[@]}"
 echo "Number of epochs for each trial: ${e}"
+echo "Weight optimisation: ${w}"
 echo "--------------------------------------- "
 
-source /work/deodagiu/miniconda3/bin/activate qml_project
 export PYTHONUNBUFFERED=TRUE
-python3 hyperparam_optimizer.py --data_folder /work/deodagiu/qml_data/input_ae/ --norm ${n} --aetype ${t} --nevents ${s} --lr ${l[@]}  --batch ${b[@]} --epochs ${e}
+pipenv run python hyperparam_optimizer.py --data_folder $DATA_FOLDER --norm ${n} --aetype ${t} --nevents ${s} --lr ${l[@]}  --batch ${b[@]} --epochs ${e} --woptim ${w}
 export PYTHONUNBUFFERED=FALSE

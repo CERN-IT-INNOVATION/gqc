@@ -43,6 +43,7 @@ setup(
         "geomloss>=0.2.4",
         "qiskit>=0.32.0",
         "qiskit-machine-learning>=0.2.1",
+        "optuna"
     ],
     classifiers=[
         "Environment :: Console",

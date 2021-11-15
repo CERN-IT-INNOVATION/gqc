@@ -8,6 +8,7 @@ import os
 
 from . import util
 from . import data
+from .terminal_colors import tcols
 
 
 def main(args):
@@ -38,6 +39,6 @@ def main(args):
     end_time = time.time()
 
     train_time = (end_time - start_time) / 60
-    print(f"Training time: {train_time:.2e} mins.")
+    print(tcols.OKCYAN + f"Training time: {train_time:.2e} mins." + tcols.ENDC)
 
     model.loss_plot(outdir)

@@ -7,7 +7,11 @@
 #SBATCH --gres=gpu:1
 #SBATCH --mem-per-cpu=2000M
 #SBATCH --time=0-07:00
-#SBATCH --output=./trained_models/logs/ae_train_gpu_%j.out
+#SBATCH --output=./trained_aes/logs/ae_gpu_%j.out
+
+# Folder where the data is located for the training of the AE.
+# Change so it suits your configuration.
+DATA_FOLDER=/work/deodagiu/data/ae_input/
 
 usage() { echo "Usage: $0 [-n <normalization_name>] [-t <autencoder_type>] [-s <number_of_events>] [-l <learning_rate>] [-b <batch_size>] [-e <number_of_epochs>] [-f <file_flag>]" 1>&2; exit 1; }
 
@@ -57,7 +61,6 @@ echo "Number of Epochs: ${e}"
 echo "File flag: ${f}"
 echo "--------------------------------------- "
 
-source /work/deodagiu/miniconda3/bin/activate qml_project
 export PYTHONUNBUFFERED=TRUE
-python3 train.py --data_folder /work/deodagiu/qml_data/input_ae/ --norm ${n} --aetype ${t} --nevents ${s} --lr ${l} --batch ${b} --epochs ${e} --outdir ${f}
+pipenv run python ae_train --data_folder $DATA_FOLDER --norm ${n} --aetype ${t} --nevents ${s} --lr ${l} --batch ${b} --epochs ${e} --outdir ${f}
 export PYTHONUNBUFFERED=FALSE

@@ -119,7 +119,7 @@ def objective(trial, args) -> float:
     model = util.choose_ae_model(args["aetype"], device, args)
 
     min_valid = optuna_train(
-        train_loader, valid_loader, model, args["epochs"], trial
+        train_loader, valid_loader, model, args["epochs"], trial, args["woptim"]
     )
 
     return min_valid

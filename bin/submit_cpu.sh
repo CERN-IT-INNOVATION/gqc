@@ -3,11 +3,14 @@
 #SBATCH --partition=long
 #SBATCH --ntasks=1
 #SBATCH --cpus-per-task=16
-#SBATCH --mem=20000
-#SBATCH -o ./trained_models/logs/ae_train_cpu_%j.out
+#SBATCH --mem=4000
+#SBATCH -o ./trained_aes/logs/ae_cpu_%j.out
 
-mkdir -p ./logs
-usage() { echo "Usage: $0 [-n <normalization_name>] [-t <autencoder_type>] [-s <number_of_events>] [-q <number_of_train_events>] [-w <number_of_valid_events>] [-l <learning_rate>] [-b <batch_size>] [-e <number_of_epochs>] [-f <file_flag>]" 1>&2; exit 1; }
+# Define the folder where the input data is found.
+# Change so it is valid for your own machine.
+DATA_FOLDER=/work/deodagiu/data/ae_input/
+
+usage() { echo "Usage: $0 [-n <normalization_name>] [-t <autencoder_type>] [-s <number_of_events>] [-l <learning_rate>] [-b <batch_size>] [-e <number_of_epochs>] [-f <file_flag>]" 1>&2; exit 1; }
 
 while getopts ":n:t:s:q:w:l:b:e:f:" o; do
     case "${o}" in
@@ -19,12 +22,6 @@ while getopts ":n:t:s:q:w:l:b:e:f:" o; do
         ;;
     s)
         s=${OPTARG}
-        ;;
-    q)
-        q=${OPTARG}
-        ;;
-    w)
-        w=${OPTARG}
         ;;
     l)
         l=${OPTARG}
@@ -45,7 +42,7 @@ while getopts ":n:t:s:q:w:l:b:e:f:" o; do
 done
 shift $((OPTIND-1))
 
-if [ -z "${n}" ] || [ -z "${t}" ] || [ -z "${s}" ] || [ -z "${q}" ] || [ -z "${w}" ] || [ -z "${l}" ] || [ -z "${b}" ] || [ -z "${e}" ] || [ -z "${f}" ]; then
+if [ -z "${n}" ] || [ -z "${t}" ] || [ -z "${s}" ] || [ -z "${l}" ] || [ -z "${b}" ] || [ -z "${e}" ] || [ -z "${f}" ]; then
     usage
 fi
 
@@ -61,7 +58,6 @@ echo "Number of Epochs: ${e}"
 echo "File flag: ${f}"
 echo "--------------------------------------- "
 
-source /work/deodagiu/miniconda3/bin/activate qml_project
 export PYTHONUNBUFFERED=TRUE
-python3 train.py --data_folder /work/deodagiu/qml_data/input_ae/ --norm ${n} --aetype ${t} --nevents ${s} --train_events ${q} --valid_events ${w} --lr ${l} --batch ${b} --epochs ${e} --outdir ${f}
+pipenv run python ae_train --data_folder $DATA_FOLDER --norm ${n} --aetype ${t} --nevents ${s} --lr ${l} --batch ${b} --epochs ${e} --outdir ${f}
 export PYTHONUNBUFFERED=FALSE

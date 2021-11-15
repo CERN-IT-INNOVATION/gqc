@@ -1,3 +1,5 @@
+#!/usr/bin/env python
+
 # Run the hyperparameter optimization of a chosen autoencoder.
 # This is all classical hyperparameter optimisation.
 import argparse
@@ -26,6 +28,8 @@ parser.add_argument('--study_name', type=str, default='optuna_study',
                     help='The name of the optuna study.')
 parser.add_argument('--ntrials', type=int, default=1,
                     help='Number of trials optuna should run.')
+parser.add_argument('--woptim', type=bool, default=False,
+                    help='Number of trials optuna should run.')
 args = parser.parse_args()
 
 vqc_specs = [["zzfm", 0, 4], ["2local", 0, 20, 4, "linear"],
@@ -50,7 +54,8 @@ args = {
     "weight_sink":  1,
     "adam_betas":   (0.9, 0.999),
     "study_name":   args.study_name,
-    "ntri":         args.ntrials
+    "ntri":         args.ntrials,
+    "woptim":       args.woptim
 }
 
 main(args)

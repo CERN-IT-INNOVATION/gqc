@@ -2,7 +2,6 @@
 
 import os
 import joblib
-from datetime import datetime
 
 from .terminal_colors import tcols
 
@@ -48,7 +47,12 @@ def load_qsvm(path):
 
 
 def print_model_info(ae_path, qdata, qsvm):
-
+    """
+    Print information about the model.
+    @ae_path :: String of path to the autoencoder.
+    @qdata   :: The data object used to train the qsvm.
+    @qsvm    :: The qiskit qsvm object.
+    """
     print("\n-------------------------------------------")
     print(f"Autoencoder model: {ae_path}")
     print(f"Data path: {qdata.ae_data.data_folder}")
@@ -58,16 +62,3 @@ def print_model_info(ae_path, qdata, qsvm):
         f"C = {qsvm.C}"
     )
     print("-------------------------------------------\n")
-
-
-def save_model(qdata, qsvm, train_acc, test_acc, output_folder, ae_path):
-    """
-    Save the model and a log of useful info regarding the saved model.
-    @qdata         :: The data that was processed by the qsvm.
-    @qsvm          :: The qiskit qsvm object.
-    @train_acc     :: Numpy array of the training accuracies.
-    @test_acc      :: Numpy array of the testing accuracies.
-    @output_folder :: String of the output folder where the saving is.
-    @ae_path       :: The path to the ae used in reducing the qdata.
-    """
-    save_qsvm(qsvm, "qsvm_models/" + output_folder + "/qsvm_model")

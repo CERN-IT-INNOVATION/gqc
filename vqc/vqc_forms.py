@@ -4,90 +4,99 @@ import numpy as np
 from itertools import combinations
 
 
-def twolocal(qubits, theta, reps=2, entanglement="linear"):
-    
-    for r in range(reps):
-        for i in range(qubits):
-            qml.RY(theta[r * qubits + i], wires=i)
-        if entanglement == "linear":
-            for i in range(qubits - 1):
-                qml.CNOT(wires=[i, i + 1])
-        elif entanglement == "full":
-            for pair in list(combinations(range(qubits), 2)):
-                a = pair[0]
-                b = pair[1]
-                if (b < a):  # Just in case...
-                    tmp = b
-                    b = a
-                    a = tmp
-                qml.CNOT(wires=[a, b])
-        else:
-            raise Exception("Unknown entanglement pattern")
+def twolocal_full(qubits, theta, repeats=2):
+    """
+    Twolocal form with full entanglement between qubits.
+    @qubits  :: Int the number of qubits in the form.
+    @theta   :: List of the encoding angles.
+    @repeats :: Int of how many times should this form be repeated.
+    """
+    for repeat in range(repeats):
+        for qubit in range(qubits):
+            qml.RY(theta[repeats * qubits + qubit], wires=qubit)
+
+        for qubit_pair in list(combinations(range(qubits), 2)):
+            if (qubit_pair[1] < qubit_pair[0]):
+                tmp = qubit_pair[1]
+                qubit_pair[1] = qubit_pair[0]
+                qubit_pair[0] = tmp
+
+            qml.CNOT(wires=[qubit_pair[0], qubit_pair[1]])
+
+
+def twolocal_linear(qubits, theta, repeats=2):
+    """
+    The twolocal form with linear entanglement between qubits.
+    @qubits  :: Int the number of qubits in the form.
+    @theta   :: List of the encoding angles.
+    @repeats :: Int of how many times should this form be repeated.
+    """
+    for repeat in range(repeats):
+        for qubit in range(qubits):
+            qml.RY(theta[repeats * qubits + qubit], wires=qubit)
+        for qubit in range(qubits - 1):
+            qml.CNOT(wires=[qubit, qubit + 1])
 
     for i in range(qubits):
-        qml.RY(theta[reps * qubits + i], wires=i)
+        qml.RY(theta[repeats * qubits + i], wires=i)
 
 
-def treevf(qubits, theta, reps=2):
-    for r in range(reps):
-        dim = int(np.log2(qubits))
-        param_count = 0
-        for i in range(dim):
-            step = 2**i
-            for j in np.arange(0, qubits, 2*step):
-                qml.RY(theta[r * qubits + param_count], wires=j)
-                qml.RY(theta[r * qubits + param_count + 1], wires=j + step)
-                param_count += 2
-                qml.CNOT(wires=[j, j + step])
-
-
-def stepc(qubits, theta, reps=2):
-    if (qubits != 4):
-        raise Exception("stepc not implemented for qubits != 4")
-    
-    for r in range(reps):
-        for i in range(4):
-            qml.RY(theta[7 * r + i], wires=i)
-    
-        qml.CNOT(wires=[2, 3])
-        qml.RY(theta[7 * r + 4], wires=2)
-        qml.CNOT(wires=[0, 2])
-        qml.RY(theta[7 * r + 5], wires=0)
-        qml.CNOT(wires=[0, 1])
-        qml.RY(theta[7 * r + 6], wires=0)
-
-
-def zzfm(qubits, x, scaled=False):
-    
+def zzfm(qubits, x):
+    """
+    ZZ feature map.
+    @qubits :: Int the number of qubits in the form.
+    @x      :: No idea what this is since it is assigned from the namespace.
+    """
     features = len(x)
-
-    last = 0  # The last feature that we have loaded.
+    last_feature = 0
     
-    while (last < features):
+    while last_feature < features:
+        nload = min(features - last_feature, qubits)
+        for idx in range(nload):
+            qml.Hadamard(idx)
+            qml.RZ(2.0*x[last_feature + idx], wires=idx)
+
+        for pair in list(combinations(range(nload), 2)):
+            if pair[1] < pair[0]:
+                tmp = pair[1]
+                pair[1] = pair[0]
+                pair[0] = tmp
+
+            qml.CZ(wires=[pair[0], pair[1]])
+            qml.RZ(2.0 * (np.pi - x[last_feature + pair[0]]) * (np.pi -
+                   x[last_feature + pair[1]]), wires=pair[1])
+            qml.CZ(wires=[pair[0], pair[1]])
+
+        last_feature += nload
+
+
+def zzfm_scaled(qubits, x):
+    """
+    ZZ feature map.
+    @qubits :: Int the number of qubits in the form.
+    @x      ::
+    """
+    features = len(x)
+    last_feature = 0
+
+    while last_feature < features:
         # Number of features that we will load.
-        nload = min(features - last, qubits) 
+        nload = min(features - last_feature, qubits)
 
         for i in range(nload):
             qml.Hadamard(i)
-            if scaled:
-                qml.RZ(2.0 * np.pi * x[last + i], wires=i)
-            else:
-                qml.RZ(2.0*x[last + i], wires=i)
+            qml.RZ(2.0 * np.pi * x[last_feature + i], wires=i)
 
         for pair in list(combinations(range(nload), 2)):
             a = pair[0]
             b = pair[1]
-            if (b < a):  # Just in case...
+            if (b < a):
                 tmp = b
                 b = a
                 a = tmp
             qml.CZ(wires=[a, b])
-            if scaled:
-                qml.RZ(2.0 * np.pi * (1 - x[last + a]) * (1 - x[last + b]),
-                       wires=b)
-            else:
-                qml.RZ(2.0 * (np.pi - x[last + a]) * (np.pi - x[last + b]),
-                       wires=b)
+            qml.RZ(2.0 * np.pi * (1 - x[last_feature + a]) * (1 -
+                   x[last_feature + b]), wires=b)
             qml.CZ(wires=[a, b])
 
-        last += nload
+        last_feature += nload

@@ -36,10 +36,10 @@ parser.add_argument("--outdir", type=str, default="",
                     help="Flag the file in a certain way for easier labeling.")
 args = parser.parse_args()
 
-vqc_specs = [["zzfm", 0, 4], ["2local", 0, 20, 4, "linear"],
-             ["zzfm", 4, 8], ["2local", 20, 40, 4, "linear"],
-             ["zzfm", 8, 12], ["2local", 40, 60, 4, "linear"],
-             ["zzfm", 12, 16], ["2local", 60, 80, 4, "linear"]]
+vqc_specs = [["zzfm", 0, 4], ["2local_linear", 0, 20, 4],
+             ["zzfm", 4, 8], ["2local_linear", 20, 40, 4],
+             ["zzfm", 8, 12], ["2local_linear", 40, 60, 4],
+             ["zzfm", 12, 16], ["2local_linear", 60, 80, 4]]
 
 args = {
     "data_folder":  args.data_folder,

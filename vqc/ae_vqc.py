@@ -19,8 +19,9 @@ torch.manual_seed(seed)
 torch.autograd.set_detect_anomaly(False)
 torch.autograd.profiler.profile(enabled=False)
 
+
 class AE_vqc(AE_classifier):
-    def __init__(self, device = 'cpu', hparams = {}):
+    def __init__(self, device='cpu', hparams={}):
 
         super().__init__(device, hparams)
         del self.class_layers; del self.classifier
@@ -56,49 +57,49 @@ class AE_vqc(AE_classifier):
 
         return nparams
 
+    def define_measurement_type(self, y):
+        get_meas_type = {
+            "first": lambda: self.meas_first_qbit(y),
+            "all3": lambda: self.meas_all_3_qbits(y),
+            "all4": lambda: self.meas_all_4_qbits(y),
+        }
+        measurement = get_meas_type.get(self.hp["measurement"], lambda: None)()
+        if measurement is None:
+            raise TypeError("Undefined measurement!")
+
+        return measurement
+
     def construct_vqc(self, inputs, theta):
 
         state_0 = [[1], [0]]
-        state_all = [[1]],
         y = state_0 * np.conj(state_0).T
 
         for idx in range(0, len(self.hp["vqc_specs"])):
             self.add_vqc_layer(self.hp["vqc_specs"][idx], self.hp['nqbits'],
-                inputs, theta)
+                               inputs, theta)
 
-        get_meas_type = {
-            "first": lambda: self.meas_first_qbit(y),
-            "all3":  lambda: self.meas_all_3_qbits(y),
-            "all4":  lambda: self.meas_all_4_qbits(y),
-        }
-        measurement = get_meas_type.get(self.hp["measurement"], lambda: None)()
-        if measurement is None: raise TypeError("Undefined measurement!")
-
-        return measurement
+        return self.define_measurement_type(y)
 
     @staticmethod
     def add_vqc_layer(spec, nqbits, inputs, theta):
-        vform_name    = spec[0]
-        nfrom         = int(spec[1])
-        nto           = int(spec[2])
-        layer_nparams = nto - nfrom
+        vform_name = spec[0]
+        nfrom = int(spec[1])
+        nto = int(spec[2])
 
         implement_vqc_layer = {
-            "zzfm"   : lambda: vqc_forms.zzfm(nqbits, inputs[nfrom:nto]),
-            "zzfm2"  : lambda: vqc_forms.zzfm(nqbits, inputs[nfrom:nto],
-                        scaled=True),
-            "angle"  : lambda: AngleEmbedding(features=inputs[nfrom:nto],
-                        wires=range(nqbits)),
-            "angle2" : lambda: AngleEmbedding(features=np.pi*inputs[nfrom:nto],
-                        wires=range(nqbits)),
-            "amp"    : lambda: AmplitudeEmbedding(features=inputs[nfrom:nto],
-                        wires=range(nqbits), normalize=True),
-            "2local" : lambda: vqc_forms.twolocal(nqbits, theta[nfrom:nto],
-                        reps=int(spec[3]), entanglement=spec[4]),
-            "tree"   : lambda: vqc_forms.treevf(nqbits, theta[nfrom:nto],
-                        reps=int(spec[3])),
-            "step"   : lambda: vqc_forms.stepc(nqbits, theta[nfrom:nto],
-                        reps=int(spec[3]))
+            "zzfm": lambda:   vqc_forms.zzfm(nqbits, inputs[nfrom:nto]),
+            "zzfm2": lambda:  vqc_forms.zzfm_scaled(nqbits, inputs[nfrom:nto]),
+            "angle": lambda:  AngleEmbedding(features=inputs[nfrom:nto],
+                                             wires=range(nqbits)),
+            "angle2": lambda: AngleEmbedding(features=np.pi*inputs[nfrom:nto],
+                                             wires=range(nqbits)),
+            "amp": lambda:    AmplitudeEmbedding(
+                features=inputs[nfrom:nto], wires=range(nqbits),
+                normalize=True),
+            "2local_linear": lambda: vqc_forms.twolocal_linear(
+                nqbits, theta[nfrom:nto], reps=int(spec[3])),
+            "2local_full": lambda: vqc_forms.twolocal_linear(
+                nqbits, theta[nfrom:nto], reps=int(spec[3])),
         }
         if vform_name in implement_vqc_layer.keys():
             implement_vqc_layer.get(vform_name)()

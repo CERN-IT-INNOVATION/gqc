@@ -29,14 +29,14 @@ class AE_sinkclass(AE_vanilla):
             "class_layers": [128, 64, 32, 16, 8, 1],
             "labels_dimension": 2,
             "adam_betas": (0.9, 0.999),
-            "loss_weight": 0.5,
-            "weight_sink": 1,
+            "class_weight": 0.5,
+            "sinkh_weight": 1,
         }
 
         self.hp.update(new_hp)
         self.hp.update((k, hparams[k]) for k in self.hp.keys() & hparams.keys())
-        self.class_loss_weight = self.hp["loss_weight"]
-        self.laten_loss_weight = self.hp["weight_sink"]
+        self.class_loss_weight = self.hp["class_weight"]
+        self.laten_loss_weight = self.hp["sinkh_weight"]
 
         self.class_loss_function = nn.BCELoss(reduction="mean")
         self.laten_loss_function = geomloss.SamplesLoss(

@@ -28,7 +28,7 @@ class AE_variational(AE_vanilla):
         new_hp = {
             "ae_type": "variational",
             "adam_betas": (0.9, 0.999),
-            "loss_weight": 0.5,
+            "varia_weight": 0.5,
         }
 
         self.hp.update(new_hp)
@@ -37,8 +37,8 @@ class AE_variational(AE_vanilla):
         self.laten_loss_function = nn.KLDivLoss(reduction="batchmean")
         self.desired_latent_dist = dist.Normal(0, 1)
 
-        self.recon_loss_weight = 1 - self.hp["loss_weight"]
-        self.laten_loss_weight = self.hp["loss_weight"]
+        self.recon_loss_weight = 1 - self.hp["varia_weight"]
+        self.laten_loss_weight = self.hp["varia_weight"]
 
         del self.encoder
 

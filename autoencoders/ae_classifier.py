@@ -26,15 +26,15 @@ class AE_classifier(AE_vanilla):
             "ae_type": "classifier",
             "class_layers": [128, 64, 32, 16, 8, 1],
             "adam_betas": (0.9, 0.999),
-            "loss_weight": 0.5,
+            "class_weight": 0.5,
         }
         self.hp.update(new_hp)
         self.hp.update((k, hparams[k]) for k in self.hp.keys() & hparams.keys())
 
         self.class_loss_function = nn.BCELoss(reduction="mean")
 
-        self.recon_loss_weight = 1 - self.hp["loss_weight"]
-        self.class_loss_weight = self.hp["loss_weight"]
+        self.recon_loss_weight = 1 - self.hp["class_weight"]
+        self.class_loss_weight = self.hp["class_weight"]
         self.all_recon_loss = []
         self.all_class_loss = []
 

@@ -20,12 +20,18 @@ parser.add_argument("--valid_events", type=str, default=-1,
                     help="The exact number of valid events used < nevents.")
 parser.add_argument("--aetype", type=str,
                     help="The type of ae that you will use.")
-parser.add_argument('--lr', type=float, default=2e-03,
+parser.add_argument('--lr', type=float, default=2e-03, nargs=2,
                     help="The learning rate.")
-parser.add_argument("--batch", type=int, default=128,
+parser.add_argument("--batch", type=int, default=128, nargs='+',
                     help="The batch size.")
 parser.add_argument("--epochs", type=int, default=85,
                     help="The number of training epochs.")
+parser.add_argument("--varia_weight", type=float, default=1, nargs=2,
+                    help="The weight of the variational AE loss.")
+parser.add_argument("--class_weight", type=int, default=1, nargs=2,
+                    help="The weight of the classifier BCE loss.")
+parser.add_argument("--sinkh_weight", type=int, default=1, nargs=2,
+                    help="The weight of the sinkhorn AE latent space loss.")
 parser.add_argument("--outdir", type=str, default="",
                     help="Flag the file in a certain way for easier labeling.")
 args = parser.parse_args()
@@ -50,8 +56,9 @@ args = {
     "enc_activ":    'nn.Tanh()',
     "dec_activ":    'nn.Tanh()',
     "vqc_specs":    vqc_specs,
-    "loss_weight":  0.0008,
-    "weight_sink":  0.9,
+    "varia_weight": args.varia_weight,
+    "class_weight": args.class_weight,
+    "sinkh_weight": args.sinkh_weight,
     "adam_betas":   (0.9, 0.999),
     "outdir":       args.outdir,
 }

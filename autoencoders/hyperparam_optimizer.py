@@ -41,14 +41,13 @@ def optuna_train(
     @model        :: The ae model to be trained.
     @epochs       :: The number of epochs to train the model for.
     @trial        :: The optuna trial object, used in pruning.
+    @woptim       :: If True, will optimised based on raw weights.
 
     returns :: The best loss depending on various factors, such as if
         the weights in the loss are optimised, type of ae that is
         optimised, etc.
     """
-    print(
-        tcols.OKCYAN + "Training the AE model to be optimized..." + tcols.ENDC
-    )
+    print(tcols.OKCYAN + "Training AE model to be optimized..." + tcols.ENDC)
     model.instantiate_adam_optimizer()
     model.network_summary()
     model.optimizer_summary()
@@ -102,11 +101,14 @@ def objective(trial, args) -> float:
     device = util.define_torch_device()
     # Define parameters to be optimized by optuna.
     lr = trial.suggest_loguniform("lr", *args["lr"])
-    loss_weight = trial.suggest_uniform("loss_weight", 1, 1)
-    weight_sink = trial.suggest_uniform("weight_sink", 1, 1)
+    varia_weight = trial.suggest_uniform("varia_weight", *args["varia_weight"])
+    class_weight = trial.suggest_uniform("class_weight", *args["class_weight"])
+    sinkh_weight = trial.suggest_uniform("sinkh_weight", *args["sinkh_weight"])
+
     batch = trial.suggest_categorical("batch", args["batch"])
     args.update(
-        {"lr": lr, "loss_weight": loss_weight, "weight_sink": weight_sink}
+        {"lr": lr, "class_weight": class_weight, "sinkh_weight": sinkh_weight,
+         "varia_weight": varia_weight}
     )
 
     # Load the data.

@@ -3,6 +3,7 @@
 # and kfolds it into k=5.
 # Computes the ROC curve of the qsvm and the AUC, saves the ROC plot.
 import warnings
+from time import perf_counter
 import numpy as np
 
 from qiskit import Aer
@@ -33,9 +34,9 @@ def main(args):
         args["norm"],
         args["nevents"],
         args["model_path"],
-        train_events=6,
-        valid_events=6,
-        test_events=6,
+        train_events=600,
+        valid_events=720,
+        test_events=720,
         kfolds=5,
     )
 
@@ -52,26 +53,31 @@ def main(args):
     )
     kernel = QuantumKernel(feature_map=feature_map, quantum_instance=instance)
 
-    qsvm = SVC(kernel=kernel.evaluate)
+    qsvm = SVC(kernel=kernel.evaluate, C=args["c_param"])
+
+    print(tcols.OKCYAN + "Training the QSVM..." + tcols.ENDC)
+    util.print_model_info(args["model_path"], qdata, qsvm)
+
+    train_time_init = perf_counter()
     qsvm.fit(train_features, train_labels)
+    train_time_fina = perf_counter()
+    print(f"Training completed in: {train_time_fina-train_time_init:.2e} s")
 
     train_acc = qsvm.score(train_features, train_labels)
     test_acc = qsvm.score(test_features, test_labels)
-
     util.print_accuracies(test_acc, train_acc)
-    util.create_output_folder(args["output_folder"])
-    util.save_model(
-        qdata,
-        qsvm,
-        train_acc,
-        test_acc,
-        args["output_folder"],
-        args["model_path"],
-    )
 
+    args["output_folder"] = args["output_folder"] + f"_c={qsvm.C}"
+    util.create_output_folder(args["output_folder"])
+    util.save_qsvm(qsvm, "qsvm_models/" + args["output_folder"] + "/model")
+
+    print(tcols.OKCYAN +
+          "\n\nComputing accuracies on kfolded test data..." +
+          tcols.ENDC)
     scores = compute_model_scores(qsvm, test_folds, args["output_folder"])
-    names_dict = {args["display_name"]: scores}
-    plot.roc_plot(names_dict, qdata, args["output_folder"])
+
+    print(tcols.OKCYAN + "\n\nPlotting and saving ROC figure..." + tcols.ENDC)
+    plot.roc_plot(scores, qdata, args["output_folder"], args["display_name"])
 
 
 def compute_model_scores(model, data_folds, output_folder) -> np.ndarray:
@@ -85,20 +91,16 @@ def compute_model_scores(model, data_folds, output_folder) -> np.ndarray:
 
     returns :: Array of the qsvm scores obtained.
     """
-    print(tcols.HEADER)
-    print("Computing model scores on the test data folds...")
-    print(tcols.ENDC)
-
+    scores_time_init = perf_counter()
     model_scores = np.array(
         [model.decision_function(fold) for fold in data_folds]
     )
+    scores_time_fina = perf_counter()
+    print(f"Completed in: {scores_time_fina-scores_time_init:2.2e} s")
 
     path = "qsvm_models/" + output_folder + "/y_score_list.npy"
 
-    print(tcols.OKGREEN)
     print("Saving model scores array in: " + path)
-    print(tcols.ENDC)
-
     np.save(path, model_scores)
 
     return model_scores

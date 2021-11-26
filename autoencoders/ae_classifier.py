@@ -134,7 +134,7 @@ class AE_classifier(AE_vanilla):
         print("\n\n")
 
     @torch.no_grad()
-    def valid(self, valid_loader, outdir) -> list[float]:
+    def valid(self, valid_loader, outdir) -> list:
         """
         Evaluate the validation combined loss for the model and save the model
         if a new minimum in this combined and weighted loss is found.
@@ -200,7 +200,7 @@ class AE_classifier(AE_vanilla):
 
             train_loss = self.train_all_batches(train_loader)
             valid_losses = self.valid(valid_loader, outdir)
-            if self.early_stopping:
+            if self.early_stopping():
                 break
 
             self.all_train_loss.append(train_loss.item())

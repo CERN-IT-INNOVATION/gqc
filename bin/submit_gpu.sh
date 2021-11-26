@@ -7,7 +7,7 @@
 #SBATCH --gres=gpu:1
 #SBATCH --mem-per-cpu=2000M
 #SBATCH --time=0-07:00
-#SBATCH --output=./trained_aes/logs/ae_gpu_%j.out
+#SBATCH --output=./logs/ae_gpu_%j.out
 
 # Folder where the data is located for the training of the AE.
 # Change so it suits your configuration.
@@ -61,6 +61,7 @@ echo "Number of Epochs: ${e}"
 echo "File flag: ${f}"
 echo "--------------------------------------- "
 
+source /work/deodagiu/miniconda/bin/activate ae_qml
 export PYTHONUNBUFFERED=TRUE
-pipenv run python ae_train --data_folder $DATA_FOLDER --norm ${n} --aetype ${t} --nevents ${s} --lr ${l} --batch ${b} --epochs ${e} --outdir ${f}
+python ae_train --data_folder $DATA_FOLDER --norm ${n} --aetype ${t} --nevents ${s} --lr ${l} --batch ${b} --epochs ${e} --outdir ${f}
 export PYTHONUNBUFFERED=FALSE

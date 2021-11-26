@@ -2,14 +2,13 @@
 #SBATCH --job-name=ae_train
 #SBATCH --partition=long
 #SBATCH --ntasks=1
-#SBATCH --cpus-per-task=16
-#SBATCH --mem=20000
-#SBATCH -o ./qsvm_logs/ae_train_cpu_%j.out
+#SBATCH --cpus-per-task=8
+#SBATCH --mem=3000M
+#SBATCH -o ./logs/qsvm_cpu_%j.out
 
-mkdir -p ./qsvm_logs
-usage() { echo "Usage: $0 [-n <normalization_name>] [-s <number_of_events>] [-p <model_path>] [-f <output_file>]" 1>&2; exit 1; }
+usage() { echo "Usage: $0 [-n <normalization_name>] [-s <number_of_events>] [-p <model_path>] [-d <qsvm_name>] [-c <qsvm_constant_c>] [-f <output_folder>]" 1>&2; exit 1; }
 
-while getopts ":n:s:p:f:" o; do
+while getopts ":n:s:p:d:c:f:" o; do
     case "${o}" in
     n)
         n=${OPTARG}
@@ -19,6 +18,12 @@ while getopts ":n:s:p:f:" o; do
         ;;
     p)
         p=${OPTARG}
+        ;;
+    d)
+        d=${OPTARG}
+        ;;
+    c)
+        c=${OPTARG}
         ;;
     f)
         f=${OPTARG}
@@ -30,20 +35,11 @@ while getopts ":n:s:p:f:" o; do
 done
 shift $((OPTIND-1))
 
-if [ -z "${n}" ] || [ -z "${s}" ] || [ -z "${p}" ] || [ -z "${f}" ]; then
+if [ -z "${n}" ] || [ -z "${s}" ] || [ -z "${p}" ] || [ -z "${d}" ] || [ -z "${c}" ] || [ -z "${f}" ]; then
     usage
 fi
 
-echo "--------------------------------------- "
-echo "The hyperparameters of this run are:"
-echo " "
-echo "Normalization of the input file: ${n}"
-echo "Number of events in the input file: ${s}"
-echo "Model path: ${p}"
-echo "File flag: ${f}"
-echo "--------------------------------------- "
-
-source /work/deodagiu/miniconda3/bin/activate legacy_qiskit
+source /work/deodagiu/miniconda/bin/activate ae_qml
 export PYTHONUNBUFFERED=TRUE
-python3 legacy_launchQSVM.py --data_folder /work/deodagiu/qml_data/input_ae/ --norm ${n} --nevents ${s} --model_path ${p} --output_file ${f}
+python qsvm_launch --data_folder /work/deodagiu/data/ae_input --norm ${n} --nevents ${s} --model_path ${p} --display_name ${d} --c_param ${c} --output_folder ${f}
 export PYTHONUNBUFFERED=FALSE

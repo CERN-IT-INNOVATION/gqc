@@ -26,50 +26,50 @@ performance is benchmarked.
 
 ## Installing Dependencies
 
-This code base has a relatively large number of dependencies due to its
-complexity and variety of methods.
-
-There are two alternatives for installing the dependencies necessary to run
-this code: either through pipenv or through running `setup.py`. We recommend
-using pipenv.
-
-
-#### Pipenv
-
-Install pipenv using pip. Make sure that the python version you are using
-is python 3.9.
+We strongly recommend using `conda` to install the dependencies for this repo.
+If you have conda, creating a virtual environment with all the packages
+used in our code is done easily, by running the command:
 
 ```
-pip install pipenv
+conda env create -f ae_qml_conda.yml
 ```
 
-Then you should go to the ae_qml directory and run
+Afterwards, you can activate the environment with
 
 ```
-pipenv sync
-pipenv shell
-```
-The first line will create a virtual environment where all the required
-packages are installed (with the correct versions) and the second line will
-activate this environment.
-
-Now you should be ready to run the code!
-
----
-
-#### Setup file
-
-*Warning:* This will install all the dependencies in the current environment
-that you are in. Use with caution, i.e., if you do not create a virtual env
-this will be installed directly inside the standard python libs.
-
-To install using the setup.py file, just run
-
-```
-python setup.py install
+conda activate ae_qml
 ```
 
-Now you should be ready to run the code!
+Once inside the environment, you should be able to run the code smoothly.
+
+If you do not want to use `conda`, here is a list of the packages you
+would need to install:
+
+* numpy
+* pandas
+* tables
+* matplotlib
+* scikit-learn
+* torch
+* torchvision
+* torchaudio
+* torchinfo
+* cudatoolkit
+* cudatoolkit-dev (adds the nvcc compiler to cudatoolkit)
+* pykeops
+* geomloss
+* qiskit
+* qiskit-machine-learning
+
+The pykeops package is required to run the Sinkhorn auto-encoder. However,
+it is a tricky package to manage, so make sure that you have a gcc and a g++
+compiler in your path that is compatible with the version of cuda you are
+running. We recommend using conda for exactly this reason, since conda
+sets certain environment variables such that everything is configured correctly
+and pykeops can compile using cuda.
+
+If you encounter any bugs, please contact us at the email addresses listed
+on this repository.
 
 ## Running the Code
 

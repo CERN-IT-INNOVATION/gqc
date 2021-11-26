@@ -75,7 +75,7 @@ class AE_variational(AE_vanilla):
 
         return nn.Sequential(*enc_layers)
 
-    def reparametrize(self, mu, log_var) -> list[float]:
+    def reparametrize(self, mu, log_var) -> list:
         """
         Implement the reparametrization trick to be able to sample from
         the produced encoder distributions (latent space).
@@ -156,7 +156,7 @@ class AE_variational(AE_vanilla):
         )
 
     @torch.no_grad()
-    def valid(self, valid_loader, outdir) -> list[float]:
+    def valid(self, valid_loader, outdir) -> list:
         """
         Evaluate the validation combined loss for the model and save the
         model if a new minimum in this combined and weighted loss is

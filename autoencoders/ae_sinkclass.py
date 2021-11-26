@@ -35,7 +35,6 @@ class AE_sinkclass(AE_vanilla):
 
         self.hp.update(new_hp)
         self.hp.update((k, hparams[k]) for k in self.hp.keys() & hparams.keys())
-
         self.class_loss_weight = self.hp["loss_weight"]
         self.laten_loss_weight = self.hp["weight_sink"]
 

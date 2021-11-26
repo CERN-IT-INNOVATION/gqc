@@ -41,9 +41,11 @@ setup(
         "torchaudio>=0.10.0",
         "torchinfo>=1.5.3",
         "geomloss>=0.2.4",
+        "pyekops>=1.5",
         "qiskit>=0.32.0",
         "qiskit-machine-learning>=0.2.1",
-        "optuna"
+        "optuna>=2.10.0",
+        "cmake>=3.21.4"
     ],
     classifiers=[
         "Environment :: Console",

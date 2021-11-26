@@ -23,6 +23,9 @@ parser.add_argument('--output_folder', required=True,
                     help='The name of the model to be saved.')
 parser.add_argument('--display_name', type=str, default='QSVM (8 qubits)',
                     help='QSVM display name on the ROC plot.')
+parser.add_argument('--c_param', type=float, default=1.,
+                    help='The C parameter of the SVM.')
+
 args = parser.parse_args()
 
 args = {
@@ -32,7 +35,8 @@ args = {
     "model_path": args.model_path,
     "feature_dim": 16,
     "display_name": args.display_name,
-    "output_folder": args.output_folder
+    "output_folder": args.output_folder,
+    "c_param": args.c_param
 }
 
 main(args)

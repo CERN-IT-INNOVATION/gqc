@@ -111,7 +111,7 @@ class AE_vanilla(nn.Module):
         # scheduler = optim.lr_scheduler.ExponentialLR(self.optimizer,
         # gamma=0.95)
 
-    def forward(self, x) -> tuple[np.ndarray, np.ndarray]:
+    def forward(self, x) -> tuple:
         """
         Forward pass through the ae.
         """
@@ -275,7 +275,7 @@ class AE_vanilla(nn.Module):
         nb_of_batches = 0
         for batch in train_loader:
             x_batch, y_batch = batch
-            batch_loss = self.train_batch(x_batch)
+            batch_loss = self.train_batch(x_batch, y_batch)
             batch_loss_sum += batch_loss
             nb_of_batches += 1
 

@@ -200,7 +200,7 @@ class AE_data:
         return pytorch_loader
 
     @staticmethod
-    def split_sig_bkg(data, target) -> tuple[np.ndarray, np.ndarray]:
+    def split_sig_bkg(data, target) -> tuple:
         """
         Split dataset into signal and background samples using the
         target. The target is supposed to be 1 for every signal and 0
@@ -218,7 +218,7 @@ class AE_data:
 
         return data_sig, data_bkg
 
-    def get_data(self, data, target, nevents) -> tuple[np.ndarray, np.ndarray]:
+    def get_data(self, data, target, nevents) -> tuple:
         """
         Cut the imported data and target and form new data sets with
         equal numbers of signal and background events.

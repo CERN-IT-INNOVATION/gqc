@@ -39,7 +39,7 @@ def main(args):
     roc_plots(sig[0], bkg[0], args["model_path"], "latent_roc")
     input_reco(test_sig, test_bkg, sig[1], bkg[1], args["model_path"])
 
-    if len(sig) == 3:
+    if len(sig) >= 3:
         roc_plots(sig[2], bkg[2], args["model_path"], "classif_roc")
 
 
@@ -181,7 +181,7 @@ def sig_vs_bkg(data_sig, data_bkg, model_path, output_folder):
     print(f"Latent plots were saved to {plots_folder}.")
 
 
-def compute_auc(data, target, feature) -> tuple[list, list, float, float]:
+def compute_auc(data, target, feature) -> tuple:
     """
     Split a data set into 5, compute the AUC for each, and then calculate the
     mean and stardard deviation of these.

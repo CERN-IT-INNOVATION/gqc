@@ -33,16 +33,18 @@ class VQC(NeuralNetworkClassifier):
         if num_qubits is None and feature_map is None and ansatz is None:
             raise AttributeError("Input num_qubits, feature_map, or ansatz!")
 
-        self._feature_map = None
-        self._ansatz = None
+        self._input_dim = input_dim
         self._num_qubits = None
+        self._vforms = []
 
         self._configure_vqc_circuit(num_qubits, feature_map, ansatz)
 
         # Construct the quantum circuit.
         self._circuit = QuantumCircuit(self._num_qubits)
-        self._circuit.compose(feature_map, inplace=True)
-        self._circuit.compose(ansatz, inplace=True)
+        for feature_map, ansatz in zip(self._vforms[0::2], self._vforms[1::2]):
+            print(feature_map)
+            self._circuit.compose(feature_map, inplace=True)
+            self._circuit.compose(ansatz, inplace=True)
 
         print(self._circuit)
         # Construct the circuit of the QNN.
@@ -66,6 +68,7 @@ class VQC(NeuralNetworkClassifier):
 
     def _configure_vqc_circuit(self, num_qubits, feature_map, ansatz):
         if num_qubits:
+            self._check_input_compatibility(num_qubits)
             self._config_with_num_qubits(num_qubits, feature_map, ansatz)
         else:
             if feature_map:
@@ -75,35 +78,53 @@ class VQC(NeuralNetworkClassifier):
 
     def _config_with_num_qubits(self, num_qubits, feature_map, ansatz):
         self._num_qubits = num_qubits
+
+        for form_nb in range(int(self._input_dim/num_qubits)):
+            self._set_numq_feature_map(feature_map)
+            self._set_numq_ansatz(ansatz)
+
+    def _set_numq_feature_map(self, feature_map):
         if feature_map:
-            if feature_map.num_qubits != num_qubits:
+            if feature_map.num_qubits != self._num_qubits:
                 raise AttributeError("Incompat num_qubits and feature_map!")
-            self._feature_map = feature_map
+            self._vforms.append(feature_map)
         else:
-            self._feature_map = ZZFeatureMap(num_qubits)
+            self._vforms.append(
+                ZZFeatureMap(self._num_qubits, 1, "linear"))
+
+    def _set_numq_ansatz(self, ansatz):
         if ansatz:
-            if ansatz.num_qubits != num_qubits:
+            if ansatz.num_qubits != self._num_qubits:
                 raise AttributeError("Incompatible num_qubits and ansatz!")
-            self._ansatz = ansatz
+            self._vforms.append(ansatz)
         else:
-            self._ansatz = TwoLocal(num_qubits)
+            self._vforms.append(
+                TwoLocal(self._num_qubits, 'ry', 'cx', 'linear', 1))
 
     def _config_with_feature_map(self, feature_map, ansatz):
+        self._check_input_compatibility(feature_map.num_qubits)
+        self._num_qubits = feature_map.num_qubits
         if ansatz:
             if feature_map.num_qubits != ansatz.num_qubits:
                 raise AttributeError("Incompatible feature_map and ansatz!")
-            self._feature_map = feature_map
-            self._ansatz = ansatz
-            self._num_qubits = feature_map.num_qubits
+            self._vforms.append(feature_map)
+            self._vforms.append(ansatz)
         else:
-            self._num_qubits = feature_map.num_qubits
-            self._feature_map = feature_map
-            self._ansatz = TwoLocal(feature_map.num_qubits)
+            self._vforms.append(feature_map)
+            self._vforms.append(
+                TwoLocal(self._num_qubits, 'ry', 'cx', 'linear', 1))
 
     def _config_with_ansatz(self, ansatz):
+        self._check_input_compatibility(ansatz.num_qubits)
         self._num_qubits = ansatz.num_qubits
-        self._ansatz = ansatz
-        self._feature_map = ZZFeatureMap(ansatz.num_qubits)
+        self._vforms.append(
+            ZZFeatureMap(self._num_qubits, 1, "linear"))
+        self._vforms.append(ansatz)
+
+    def _check_input_compatibility(self, num_qubits):
+        if self._input_dim % num_qubits != 0:
+            raise AttributeError("The dimensions of your input should be "
+                                 "divisible by the number of qubits.")
 
     @property
     def feature_map(self) -> QuantumCircuit:

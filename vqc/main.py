@@ -39,16 +39,13 @@ def main(args):
     valid_features = qdata.get_latent_space("valid")
     valid_labels = qdata.ae_data.vatarget
 
-    feature_map = choose_feature_map(args["feature_map"], args["nqubits"])
-    ansatz = choose_ansatz(args["ansatz"], args["nqubits"])
-
     backend = Aer.get_backend("aer_simulator_statevector")
     qinst = QuantumInstance(backend, seed_simulator=seed, seed_transpiler=seed)
 
-    vqc = VQC(args["nqubits"], feature_map, ansatz, warm_start=False,
+    vqc = VQC(args["nqubits"], args["feature_map"], args["ansatz"],
+              train_features.shape[2], warm_start=False,
               quantum_instance=qinst, loss=args["loss"],
               optimizer=args["optimizer"])
-    print(vqc)
     exit(1)
 
     print(tcols.OKCYAN + "Training the VQC..." + tcols.ENDC)
@@ -78,44 +75,6 @@ def train(vqc, train_features, train_labels, epochs):
     for epoch in range(epochs):
         for data_batch, target_batch in zip(train_features, train_labels):
             vqc.fit(data_batch, target_batch)
-
-
-def choose_feature_map(feature_map, nqubits):
-    """
-    Choose the feature map to run the vqc with.
-    @feature_map :: String specifying the name of the ansatz you want to use.
-                    Must be available in the qiskit library.
-    @nqubits     :: The number of qubits to configure this ansatz for.
-
-    returns :: Qiskit object of the feature map circuit.
-    """
-    switcher = {
-        "ZZFeatureMap": lambda: ZZFeatureMap(nqubits)
-    }
-    feature_map = switcher.get(feature_map, lambda: None)()
-    if feature_map is None:
-        raise TypeError("Cannot run with specified feature map!")
-
-    return feature_map
-
-
-def choose_ansatz(ansatz, nqubits):
-    """
-    Choose the ansatz to run the vqc with.
-    @ansatz  :: String specifying the name of the ansatz you want to use.
-                Must be available in the qiskit library.
-    @nqubits :: The number of qubits to configure this ansatz for.
-
-    returns :: Qiskit object of the ansatz circuit.
-    """
-    switcher = {
-        "TwoLocal": lambda: TwoLocal(nqubits)
-    }
-    ansatz = switcher.get(ansatz, lambda: None)()
-    if ansatz is None:
-        raise TypeError("Cannot run with specified ansatz!")
-
-    return ansatz
 
 
 def compute_model_scores(model, data_folds, output_folder) -> np.ndarray:

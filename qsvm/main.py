@@ -98,7 +98,7 @@ def compute_model_scores(model, data_folds, output_folder) -> np.ndarray:
     scores_time_fina = perf_counter()
     print(f"Completed in: {scores_time_fina-scores_time_init:2.2e} s")
 
-    path = "qsvm_models/" + output_folder + "/y_score_list.npy"
+    path = "trained_qsvms/" + output_folder + "/y_score_list.npy"
 
     print("Saving model scores array in: " + path)
     np.save(path, model_scores)

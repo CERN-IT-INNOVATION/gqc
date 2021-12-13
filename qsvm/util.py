@@ -6,7 +6,10 @@ from datetime import datetime
 #from typing import String FIXME caused: 
 # "ImportError: cannot import name 'String' from 'typing' 
 # (/work/vabelis/miniconda3/envs/ae_qml/lib/python3.8/typing.py)"
+from typing import Tuple
 from qiskit import IBMQ
+from qiskit import Aer
+from qiskit.utils import QuantumInstance
 from qiskit.providers.aer.noise import NoiseModel
 
 from .terminal_colors import tcols
@@ -83,7 +86,10 @@ def save_kernel_matrix():
     computations, simulations and hardware runs.
     '''
     # TODO
-def configure_backend(ibmq_token, backend_name):
+
+
+def connect_quantum_computer(ibmq_token, backend_name):
+    #FIXME should it be get_*?
     '''
     Load a IBMQ-experience backend using a token (IBM-CERN hub credentials)
     This backend (i.e. quantum computer) can either be used for running on
@@ -96,7 +102,7 @@ def configure_backend(ibmq_token, backend_name):
                               to non-pubic hardware.
     @backend_name (string) :: Quantum computer name.
     
-    Returns: Backend qiskit object.
+    Returns: IBMQBackend qiskit object.
     '''
     #FIXME Put import IBMQ here or top?
     print('Enabling IBMQ account using provided token...')
@@ -111,8 +117,8 @@ def configure_backend(ibmq_token, backend_name):
     return backend 
 
 
-#TODO What is the best place to define the method below
-def get_backend_configuration(backend):
+#TODO What is the best place to define the method below main vs util.
+def get_backend_configuration(backend) -> Tuple: #FIXME Tuple[blah,foo]?
     '''
     Gather backend configuration and properties from the calibration data.
     
@@ -120,10 +126,35 @@ def get_backend_configuration(backend):
     @backend :: The IBMQBackend object representing a quantum computer.
 
     Returns:
-            @noise_model from the 1-gate, 2-gate (CX) errors, thermal relaxa
-
+            @noise_model from the 1-gate, 2-gate (CX) errors, thermal relaxation,
+            etc.
+            @coupling_map: connectivity of the physical qubits.
+            @basis_gates: gates that are physically implemented on the hardware.
+            the transpiler decomposes the generic/abstract circuit to these
+            physical basis gates, taking into acount also the coupling_map.
     '''
     noise_model = NoiseModel.from_backend(backend)
     coupling_map = backend.configuration().coupling_map
     basis_gates = noise_model.basis_gates
     return noise_model, coupling_map, basis_gates
+
+
+def configure_quantum_instance(backend,seed) -> QuantumInstance:
+    '''
+    Prepare a QuantumInstance object for simulation with noise based on the 
+    real quantum computer calibration data.
+    '''
+    noise_model, coupling_map, basis_gates = \
+                get_backend_configuration(backend)
+    quantum_instance = QuantumInstance(
+        Aer.get_backend('aer_simulator'),
+        seed_simulator=seed,
+        seed_transpiler=seed,
+        optimization_level = 3, #maybe not hard code them?
+        basis_gates=basis_gates,
+        coupling_map=coupling_map,
+        noise_model=noise_model,
+        shots=10000
+    )
+    return quantum_instance
+    

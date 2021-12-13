@@ -50,17 +50,21 @@ def main(args):
     test_folds = qdata.get_kfolded_data("test")
 
     feature_map = u2Reuploading(nqubits=8, nfeatures=args["feature_dim"])
-    backend = util.configure_backend(args["ibmq_token"], args["backend_name"])
-    
-    quantum_instance = QuantumInstance(
-        backend, seed_simulator=seed, seed_transpiler=seed, 
-        optimization_level = 3, 
+    backend = util.connect_quantum_computer(
+        args["ibmq_token"], 
+        args["backend_name"]
     )
-
+    
+    #quantum_instance = QuantumInstance(
+    #    backend, seed_simulator=seed, seed_transpiler=seed, 
+    #    optimization_level = 3, 
+    #)
+    quantum_instance = util.configure_quantum_instance(backend,seed)
     kernel = QuantumKernel(feature_map=feature_map, 
                            quantum_instance=quantum_instance)
    #quantum_kernel_matrix = kernel.evaluate(x_vec = train_features)
     print(train_features.shape)
+    print(quantum_instance)
 '''
     qsvm = SVC(kernel=kernel, C=args["c_param"])
 

@@ -5,5 +5,5 @@ python ae_train --aetype vanilla --data_folder ../../data/ae_input/ --norm minma
 python ae_plot --data_folder ../../data/ae_input/ --norm minmax --nevents 7.20e+05 --model_path ./trained_aes/first_run/best_model.pt
 
 # Run the qsvm on the ae latent space.
-python qsvm_launch --data_folder ../../data/ae_input/ --norm minmax --nevents 7.20e+05 --model_path ./trained_aes/first_run/best_model.pt --output_folder test
+qsvm_launch --data_folder ../../data/ae_input/ --norm minmax --nevents 7.20e+05 --model_path ./trained_aes/first_run/best_model.pt --output_folder test
 

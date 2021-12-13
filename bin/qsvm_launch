@@ -6,10 +6,15 @@ import sys
 sys.path.append("..")
 
 from qsvm.main import main
+
+# Define token globally. It is needed to access IBM machines and calibration
+# info. Currently usin vbelis token.
+ibmq_token = '3b5456f5831866975f67f7019292c399bcfc011672533ddaec2ae2bddf5ab29c2a17a0c6c176fce1df2408cd07b3be938ede816b120e97a350f0bb6a11d0bf6e'
+
 parser = argparse.ArgumentParser(formatter_class=argparse.
                                  ArgumentDefaultsHelpFormatter)
 parser.add_argument("--data_folder", type=str,
-                    default='../../data/input_ae/',
+                    default='../../data/ae_input/',
                     help="The folder where the data is stored on the system.")
 parser.add_argument("--norm", type=str,
                     default='minmax',
@@ -19,6 +24,9 @@ parser.add_argument("--nevents", type=str,
                     help="The number of events of the norm file.")
 parser.add_argument('--model_path', type=str, required=True,
                     help="The path to the Auto-Encoder model.")
+parser.add_argument('--backend_name', type=str, required=True,
+                    help='The IBM backend. Could be a simulator'
+                    ', noise model, or a real quantum computer')
 parser.add_argument('--output_folder', required=True,
                     help='The name of the model to be saved.')
 parser.add_argument('--display_name', type=str, default='QSVM (8 qubits)',
@@ -33,6 +41,8 @@ args = {
     "norm": args.norm,
     "nevents": args.nevents,
     "model_path": args.model_path,
+    "backend_name": args.backend_name, #TODO find a way to choose simulators/noise models/NISQ devices
+    "ibmq_token": ibmq_token,
     "feature_dim": 16,
     "display_name": args.display_name,
     "output_folder": args.output_folder,

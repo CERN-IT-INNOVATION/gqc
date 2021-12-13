@@ -6,7 +6,7 @@ import warnings
 from time import perf_counter
 import numpy as np
 
-from qiskit import Aer
+from qiskit.providers.aer import AerSimulator
 from qiskit.utils import QuantumInstance
 from qiskit.utils import algorithm_globals
 from qiskit_machine_learning.kernels import QuantumKernel
@@ -18,6 +18,9 @@ from . import qdata as qd
 from . import util
 from .feature_map_circuits import u2Reuploading
 from . import plot
+
+#TODO good way to import any backend required (mock, noise model, or real)
+# without having if-statement imports.
 
 # Warnings are suppressed since qiskit aqua obfuscates the output of this
 # script otherwise (IBM's fault not ours.)
@@ -47,13 +50,19 @@ def main(args):
     test_folds = qdata.get_kfolded_data("test")
 
     feature_map = u2Reuploading(nqubits=8, nfeatures=args["feature_dim"])
-    backend = Aer.get_backend("aer_simulator_statevector")
-    instance = QuantumInstance(
-        backend, seed_simulator=seed, seed_transpiler=seed
+    backend = util.configure_backend(args["ibmq_token"], args["backend_name"])
+    
+    quantum_instance = QuantumInstance(
+        backend, seed_simulator=seed, seed_transpiler=seed, 
+        optimization_level = 3, 
     )
-    kernel = QuantumKernel(feature_map=feature_map, quantum_instance=instance)
 
-    qsvm = SVC(kernel=kernel.evaluate, C=args["c_param"])
+    kernel = QuantumKernel(feature_map=feature_map, 
+                           quantum_instance=quantum_instance)
+   #quantum_kernel_matrix = kernel.evaluate(x_vec = train_features)
+    print(train_features.shape)
+'''
+    qsvm = SVC(kernel=kernel, C=args["c_param"])
 
     print(tcols.OKCYAN + "Training the QSVM..." + tcols.ENDC)
     util.print_model_info(args["model_path"], qdata, qsvm)
@@ -78,7 +87,7 @@ def main(args):
 
     print(tcols.OKCYAN + "\n\nPlotting and saving ROC figure..." + tcols.ENDC)
     plot.roc_plot(scores, qdata, args["output_folder"], args["display_name"])
-
+'''
 
 def compute_model_scores(model, data_folds, output_folder) -> np.ndarray:
     """

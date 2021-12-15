@@ -3,14 +3,14 @@ VQC class implemented with qiskit and qiskit machine learning.
 """
 import numpy as np
 
-from typing import cast
-
 from qiskit import QuantumCircuit
-from qiskit.circuit.library import ZZFeatureMap, TwoLocal
+from qiskit.circuit.library import TwoLocal
 
 from qiskit_machine_learning.neural_networks import CircuitQNN
 from qiskit_machine_learning.algorithms.classifiers.neural_network_classifier \
     import NeuralNetworkClassifier
+
+from .zzfeaturemap import ZZFeatureMap
 
 
 class VQC(NeuralNetworkClassifier):
@@ -28,39 +28,41 @@ class VQC(NeuralNetworkClassifier):
         @warm_start    :: Use weights from previous fit to start next fit.
         @initial_point :: Initial point for the optimizer to start from.
         """
-
-        # Perform initialisation checks on variables.
-        if num_qubits is None and feature_map is None and ansatz is None:
-            raise AttributeError("Input num_qubits, feature_map, or ansatz!")
+        self._check_input_arguments(num_qubits, feature_map, ansatz)
+        self._roman_letters = 'abcdefghijklmnopqrstuvwxyz'
+        self._greek_letters = 'αβγδεζηθικλμνξοπρστυφχψω'
 
         self._input_dim = input_dim
         self._num_qubits = None
-        self._vforms = []
+
+        self._input_params = []
+        self._weight_params = []
 
         self._configure_vqc_circuit(num_qubits, feature_map, ansatz)
 
         # Construct the quantum circuit.
         self._circuit = QuantumCircuit(self._num_qubits)
         for feature_map, ansatz in zip(self._vforms[0::2], self._vforms[1::2]):
-            print(feature_map)
+            self._input_params += feature_map.parameters
+            self._weight_params += ansatz.parameters
             self._circuit.compose(feature_map, inplace=True)
             self._circuit.compose(ansatz, inplace=True)
 
-        print(self._circuit)
         # Construct the circuit of the QNN.
         neural_network = CircuitQNN(
             self._circuit,
-            self._feature_map.parameters,
-            self._ansatz.parameters,
+            self._input_params,
+            self._weight_params,
             interpret=self._get_interpret(2),
             output_shape=2,
             quantum_instance=quantum_instance,
-            input_gradients=True,
+            input_gradients=False,
         )
+
         super().__init__(
             neural_network=neural_network,
             loss=loss,
-            one_hot=False,
+            one_hot=True,
             optimizer=optimizer,
             warm_start=warm_start,
             initial_point=initial_point,
@@ -68,83 +70,125 @@ class VQC(NeuralNetworkClassifier):
 
     def _configure_vqc_circuit(self, num_qubits, feature_map, ansatz):
         if num_qubits:
-            self._check_input_compatibility(num_qubits)
-            self._config_with_num_qubits(num_qubits, feature_map, ansatz)
+            return self._config_with_num_qubits(num_qubits, feature_map, ansatz)
         else:
             if feature_map:
-                self._config_with_feature_map(feature_map, ansatz)
+                return self._config_with_feature_map(feature_map, ansatz)
             else:
-                self._config_with_ansatz(ansatz)
+                return self._config_with_ansatz(ansatz)
 
     def _config_with_num_qubits(self, num_qubits, feature_map, ansatz):
+        self._check_input_compatibility(num_qubits)
         self._num_qubits = num_qubits
+        vforms = []
 
         for form_nb in range(int(self._input_dim/num_qubits)):
-            self._set_numq_feature_map(feature_map)
-            self._set_numq_ansatz(ansatz)
+            vforms.append(self._set_feature_map(feature_map))
+            vforms.append(self._set_ansatz(ansatz))
 
-    def _set_numq_feature_map(self, feature_map):
-        if feature_map:
-            if feature_map.num_qubits != self._num_qubits:
-                raise AttributeError("Incompat num_qubits and feature_map!")
-            self._vforms.append(feature_map)
-        else:
-            self._vforms.append(
-                ZZFeatureMap(self._num_qubits, 1, "linear"))
-
-    def _set_numq_ansatz(self, ansatz):
-        if ansatz:
-            if ansatz.num_qubits != self._num_qubits:
-                raise AttributeError("Incompatible num_qubits and ansatz!")
-            self._vforms.append(ansatz)
-        else:
-            self._vforms.append(
-                TwoLocal(self._num_qubits, 'ry', 'cx', 'linear', 1))
+        return vforms
 
     def _config_with_feature_map(self, feature_map, ansatz):
         self._check_input_compatibility(feature_map.num_qubits)
         self._num_qubits = feature_map.num_qubits
-        if ansatz:
-            if feature_map.num_qubits != ansatz.num_qubits:
-                raise AttributeError("Incompatible feature_map and ansatz!")
-            self._vforms.append(feature_map)
-            self._vforms.append(ansatz)
-        else:
-            self._vforms.append(feature_map)
-            self._vforms.append(
-                TwoLocal(self._num_qubits, 'ry', 'cx', 'linear', 1))
+        vforms = []
+
+        for form_nb in range(int(self._input_dim/num_qubits)):
+            vforms.append(self._set_feature_map(feature_map))
+            vforms.append(self._set_ansatz(ansatz))
+
+        return vforms
 
     def _config_with_ansatz(self, ansatz):
         self._check_input_compatibility(ansatz.num_qubits)
         self._num_qubits = ansatz.num_qubits
-        self._vforms.append(
-            ZZFeatureMap(self._num_qubits, 1, "linear"))
-        self._vforms.append(ansatz)
+        vforms = []
+
+        for form_nb in range(int(self._input_dim/num_qubits)):
+            vforms.append(self._set_feature_map(feature_map))
+            vforms.append(self._set_ansatz(ansatz))
+
+        return vforms
+
+    def _set_feature_map(self, feature_map):
+        if feature_map:
+            if feature_map.num_qubits != self._num_qubits:
+                raise AttributeError("Incompat num_qubits and feature_map!")
+            return feature_map
+
+        param_prefix = self._roman_letters[-1]
+        self._roman_letters = self._roman_letters[:-1]
+
+        return ZZFeatureMap(self._num_qubits, 1, "linear",
+                            parameter_prefix=param_prefix)
+
+    def _set_ansatz(self, ansatz):
+        if ansatz:
+            if ansatz.num_qubits != self._num_qubits:
+                raise AttributeError("Incompatible num_qubits and ansatz!")
+            return ansatz
+
+        param_prefix = self._greek_letters[-1]
+        self._greek_letters = self._greek_letters[:-1]
+
+        return TwoLocal(self._num_qubits, 'ry', 'cx', 'linear', 1,
+                        parameter_prefix=param_prefix)
+
+    @staticmethod
+    def _check_input_arguments(num_qubits, feature_map, ansatz):
+        if num_qubits is None and feature_map is None and ansatz is None:
+            raise AttributeError("Input num_qubits, feature_map, or ansatz!")
 
     def _check_input_compatibility(self, num_qubits):
+        """
+        Check if the input dimension is compatible with the number of qubits
+        that are being used.
+        @num_qubits :: Int of the number of qubits used in the vqc.
+        """
         if self._input_dim % num_qubits != 0:
             raise AttributeError("The dimensions of your input should be "
                                  "divisible by the number of qubits.")
 
-    @property
-    def feature_map(self) -> QuantumCircuit:
-        """Returns the used feature map."""
-        return self._feature_map
+    def _encode_onehot(self, target):
+        """
+        Reshape the target that such that it follows onehot encoding.
+        @target :: Numpy array with target data.
+        """
+        onehot_target = np.zeros((target.size, int(target.max()+1)))
+        onehot_target[np.arange(target.size), target.astype(int)] = 1
+
+        return onehot_target
+
+    def _check_target_encoding_onehot(self, target):
+        """
+        This class is hardcoded to only work with onehot encoding.
+        Thus, check if the provided target data is onehot encoded.
+        @target :: Numpy array containing the target data.
+        """
+        num_classes = len(np.unique(y, axis=0))
+        if num_classes == target.shape[1]:
+            return 1
+        return 0
 
     @property
-    def ansatz(self) -> QuantumCircuit:
-        """Returns the used ansatz."""
-        return self._ansatz
+    def input_dim(self):
+        return self._input_dim
 
     @property
     def circuit(self) -> QuantumCircuit:
-        """Returns the underlying quantum circuit."""
         return self._circuit
 
     @property
     def num_qubits(self) -> int:
-        """Returns the number of qubits used by ansatz and feature map."""
         return self.circuit.num_qubits
+
+    @property
+    def input_params(self):
+        return self._input_params
+
+    @property
+    def weight_params(self):
+        return self._weight_params
 
     def fit(self, X: np.ndarray, y: np.ndarray):
         """
@@ -155,12 +199,19 @@ class VQC(NeuralNetworkClassifier):
 
         returns: self: returns a trained classifier.
         """
+        if not self._check_target_encoding_onehot(y):
+            y = self._encode_onehot(y)
+
         num_classes = len(np.unique(y, axis=0))
-        cast(CircuitQNN, self._neural_network).set_interpret(
+        self._neural_network.set_interpret(
             self._get_interpret(num_classes), num_classes)
+
         return super().fit(X, y)
 
     def _get_interpret(self, num_classes):
+        """
+
+        """
         def parity(x, num_classes=num_classes):
             return "{:b}".format(x).count("1") % num_classes
 

@@ -58,6 +58,7 @@ def print_model_info(ae_path, qdata, vqc):
     print(f"Data path: {qdata.ae_data.data_folder}")
     print(
         f"ntrain = {len(qdata.ae_data.trtarget)}, "
-        f"ntest = {len(qdata.ae_data.tetarget)}, "
+        f"nvalid = {len(qdata.ae_data.vatarget)}, "
+        f"ntest  = {len(qdata.ae_data.tetarget)}, "
     )
     print("-------------------------------------------\n")

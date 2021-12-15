@@ -238,5 +238,6 @@ class AE_data:
         data_sig, data_bkg = self.split_sig_bkg(data, target)
         data = np.vstack((data_sig[:nevents, :], data_bkg[:nevents, :]))
         target = np.concatenate((np.ones(nevents), np.zeros(nevents)))
+        shuffling = np.random.permutation(len(target))
 
-        return data, target
+        return data[shuffling], target[shuffling]

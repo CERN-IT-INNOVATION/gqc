@@ -7,6 +7,8 @@ sys.path.append("..")
 
 
 from vqc.main import main
+from vqc.zzfeaturemap import ZZFeatureMap
+from qiskti.circuit.library import TwoLocal
 parser = argparse.ArgumentParser(formatter_class=argparse.
                                  ArgumentDefaultsHelpFormatter)
 parser.add_argument("--data_folder", type=str, default='../../data/input_ae/',
@@ -27,8 +29,6 @@ parser.add_argument('--batch_size', type=int, default=50,
                     help="The batch size to train the vqc with.")
 parser.add_argument('--loss', type=str, default="cross_entropy",
                     help="The loss function for the vqc. Defs to xentropy.")
-parser.add_argument('--optimizer', type=str, default=None,
-                    help="The optimizer for training. Defs to SLSQP.")
 
 args = parser.parse_args()
 
@@ -47,7 +47,9 @@ args = {
     "epochs": args.epochs,
     "batch_size": args.batch_size,
     "loss": args.loss,
-    "optimizer": args.optimizer
+    "train_events": 1000,
+    "valid_events": 400,
+    "test_events": 600,
 }
 
 main(args)

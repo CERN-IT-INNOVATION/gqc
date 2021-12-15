@@ -146,3 +146,14 @@ class qdata:
         else:
             raise RuntimeError("Batchify does not cover arrays with "
                                "dimension larger than 2.")
+
+    @staticmethod
+    def to_onehot(target):
+        """
+        Reshape the target that such that it follows onehot encoding.
+        @target :: Numpy array with target data.
+        """
+        onehot_target = np.zeros((target.size, int(target.max()+1)))
+        onehot_target[np.arange(target.size), target.astype(int)] = 1
+
+        return onehot_target

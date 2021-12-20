@@ -10,6 +10,7 @@ from qiskit.providers.aer import AerSimulator
 from qiskit.utils import QuantumInstance
 from qiskit.utils import algorithm_globals
 from qiskit_machine_learning.kernels import QuantumKernel
+#from qiskit.circuit import ParameterVector
 
 from sklearn.svm import SVC
 
@@ -50,22 +51,33 @@ def main(args):
     test_folds = qdata.get_kfolded_data("test")
 
     feature_map = u2Reuploading(nqubits=8, nfeatures=args["feature_dim"])
-    backend = util.connect_quantum_computer(
-        args["ibmq_token"], 
-        args["backend_name"]
+    #Virtual to physical qubits, ordering is from 0->(n_qubits-1)
+    initial_layout = [9,8,11,14,16,19,22,25]
+    #TODO make the config adjustable from  argparse
+    config = {'seed_transpiler':seed, 'seed_simulator':seed ,
+              'optimization_level':3, 'initial_layout':initial_layout,
+              'shots':5000}
+    quantum_instance = util.configure_quantum_instance(
+        ibmq_token=args["ibmq_token"],
+        sim_type = args["sim_type"],
+        backend_name= args["backend_name"],
+        **config
     )
-    
-    #quantum_instance = QuantumInstance(
-    #    backend, seed_simulator=seed, seed_transpiler=seed, 
-    #    optimization_level = 3, 
-    #)
-    quantum_instance = util.configure_quantum_instance(backend,seed)
+    from qiskit.visualization import plot_circuit_layout
+    print(quantum_instance)
+    print(quantum_instance.transpile(feature_map)[0].draw(
+          output='text'))
     kernel = QuantumKernel(feature_map=feature_map, 
                            quantum_instance=quantum_instance)
+ '''
+    feature_map_params = ParameterVector(
+        "par_x", 
+        self._feature_map.num_parameters
+        )
+    qc_kernel = kernel.construct_circuit()
    #quantum_kernel_matrix = kernel.evaluate(x_vec = train_features)
-    print(train_features.shape)
-    print(quantum_instance)
-'''
+    
+
     qsvm = SVC(kernel=kernel, C=args["c_param"])
 
     print(tcols.OKCYAN + "Training the QSVM..." + tcols.ENDC)

@@ -61,4 +61,6 @@ def print_model_info(ae_path, qdata, vqc):
         f"nvalid = {len(qdata.ae_data.vatarget)}, "
         f"ntest  = {len(qdata.ae_data.tetarget)}, "
     )
+    print("The VQC circuit about to be trained.")
+    print(vqc.circuit())
     print("-------------------------------------------\n")

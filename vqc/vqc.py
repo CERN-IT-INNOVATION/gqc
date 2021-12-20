@@ -1,6 +1,9 @@
-"""
-VQC class implemented with qiskit and qiskit machine learning.
-"""
+# VQC class implemented with qiskit and qiskit machine learning.
+# If the number of features is larger than the number of available qubits,
+# the circuit is assembled in such a way to use data reouploading.
+# This is highly experimental and certain hacks are employed to make this
+# possible.
+
 import numpy as np
 
 from qiskit import QuantumCircuit
@@ -69,6 +72,15 @@ class VQC(NeuralNetworkClassifier):
         )
 
     def _configure_vqc_circuit(self, num_qubits, feature_map, ansatz):
+        """
+        Father method for all the configure methods below.
+        @num_qubits  :: Int of the number of qubits to be used.
+        @feature_map :: The feature map object to be used. Can be none.
+        @ansatz      :: The ansatz object to be used. Can be none.
+
+        returns :: List of the variational forms used to construct the
+                   vqc qiskit circuit.
+        """
         if num_qubits:
             return self._config_with_num_qubits(num_qubits, feature_map, ansatz)
         else:
@@ -78,6 +90,17 @@ class VQC(NeuralNetworkClassifier):
                 return self._config_with_ansatz(ansatz)
 
     def _config_with_num_qubits(self, num_qubits, feature_map, ansatz):
+        """
+        Configure the vqc given the number of qubits. If the feature map
+        and ansatz are none, choose default ones.
+
+        @num_qubits  :: Int of the number of qubits to be used.
+        @feature_map :: The feature map object to be used. Can be none.
+        @ansatz      :: The ansatz object to be used. Can be none.
+
+        returns :: List of the variational forms used to construct the
+                   vqc qiskit circuit.
+        """
         self._check_input_compatibility(num_qubits)
         self._num_qubits = num_qubits
         vforms = []
@@ -89,6 +112,16 @@ class VQC(NeuralNetworkClassifier):
         return vforms
 
     def _config_with_feature_map(self, feature_map, ansatz):
+        """
+        Configure the vqc given no number of qubits but a feature map instead.
+        The number of qubits are taken from the feature map attributes.
+        The ansatz, if not given, is defaulted to TwoLocal.
+        @feature_map :: The feature map object to be used. Can be none.
+        @ansatz      :: The ansatz object to be used. Can be none.
+
+        returns :: List of the variational forms used to construct the
+                   vqc qiskit circuit.
+        """
         self._check_input_compatibility(feature_map.num_qubits)
         self._num_qubits = feature_map.num_qubits
         vforms = []
@@ -100,6 +133,15 @@ class VQC(NeuralNetworkClassifier):
         return vforms
 
     def _config_with_ansatz(self, ansatz):
+        """
+        Configure the vqc given no number of qubits to be used or feature map.
+        Then, an ansatz must be given. The number of qubits are used from the
+        ansatz. The feature map defaults to ZZFeatureMap.
+        @ansatz      :: The ansatz object to be used. Can be none.
+
+        returns :: List of the variational forms used to construct the
+                   vqc qiskit circuit.
+        """
         self._check_input_compatibility(ansatz.num_qubits)
         self._num_qubits = ansatz.num_qubits
         vforms = []
@@ -111,6 +153,14 @@ class VQC(NeuralNetworkClassifier):
         return vforms
 
     def _set_feature_map(self, feature_map):
+        """
+        Checks if the feature map exists. If it does, check consistency with
+        the available number of qubits in the circuit and return it.
+        Otherwise, if the feature map does not exist, default to ZZFeatureMap.
+        @feature_map :: The feature map object to be used. Can be none.
+
+        returns :: Qiskit circuit object of a feature map.
+        """
         if feature_map:
             if feature_map.num_qubits != self._num_qubits:
                 raise AttributeError("Incompat num_qubits and feature_map!")
@@ -123,6 +173,14 @@ class VQC(NeuralNetworkClassifier):
                             parameter_prefix=param_prefix)
 
     def _set_ansatz(self, ansatz):
+        """
+        Check if the ansatz exists. If it does, check consistency with the
+        available number of qubits and return it.
+        Otherwise, if the ansatz does not exist, default to TwoLocal.
+        @ansatz :: The ansatz object to be used. Can be none.
+
+        returns :: Qiskit circuit object of an ansatz.
+        """
         if ansatz:
             if ansatz.num_qubits != self._num_qubits:
                 raise AttributeError("Incompatible num_qubits and ansatz!")
@@ -136,6 +194,10 @@ class VQC(NeuralNetworkClassifier):
 
     @staticmethod
     def _check_input_arguments(num_qubits, feature_map, ansatz):
+        """
+        Check if either a number of qubits, a feature map, or an ansatz was
+        given by the user.
+        """
         if num_qubits is None and feature_map is None and ansatz is None:
             raise AttributeError("Input num_qubits, feature_map, or ansatz!")
 
@@ -210,7 +272,17 @@ class VQC(NeuralNetworkClassifier):
 
     def _get_interpret(self, num_classes):
         """
-
+        In the current vqc implementation, either no measurements are done
+        (the feature vectors are available), or every measurement is done,
+        when hardware or a noisy simulation is used.
+        Thus, we need to map the output of the circuit to something that
+        we can compare with our target labels. Here's where this parity
+        method comes it, which maps the even bits to background and the odd
+        bits to signal, thus returning two numbers per data sample.
+        These two numbers are the probability to be signal and background.
+        This then requires the target to be one-hot encoded.
+        @num_classes :: Int of the number of classes that are present in the
+                        data, i.e., for one signal and one bkg this is 2.
         """
         def parity(x, num_classes=num_classes):
             return "{:b}".format(x).count("1") % num_classes

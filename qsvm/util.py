@@ -9,7 +9,8 @@ from qiskit import Aer
 from qiskit.utils import QuantumInstance
 from qiskit.providers.aer.noise import NoiseModel
 from qiskit.providers.exceptions import QiskitBackendNotFoundError
-#from qiskit
+from qiskit.circuit import ParameterVector
+from qiskit.visualization import plot_circuit_layout
 
 from .terminal_colors import tcols
 
@@ -79,8 +80,57 @@ def save_model(qdata, qsvm, train_acc, test_acc, output_folder, ae_path):
     """
     save_qsvm(qsvm, "qsvm_models/" + output_folder + "/qsvm_model")
 
-#def quatum_kernel_circuit():
-#    return 
+
+def get_quatum_kernel_circuit(quantum_kernel, path, output_format='mpl',
+                                **kwargs):
+    '''
+    Print the transpiled quantum kernel circuit
+    Args:
+         @quantum_kernel (QuantumKernel) :: QuantumKernel object used in the
+                                            QSVM training.
+         @path (str)                     :: Path to save the output figure.
+         @output_format (str)            :: The format of the image. Formats:
+                                            'text', 'mlp', 'latex', 'latex_source'.
+         @kwargs                         :: Keyword arguemnts for 
+                                            QuantumCircuit.draw()
+    '''
+    n_params = quantum_kernel.feature_map.num_parameters
+    feature_map_params_x = ParameterVector("x", n_params)
+    feature_map_params_y = ParameterVector("y", n_params)
+    qc_kernel_circuit = quantum_kernel.construct_circuit(
+    feature_map_params_x,
+    feature_map_params_y
+    )
+    qc_transpiled = quantum_kernel.quantum_instance\
+                    .transpile(qc_kernel_circuit)[0]
+    #save the circuit image FIXME save in qsvm_model/model_folder/
+    path += '/quantum_kernel_circuit_plot'
+    print('\nSaving quantum kernel circuit in: ', path)
+    qc_transpiled.draw(
+        output = output_format,
+        filename = path,
+        **kwargs,
+    )
+    return qc_transpiled
+
+#FIXME plot_circuit_layout() raises error because gets None out of:
+# cmap = backend.configuration().coupling_map in the source code/
+# If we do it with AerSimulator() instead of NoiseModel then it should
+# work.
+def save_circuit_physical_layout(circuit, backend, save_path):
+    '''
+    Plot and save the quantum circuit and its physical layout on the backend 
+    .
+    Args:
+         @circuit (QuantumCircuit) :: Circuit to plot on the backend.
+         @backend                  :: The physical quantum computer or 
+                                      thereof.
+         @save_path (str)          :: Path to save figure.
+    '''
+
+    fig = plot_circuit_layout(circuit,backend)
+    save_path += '/circuit_physical_layout'
+    fig.savefig(save_path)
 
 def save_kernel_matrix():
     '''
@@ -163,7 +213,7 @@ def ideal_simulation(seed) -> QuantumInstance:
     '''
 
 #FIXME backend = AerSimulator.from_backend(quantum_computer_backend)
-# ^ Panos recommendation.
+# ^ Panos recommendation. to do noisy sim efficiently.
 def noisy_simulation(ibmq_token,backend_name,**kwargs)\
                       -> QuantumInstance:
     '''

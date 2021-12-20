@@ -10,7 +10,6 @@ from qiskit.providers.aer import AerSimulator
 from qiskit.utils import QuantumInstance
 from qiskit.utils import algorithm_globals
 from qiskit_machine_learning.kernels import QuantumKernel
-#from qiskit.circuit import ParameterVector
 
 from sklearn.svm import SVC
 
@@ -38,9 +37,9 @@ def main(args):
         args["norm"],
         args["nevents"],
         args["model_path"],
-        train_events=600,
-        valid_events=720,
-        test_events=720,
+        train_events=4,
+        valid_events=4,
+        test_events=4,
         kfolds=5,
     )
 
@@ -51,9 +50,12 @@ def main(args):
     test_folds = qdata.get_kfolded_data("test")
 
     feature_map = u2Reuploading(nqubits=8, nfeatures=args["feature_dim"])
-    #Virtual to physical qubits, ordering is from 0->(n_qubits-1)
-    initial_layout = [9,8,11,14,16,19,22,25]
-    #TODO make the config adjustable from  argparse
+    #FIXME Virtual to physical qubits, ordering is from 0->(n_qubits-1)
+    #initial_layout = [9,8,11,14,16,19,22,25]
+    initial_layout = None
+    # TODO make the config adjustable from  argparse
+    # FIXME if I choose sim_type = 'ideal' then it errors due to unexpected 
+    # keyword argument 'seed_transpiler'
     config = {'seed_transpiler':seed, 'seed_simulator':seed ,
               'optimization_level':3, 'initial_layout':initial_layout,
               'shots':5000}
@@ -63,42 +65,45 @@ def main(args):
         backend_name= args["backend_name"],
         **config
     )
-    from qiskit.visualization import plot_circuit_layout
-    print(quantum_instance)
-    print(quantum_instance.transpile(feature_map)[0].draw(
-          output='text'))
+    #print(quantum_instance)
     kernel = QuantumKernel(feature_map=feature_map, 
                            quantum_instance=quantum_instance)
- '''
-    feature_map_params = ParameterVector(
-        "par_x", 
-        self._feature_map.num_parameters
-        )
-    qc_kernel = kernel.construct_circuit()
-   #quantum_kernel_matrix = kernel.evaluate(x_vec = train_features)
-    
 
-    qsvm = SVC(kernel=kernel, C=args["c_param"])
+    qc_transpiled = util.get_quatum_kernel_circuit(quantum_kernel=kernel, 
+                                                   path='.')
+    #TODO errors for the moment. Need to port to AerSimulator.from_backend()
+    #util.save_circuit_physical_layout(qc_transpiled,quantum_instance.backend,
+    #                                  '.')
+    #print(len(initial_layout))
+    print(len(train_features[0]))
+    print(feature_map.num_qubits)
+    quantum_kernel_matrix = kernel.evaluate(x_vec = train_features)
+    
+    qsvm = SVC(kernel='precomputed', C=args["c_param"])
 
     print(tcols.OKCYAN + "Training the QSVM..." + tcols.ENDC)
     util.print_model_info(args["model_path"], qdata, qsvm)
 
     train_time_init = perf_counter()
-    qsvm.fit(train_features, train_labels)
+    qsvm.fit(quantum_kernel_matrix, train_labels)
     train_time_fina = perf_counter()
     print(f"Training completed in: {train_time_fina-train_time_init:.2e} s")
 
-    train_acc = qsvm.score(train_features, train_labels)
-    test_acc = qsvm.score(test_features, test_labels)
+    train_acc = qsvm.score(quantum_kernel_matrix, train_labels)
+    #evaluate test kernel matrix
+    kernel_matrix_test = kernel.evaluate(x_vec=test_features,y_vec=train_features)
+    test_acc = qsvm.score(kernel_matrix_test, test_labels)
     util.print_accuracies(test_acc, train_acc)
 
+    #TODO change naming convention to include simulation type
     args["output_folder"] = args["output_folder"] + f"_c={qsvm.C}"
     util.create_output_folder(args["output_folder"])
     util.save_qsvm(qsvm, "qsvm_models/" + args["output_folder"] + "/model")
-
+'''
     print(tcols.OKCYAN +
           "\n\nComputing accuracies on kfolded test data..." +
           tcols.ENDC)
+    #TODO with kernel.evaluate()
     scores = compute_model_scores(qsvm, test_folds, args["output_folder"])
 
     print(tcols.OKCYAN + "\n\nPlotting and saving ROC figure..." + tcols.ENDC)

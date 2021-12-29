@@ -11,7 +11,7 @@ __pycache__
 
 # Ouput
 trained_aes/
-qsvm_models/
+models/
 
 # Logs
 logs/

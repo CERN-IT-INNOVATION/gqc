@@ -64,5 +64,5 @@ def roc_plot(scores, qdata_loader, output_folder, model_name):
     plt.ylim([0.0, 1.0])
     plt.tight_layout()
     plt.legend()
-    f1.savefig("qsvm_models/" + output_folder + "/roc_plot.pdf")
+    f1.savefig("models/" + output_folder + "/roc_plot.pdf")
     plt.close()

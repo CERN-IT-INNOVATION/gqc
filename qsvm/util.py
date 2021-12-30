@@ -93,6 +93,9 @@ def get_quatum_kernel_circuit(quantum_kernel, path, output_format='mpl',
                                             'text', 'mlp', 'latex', 'latex_source'.
          @kwargs                         :: Keyword arguemnts for 
                                             QuantumCircuit.draw()
+    Returns:
+            Transpiled QuantumCircuit that represents the quantum kernel.
+            i.e., the circuit that will be executed on the backend.
     '''
     n_params = quantum_kernel.feature_map.num_parameters
     feature_map_params_x = ParameterVector("x", n_params)

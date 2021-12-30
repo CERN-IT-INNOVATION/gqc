@@ -1,14 +1,14 @@
 #!/usr/bin/env python
 
-# Run script of the qsvm. See the main file for more details on how it works.
+# Run script of the qsvm  training. See the main file for more details 
+# on how it works.
+
 import argparse
 import sys
 sys.path.append("..")
 
-from qsvm.main import main
+from qsvm.main import main #TODO rename the module to train?
 
-# Define token globally. It is needed to access IBM machines and calibration
-# info. Currently usin vbelis token.
 
 parser = argparse.ArgumentParser(formatter_class=argparse.
                                  ArgumentDefaultsHelpFormatter)
@@ -40,7 +40,8 @@ parser.add_argument('--c_param', type=float, default=1.,
 
 args = parser.parse_args()
 
-#
+# Define token globally. It is needed to access IBM machines and calibration
+# info. Currently using vbelis token.
 ibmq_token = '3b5456f5831866975f67f7019292c399bcfc011672533ddaec2ae2bddf5ab29c2a17a0c6c176fce1df2408cd07b3be938ede816b120e97a350f0bb6a11d0bf6e'
 
 args = {

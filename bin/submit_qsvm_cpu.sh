@@ -39,7 +39,7 @@ if [ -z "${n}" ] || [ -z "${s}" ] || [ -z "${p}" ] || [ -z "${d}" ] || [ -z "${c
     usage
 fi
 
-source /work/deodagiu/miniconda/bin/activate ae_qml
+source /work/vabelis/miniconda3/bin/activate ae_qml
 export PYTHONUNBUFFERED=TRUE
-python qsvm_launch --data_folder /work/deodagiu/data/ae_input --norm ${n} --nevents ${s} --model_path ${p} --display_name ${d} --c_param ${c} --output_folder ${f}
+./qsvm_launch --data_folder /work/vabelis/data/ae_input --norm ${n} --nevents ${s} --model_path ${p} --display_name ${d} --c_param ${c} --output_folder ${f}
 export PYTHONUNBUFFERED=FALSE

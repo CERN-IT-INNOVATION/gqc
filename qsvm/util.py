@@ -1,6 +1,7 @@
 # Utility methods for the qsvm.
 
 import os
+import warnings
 import joblib
 from datetime import datetime
 from typing import Tuple, Type
@@ -31,8 +32,8 @@ def create_output_folder(output_folder):
     @output_folder :: Name of the output folder for this particular
                       version of the qsvm.
     """
-    if not os.path.exists("qsvm_models/" + output_folder):
-        os.makedirs("qsvm_models/" + output_folder)
+    if not os.path.exists("models/" + output_folder):
+        os.makedirs("models/" + output_folder)
 
 
 def save_qsvm(model, path):
@@ -106,7 +107,7 @@ def get_quatum_kernel_circuit(quantum_kernel, path, output_format='mpl',
     )
     qc_transpiled = quantum_kernel.quantum_instance\
                     .transpile(qc_kernel_circuit)[0]
-    #save the circuit image FIXME save in qsvm_model/model_folder/
+    
     path += '/quantum_kernel_circuit_plot'
     print('\nSaving quantum kernel circuit in: ', path)
     qc_transpiled.draw(
@@ -158,7 +159,7 @@ def connect_quantum_computer(ibmq_token, backend_name):
     
     Returns: IBMQBackend qiskit object.
     '''
-    #FIXME it is printed in one go together with the other print()
+
     print('Enabling IBMQ account using provided token...', end="")
     IBMQ.enable_account(ibmq_token)
     provider = IBMQ.get_provider(hub='ibm-q-cern', group='internal', 
@@ -166,7 +167,8 @@ def connect_quantum_computer(ibmq_token, backend_name):
     try: 
         quantum_computer_backend = provider.get_backend(backend_name)
     except QiskitBackendNotFoundError:
-        raise AttributeError('Backend name not found in provider\'s list')
+        raise AttributeError(tcols.FAIL + 'Backend name not found in provider\'s '
+                             'list'+tcols.ENDC)
     print(tcols.OKGREEN +' Loaded IBMQ backend: ' + backend_name+'.' + tcols.ENDC)
     return quantum_computer_backend
 
@@ -192,19 +194,19 @@ def get_backend_configuration(backend) -> Tuple:
     return noise_model, coupling_map, basis_gates
 
 
-def ideal_simulation(seed) -> QuantumInstance:
+def ideal_simulation(**kwargs) -> QuantumInstance:
     '''
     Defines QuantumInstance for an ideal (statevector) simulation (no noise, no
     sampling statistics uncertainties). 
     
     Args:
-         @seed :: FIXME Does seed matter for statevector simulation and QuantumKernel?
+         Keyword arguments of the QuantumInstance object.
     '''
     
-    print('Initialising ideal (statevector) simulation.')
+    print('\nInitialising ideal (statevector) simulation.')
     quantum_instance = QuantumInstance(
          backend = Aer.get_backend('aer_simulator_statevector'),
-         seed_simulator = seed
+         **kwargs
          )
     return quantum_instance
 
@@ -227,6 +229,7 @@ def noisy_simulation(ibmq_token,backend_name,**kwargs)\
          @qubit_layout :: Map of abstract circuit qubits to physical qubits as
                           defined on the hardware.
     '''
+    print('\nInitialising noisy simulation.')
     backend = connect_quantum_computer(ibmq_token,backend_name)
     noise_model, coupling_map, basis_gates = \
                 get_backend_configuration(backend)
@@ -254,6 +257,7 @@ def hardware_run(backend_name, ibmq_token, **kwargs):
     Returns:
             QuantumInstance object with quantum computer backend.
     '''
+    print('\nInitialising run on a quantum computer.')
     quantum_computer_backend = connect_quantum_computer(ibmq_token,backend_name)
     quantum_instance = QuantumInstance(
         backend = quantum_computer_backend, 
@@ -262,17 +266,19 @@ def hardware_run(backend_name, ibmq_token, **kwargs):
     return quantum_instance
 
 
-def configure_quantum_instance(ibmq_token, sim_type,backend_name = None,
+def configure_quantum_instance(ibmq_token, run_type,backend_name = None,
                                 **kwargs) -> QuantumInstance:
     '''
     Gives the final quantum_instance required for running the Quantum
     kernel.
     '''
-    #FIXME better way to write the if-statements below
-    if sim_type == 'ideal' and backend_name is not None:
-        raise TypeError(tcols.FAIL + 'Why give real backend when you want' 
-                        'ideal simulation?' +tcols.ENDC )
-    if (sim_type == 'noisy' or sim_type == 'hardware') and (backend_name is None):
+    #FIXME better way to write the if-statements below?
+    #FIXME sloppy work around now put string 'none' for ideal simulation
+    #forced to put something due to the execution bash script.
+    if run_type == 'ideal' and backend_name is not None:
+        warnings.warn(tcols.WARNING + 'Why give real backend when you want' 
+                        'ideal simulation?' +tcols.ENDC)
+    if (run_type == 'noisy' or run_type == 'hardware') and (backend_name is None):
         raise TypeError(tcols.FAIL + 'Need to specify backend name (\'ibmq_<city_name>\')'
                         ' when running a noisy simulation or running on hardware!'
                         + tcols.ENDC)
@@ -284,11 +290,12 @@ def configure_quantum_instance(ibmq_token, sim_type,backend_name = None,
                                                     backend_name=backend_name,
                                                     **kwargs),
             'hardware' : lambda: hardware_run(backend_name = backend_name, 
-                                              ibmq_token = ibmq_token, **kwargs
+                                              ibmq_token = ibmq_token, 
+                                              **kwargs
                 )
         }
     #FIXME why is the (), callable needed? 
-    quantum_instance = switcher.get(sim_type, lambda: None)()
+    quantum_instance = switcher.get(run_type, lambda: None)()
     if quantum_instance is None:
         raise TypeError('Specified simulation type does not exist!')
     return quantum_instance

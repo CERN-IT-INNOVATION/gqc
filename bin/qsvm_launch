@@ -41,6 +41,18 @@ args = parser.parse_args()
 # info. Currently using vbelis token.
 ibmq_token = '3b5456f5831866975f67f7019292c399bcfc011672533ddaec2ae2bddf5ab29c2a17a0c6c176fce1df2408cd07b3be938ede816b120e97a350f0bb6a11d0bf6e'
 
+#FIXME Virtual to physical qubits, ordering is from 0->(n_qubits-1)
+#initial_layout = [9,8,11,14,16,19,22,25]
+initial_layout = None
+
+# Make also switcher for the config dictionary?
+# TODO make the config adjustable by the user
+# FIXME if I choose run_type = 'ideal' then it errors due to unexpected 
+# keyword argument 'seed_transpiler'
+seed = 12345
+config = {'optimization_level':3, 'initial_layout':initial_layout,
+          'seed_transpiler':seed, 'seed_transpiler':seed, 'shots':5000}
+
 args = {
     "feature_dim": 16,
     "data_folder": args.data_folder,
@@ -51,7 +63,8 @@ args = {
     "output_folder": args.output_folder,
     "backend_name": args.backend_name,
     "ibmq_token": ibmq_token,
-    "run_type": args.run_type
+    "run_type": args.run_type,
+    "config": config
 }
 
 main(args)

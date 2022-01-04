@@ -85,7 +85,7 @@ def save_model(qdata, qsvm, train_acc, test_acc, output_folder, ae_path):
 def get_quatum_kernel_circuit(quantum_kernel, path, output_format='mpl',
                                 **kwargs):
     '''
-    Print the transpiled quantum kernel circuit
+    Save the transpiled quantum kernel circuit
     Args:
          @quantum_kernel (QuantumKernel) :: QuantumKernel object used in the
                                             QSVM training.
@@ -98,6 +98,7 @@ def get_quatum_kernel_circuit(quantum_kernel, path, output_format='mpl',
             Transpiled QuantumCircuit that represents the quantum kernel.
             i.e., the circuit that will be executed on the backend.
     '''
+    print('\nCreating the quanntum kernel circuit...')
     n_params = quantum_kernel.feature_map.num_parameters
     feature_map_params_x = ParameterVector("x", n_params)
     feature_map_params_y = ParameterVector("y", n_params)
@@ -109,7 +110,7 @@ def get_quatum_kernel_circuit(quantum_kernel, path, output_format='mpl',
                     .transpile(qc_kernel_circuit)[0]
     
     path += '/quantum_kernel_circuit_plot'
-    print('\nSaving quantum kernel circuit in: ', path)
+    print('Saving quantum kernel circuit in: ', path)
     qc_transpiled.draw(
         output = output_format,
         filename = path,
@@ -203,7 +204,8 @@ def ideal_simulation(**kwargs) -> QuantumInstance:
          Keyword arguments of the QuantumInstance object.
     '''
     
-    print('\nInitialising ideal (statevector) simulation.')
+    print(tcols.BOLD + '\nInitialising ideal (statevector) simulation.'\
+          + tcols.ENDC)
     quantum_instance = QuantumInstance(
          backend = Aer.get_backend('aer_simulator_statevector'),
          **kwargs
@@ -229,7 +231,7 @@ def noisy_simulation(ibmq_token,backend_name,**kwargs)\
          @qubit_layout :: Map of abstract circuit qubits to physical qubits as
                           defined on the hardware.
     '''
-    print('\nInitialising noisy simulation.')
+    print(tcols.BOLD + '\nInitialising noisy simulation.' + tcols.ENDC)
     backend = connect_quantum_computer(ibmq_token,backend_name)
     noise_model, coupling_map, basis_gates = \
                 get_backend_configuration(backend)
@@ -257,7 +259,7 @@ def hardware_run(backend_name, ibmq_token, **kwargs):
     Returns:
             QuantumInstance object with quantum computer backend.
     '''
-    print('\nInitialising run on a quantum computer.')
+    print(tcols.BOLD + '\nInitialising run on a quantum computer.' + tcols.ENDC)
     quantum_computer_backend = connect_quantum_computer(ibmq_token,backend_name)
     quantum_instance = QuantumInstance(
         backend = quantum_computer_backend, 
@@ -297,5 +299,5 @@ def configure_quantum_instance(ibmq_token, run_type,backend_name = None,
     #FIXME why is the (), callable needed? 
     quantum_instance = switcher.get(run_type, lambda: None)()
     if quantum_instance is None:
-        raise TypeError('Specified simulation type does not exist!')
+        raise TypeError('Specified programme run type does not exist!')
     return quantum_instance

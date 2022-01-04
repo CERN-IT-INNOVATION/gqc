@@ -27,7 +27,7 @@ def main(args):
     print(test_folds.shape)
     scores = compute_model_scores(qsvm, test_folds, args["qsvm_model"])
     print(tcols.OKCYAN + "\n\nPlotting and saving ROC figure..." + tcols.ENDC)
-    
+    #FIXME path to save the y_scores_list and roc plot needs to be in qsvm/
     #plot.roc_plot(scores, qdata, args["output_folder"], args["display_name"])
 
 

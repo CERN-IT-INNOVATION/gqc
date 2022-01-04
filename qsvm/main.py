@@ -8,6 +8,7 @@ from time import perf_counter
 from qiskit.providers.aer import AerSimulator
 from qiskit.utils import algorithm_globals
 from qiskit_machine_learning.kernels import QuantumKernel
+import numpy as np
 
 from sklearn.svm import SVC
 
@@ -31,32 +32,22 @@ def main(args):
         args["norm"],
         args["nevents"],
         args["model_path"],
-        train_events=50,
+        train_events=600,
         valid_events=0,
-        test_events=0,
+        test_events=720,
     )
 
     train_features = qdata.get_latent_space("train")
     train_labels = qdata.ae_data.trtarget
     test_features = qdata.get_latent_space("test")
     test_labels = qdata.ae_data.tetarget
-
     feature_map = u2Reuploading(nqubits=8, nfeatures=args["feature_dim"])
-    #FIXME Virtual to physical qubits, ordering is from 0->(n_qubits-1)
-    #initial_layout = [9,8,11,14,16,19,22,25]
-    initial_layout = None
-    # TODO make the config adjustable from  argparse
-    # FIXME if I choose run_type = 'ideal' then it errors due to unexpected 
-    # keyword argument 'seed_transpiler'
-    config = {'seed_transpiler': seed, 'seed_simulator':seed,
-              'optimization_level':3, 'initial_layout':initial_layout,
-              'shots':5000}
     
     quantum_instance = util.configure_quantum_instance(
         ibmq_token=args["ibmq_token"],
         run_type = args["run_type"],
         backend_name= args["backend_name"],
-        **config
+        **args["config"]
     )
     
     kernel = QuantumKernel(feature_map=feature_map, 
@@ -66,12 +57,23 @@ def main(args):
     #                                  '.')
     #print(len(initial_layout))
     #TODO save circuit meta-data: circuit depth, number of CNOTS.
+
     print('Calculating the quantum kernel matrix elements... ', end="")
     quantum_kernel_matrix = kernel.evaluate(x_vec = train_features)
     print(tcols.OKGREEN +'Done.' + tcols.ENDC)
     qsvm = SVC(kernel='precomputed', C=args["c_param"])
+    
+    args["output_folder"] = args["output_folder"] + f"_c={qsvm.C}" \
+                            + f"_{args['run_type']}"
+    if (args["backend_name"] is not None): 
+        args["output_folder"] += f'_{args["backend_name"]}'
 
-    print(tcols.BOLD + "Training the QSVM..." + tcols.ENDC)
+    util.create_output_folder(args["output_folder"])
+    # Save the quantum kernel matrix for further analysis.
+    np.save('models/' + args["output_folder"] + 'kernel_matrix_elements', 
+            quantum_kernel_matrix)
+
+    print("Training the QSVM...", end="")
     util.print_model_info(args["model_path"], qdata, qsvm)
 
     train_time_init = perf_counter()
@@ -85,17 +87,8 @@ def main(args):
     test_acc = qsvm.score(kernel_matrix_test, test_labels)
     util.print_accuracies(test_acc, train_acc)
 
-    args["output_folder"] = args["output_folder"] + f"_c={qsvm.C}" \
-                            + f"_{args['run_type']}"
-    # FIXME sloppy workaround of the FIXME in submit script: write 'None' (str)
-    # when running ideal simulation.
-    if (args["backend_name"] is not None): 
-        args["output_folder"] += f'_{args["backend_name"]}'
-    util.create_output_folder(args["output_folder"])
-    
     qc_transpiled = util.get_quatum_kernel_circuit(
         kernel, 
         'models/'+args["output_folder"]
     )
     util.save_qsvm(qsvm, "models/" + args["output_folder"] + "/model")
-    

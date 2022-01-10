@@ -12,6 +12,7 @@ from qiskit.providers.aer.noise import NoiseModel
 from qiskit.providers.exceptions import QiskitBackendNotFoundError
 from qiskit.circuit import ParameterVector
 from qiskit.visualization import plot_circuit_layout
+from qiskit.providers.aer.backends import AerSimulator
 
 from .terminal_colors import tcols
 
@@ -26,14 +27,24 @@ def print_accuracies(test_accuracy, train_accuracy):
     print(f"Test Accuracy     = {test_accuracy}" + tcols.ENDC)
 
 
-def create_output_folder(output_folder):
+def create_output_folder(args, qsvm):
     """
-    Creates output folder for the qsvm.
-    @output_folder :: Name of the output folder for this particular
-                      version of the qsvm.
+    Creates output folder for the qsvm and returns the path (str)
+    @args (dict)         :: The argument dictionary defined in the qsvm_launch
+                            script.
+    @qsvm (sklearn.SVC)  :: QSVM object.
+    Returns:
+            @out_path (str), the path where all files relevant to the qsvm
+            will be saved.
     """
-    if not os.path.exists("models/" + output_folder):
-        os.makedirs("models/" + output_folder)
+    args["output_folder"] = args["output_folder"] + f"_c={qsvm.C}" \
+                            + f"_{args['run_type']}"
+    if (args["backend_name"] is not None): 
+        args["output_folder"] += f'_{args["backend_name"]}'
+    out_path = "models/" + args["output_folder"]
+    if not os.path.exists(out_path):
+        os.makedirs(out_path)
+    return out_path
 
 
 def save_qsvm(model, path):
@@ -136,14 +147,7 @@ def save_circuit_physical_layout(circuit, backend, save_path):
     fig = plot_circuit_layout(circuit,backend)
     save_path += '/circuit_physical_layout'
     fig.savefig(save_path)
-
-def save_kernel_matrix():
-    '''
-    Save kernel matrix as a numpy array. To compare between ideal
-    computations, simulations and hardware runs.
-    '''
-    # TODO
-
+    
 
 def connect_quantum_computer(ibmq_token, backend_name):
     '''
@@ -176,6 +180,8 @@ def connect_quantum_computer(ibmq_token, backend_name):
 
 def get_backend_configuration(backend) -> Tuple:
     '''
+    @ DEPRECATED
+    
     Gather backend configuration and properties from the calibration data.
     
     Args:
@@ -219,8 +225,7 @@ def ideal_simulation(**kwargs) -> QuantumInstance:
     etc.
     '''
 
-#FIXME backend = AerSimulator.from_backend(quantum_computer_backend)
-# ^ Panos recommendation. to do noisy sim efficiently.
+
 def noisy_simulation(ibmq_token,backend_name,**kwargs)\
                       -> QuantumInstance:
     '''
@@ -232,20 +237,17 @@ def noisy_simulation(ibmq_token,backend_name,**kwargs)\
                           defined on the hardware.
     '''
     print(tcols.BOLD + '\nInitialising noisy simulation.' + tcols.ENDC)
-    backend = connect_quantum_computer(ibmq_token,backend_name)
-    noise_model, coupling_map, basis_gates = \
-                get_backend_configuration(backend)
+    quantum_computer_backend = connect_quantum_computer(ibmq_token,
+                                                        backend_name)
+    backend = AerSimulator.from_backend(quantum_computer_backend)
     
     quantum_instance = QuantumInstance(
-        backend = Aer.get_backend('aer_simulator'),
-        basis_gates=basis_gates,
-        coupling_map=coupling_map,
-        noise_model=noise_model,
+        backend = backend,
         **kwargs
         )
     return quantum_instance
 
-#TODO is the seed needed here?
+
 def hardware_run(backend_name, ibmq_token, **kwargs):
     '''
     Configure QuantumInstance based on a quantum computer. The circuits will
@@ -274,19 +276,12 @@ def configure_quantum_instance(ibmq_token, run_type,backend_name = None,
     Gives the final quantum_instance required for running the Quantum
     kernel.
     '''
-    #FIXME better way to write the if-statements below?
-    #FIXME sloppy work around now put string 'none' for ideal simulation
-    #forced to put something due to the execution bash script.
-    if run_type == 'ideal' and backend_name is not None:
-        warnings.warn(tcols.WARNING + 'Why give real backend when you want' 
-                        'ideal simulation?' +tcols.ENDC)
     if (run_type == 'noisy' or run_type == 'hardware') and (backend_name is None):
         raise TypeError(tcols.FAIL + 'Need to specify backend name (\'ibmq_<city_name>\')'
                         ' when running a noisy simulation or running on hardware!'
                         + tcols.ENDC)
     
     switcher = {
-            #TODO backend name for ideal_simulation? Edge cases?
             'ideal'    : lambda: ideal_simulation(**kwargs),
             'noisy'    : lambda: noisy_simulation(ibmq_token=ibmq_token,
                                                     backend_name=backend_name,

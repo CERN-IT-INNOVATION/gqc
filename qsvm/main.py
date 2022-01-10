@@ -32,9 +32,9 @@ def main(args):
         args["norm"],
         args["nevents"],
         args["model_path"],
-        train_events=600,
+        train_events=4,
         valid_events=0,
-        test_events=720,
+        test_events=10,
     )
 
     train_features = qdata.get_latent_space("train")
@@ -52,26 +52,19 @@ def main(args):
     
     kernel = QuantumKernel(feature_map=feature_map, 
                            quantum_instance=quantum_instance)
-    #TODO errors for the moment. Need to port to AerSimulator.from_backend()
-    #util.save_circuit_physical_layout(qc_transpiled,quantum_instance.backend,
-    #                                  '.')
-    #print(len(initial_layout))
     #TODO save circuit meta-data: circuit depth, number of CNOTS.
 
     print('Calculating the quantum kernel matrix elements... ', end="")
+    train_time_init = perf_counter()
     quantum_kernel_matrix = kernel.evaluate(x_vec = train_features)
-    print(tcols.OKGREEN +'Done.' + tcols.ENDC)
+    train_time_fina = perf_counter()
+    print(tcols.OKGREEN +f'Done in: {train_time_fina-train_time_init:.2e} s'
+          + tcols.ENDC)
     qsvm = SVC(kernel='precomputed', C=args["c_param"])
     
-    args["output_folder"] = args["output_folder"] + f"_c={qsvm.C}" \
-                            + f"_{args['run_type']}"
-    if (args["backend_name"] is not None): 
-        args["output_folder"] += f'_{args["backend_name"]}'
-
-    util.create_output_folder(args["output_folder"])
+    out_path = util.create_output_folder(args, qsvm)
     # Save the quantum kernel matrix for further analysis.
-    np.save('models/' + args["output_folder"] + 'kernel_matrix_elements', 
-            quantum_kernel_matrix)
+    np.save(out_path + '/kernel_matrix_elements', quantum_kernel_matrix)
 
     print("Training the QSVM...", end="")
     util.print_model_info(args["model_path"], qdata, qsvm)
@@ -82,13 +75,17 @@ def main(args):
     print(f"Training completed in: {train_time_fina-train_time_init:.2e} s")
 
     train_acc = qsvm.score(quantum_kernel_matrix, train_labels)
-    #evaluate test kernel matrix
+    # Evaluate test kernel matrix
     kernel_matrix_test = kernel.evaluate(x_vec=test_features,y_vec=train_features)
     test_acc = qsvm.score(kernel_matrix_test, test_labels)
     util.print_accuracies(test_acc, train_acc)
 
-    qc_transpiled = util.get_quatum_kernel_circuit(
-        kernel, 
-        'models/'+args["output_folder"]
+    qc_transpiled = util.get_quatum_kernel_circuit(kernel, out_path)
+    '''
+    util.save_circuit_physical_layout(
+        qc_transpiled, 
+        quantum_instance.backend,
+        out_path + '/circuit_layout'
     )
-    util.save_qsvm(qsvm, "models/" + args["output_folder"] + "/model")
+    '''
+    util.save_qsvm(qsvm, out_path + "/model")

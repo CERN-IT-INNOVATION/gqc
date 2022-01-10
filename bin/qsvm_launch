@@ -46,9 +46,8 @@ ibmq_token = '3b5456f5831866975f67f7019292c399bcfc011672533ddaec2ae2bddf5ab29c2a
 initial_layout = None
 
 # Make also switcher for the config dictionary?
-# TODO make the config adjustable by the user
-# FIXME if I choose run_type = 'ideal' then it errors due to unexpected 
-# keyword argument 'seed_transpiler'
+# TODO make the config adjustable by the user to avoid if I choose 
+# run_type = 'ideal' then it errors due to unexpected keyword argument 'seed_transpiler'
 seed = 12345
 config = {'optimization_level':3, 'initial_layout':initial_layout,
           'seed_transpiler':seed, 'seed_transpiler':seed, 'shots':5000}

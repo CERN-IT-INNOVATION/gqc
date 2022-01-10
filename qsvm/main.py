@@ -34,7 +34,7 @@ def main(args):
         args["model_path"],
         train_events=4,
         valid_events=0,
-        test_events=10,
+        test_events=4,
     )
 
     train_features = qdata.get_latent_space("train")
@@ -43,7 +43,7 @@ def main(args):
     test_labels = qdata.ae_data.tetarget
     feature_map = u2Reuploading(nqubits=8, nfeatures=args["feature_dim"])
     
-    quantum_instance = util.configure_quantum_instance(
+    quantum_instance, backend = util.configure_quantum_instance(
         ibmq_token=args["ibmq_token"],
         run_type = args["run_type"],
         backend_name= args["backend_name"],
@@ -52,7 +52,7 @@ def main(args):
     
     kernel = QuantumKernel(feature_map=feature_map, 
                            quantum_instance=quantum_instance)
-    #TODO save circuit meta-data: circuit depth, number of CNOTS.
+    
 
     print('Calculating the quantum kernel matrix elements... ', end="")
     train_time_init = perf_counter()
@@ -80,12 +80,13 @@ def main(args):
     test_acc = qsvm.score(kernel_matrix_test, test_labels)
     util.print_accuracies(test_acc, train_acc)
 
-    qc_transpiled = util.get_quatum_kernel_circuit(kernel, out_path)
-    '''
-    util.save_circuit_physical_layout(
-        qc_transpiled, 
-        quantum_instance.backend,
-        out_path + '/circuit_layout'
-    )
-    '''
     util.save_qsvm(qsvm, out_path + "/model")
+
+    qc_transpiled = util.get_quantum_kernel_circuit(kernel, out_path)
+    if backend is not None:
+        util.save_circuit_physical_layout(
+            qc_transpiled, 
+            backend,
+            out_path
+        )
+    

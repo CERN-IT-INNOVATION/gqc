@@ -93,7 +93,7 @@ def save_model(qdata, qsvm, train_acc, test_acc, output_folder, ae_path):
     save_qsvm(qsvm, "qsvm_models/" + output_folder + "/qsvm_model")
 
 
-def get_quatum_kernel_circuit(quantum_kernel, path, output_format='mpl',
+def get_quantum_kernel_circuit(quantum_kernel, path, output_format='mpl',
                                 **kwargs):
     '''
     Save the transpiled quantum kernel circuit
@@ -121,7 +121,8 @@ def get_quatum_kernel_circuit(quantum_kernel, path, output_format='mpl',
                     .transpile(qc_kernel_circuit)[0]
     
     path += '/quantum_kernel_circuit_plot'
-    print('Saving quantum kernel circuit in: ', path)
+    print(tcols.OKCYAN + 'Saving quantum kernel circuit in: ' + tcols.ENDC, 
+          path)
     qc_transpiled.draw(
         output = output_format,
         filename = path,
@@ -129,10 +130,7 @@ def get_quatum_kernel_circuit(quantum_kernel, path, output_format='mpl',
     )
     return qc_transpiled
 
-#FIXME plot_circuit_layout() raises error because gets None out of:
-# cmap = backend.configuration().coupling_map in the source code/
-# If we do it with AerSimulator() instead of NoiseModel then it should
-# work.
+
 def save_circuit_physical_layout(circuit, backend, save_path):
     '''
     Plot and save the quantum circuit and its physical layout on the backend 
@@ -143,9 +141,10 @@ def save_circuit_physical_layout(circuit, backend, save_path):
                                       thereof.
          @save_path (str)          :: Path to save figure.
     '''
-
     fig = plot_circuit_layout(circuit,backend)
     save_path += '/circuit_physical_layout'
+    print(tcols.OKCYAN + 'Saving physical circuit layout in: ' + tcols.ENDC, 
+          save_path)    
     fig.savefig(save_path)
     
 
@@ -164,7 +163,6 @@ def connect_quantum_computer(ibmq_token, backend_name):
     
     Returns: IBMQBackend qiskit object.
     '''
-
     print('Enabling IBMQ account using provided token...', end="")
     IBMQ.enable_account(ibmq_token)
     provider = IBMQ.get_provider(hub='ibm-q-cern', group='internal', 
@@ -216,7 +214,8 @@ def ideal_simulation(**kwargs) -> QuantumInstance:
          backend = Aer.get_backend('aer_simulator_statevector'),
          **kwargs
          )
-    return quantum_instance
+    # None needed to specify that no backend device is loaded for ideal sim.
+    return quantum_instance, None 
 
 #def custom_aer_simulation(**kwargs):
     '''
@@ -235,6 +234,9 @@ def noisy_simulation(ibmq_token,backend_name,**kwargs)\
     Args:
          @qubit_layout :: Map of abstract circuit qubits to physical qubits as
                           defined on the hardware.
+    Returns:
+            @QuantumInstance object to be used for the simulation.
+            @backend on which the noisy simulation is based.
     '''
     print(tcols.BOLD + '\nInitialising noisy simulation.' + tcols.ENDC)
     quantum_computer_backend = connect_quantum_computer(ibmq_token,
@@ -245,7 +247,7 @@ def noisy_simulation(ibmq_token,backend_name,**kwargs)\
         backend = backend,
         **kwargs
         )
-    return quantum_instance
+    return quantum_instance, quantum_computer_backend
 
 
 def hardware_run(backend_name, ibmq_token, **kwargs):
@@ -259,7 +261,8 @@ def hardware_run(backend_name, ibmq_token, **kwargs):
                           to non-pubic hardware.
 
     Returns:
-            QuantumInstance object with quantum computer backend.
+            @QuantumInstance object with quantum computer backend.
+            @The quantum computer backend object.
     '''
     print(tcols.BOLD + '\nInitialising run on a quantum computer.' + tcols.ENDC)
     quantum_computer_backend = connect_quantum_computer(ibmq_token,backend_name)
@@ -267,14 +270,32 @@ def hardware_run(backend_name, ibmq_token, **kwargs):
         backend = quantum_computer_backend, 
         **kwargs
         )
-    return quantum_instance
+    return quantum_instance, quantum_computer_backend
 
 
-def configure_quantum_instance(ibmq_token, run_type,backend_name = None,
+def configure_quantum_instance(ibmq_token, run_type, backend_name = None,
                                 **kwargs) -> QuantumInstance:
     '''
-    Gives the final quantum_instance required for running the Quantum
-    kernel.
+    Gives the QuantumInstance object required for running the Quantum kernel.
+    The quantum instance can be configured for a simulation of a backend with
+    noise, an ideal (statevector) simulation or running on a real quantum 
+    device.
+    Args:
+         @ibmq_token (string)   :: Token for authentication by IBM to give 
+                                   access to non-pubic hardware.
+         @run_type (string)     :: Takes values the possible values {ideal, 
+                                   noisy, hardware} to specify what type of 
+                                   backend will be provided to the quantum
+                                   instance object.
+         @backend_name (string) :: Name of the quantum computer to run or base
+                                   the noisy simulation on. For ideal runs it 
+                                   can be set ton "none".
+         @**kwargs     (dict)   :: Dictionary of keyword arguments for the 
+                                   QuantumInstance.
+    Returns:
+            @QuantumInstance object to be used in the QuantumKernel training.
+            @backend that is being used. None if an ideal simulation is initi-
+             ated.
     '''
     if (run_type == 'noisy' or run_type == 'hardware') and (backend_name is None):
         raise TypeError(tcols.FAIL + 'Need to specify backend name (\'ibmq_<city_name>\')'
@@ -292,7 +313,7 @@ def configure_quantum_instance(ibmq_token, run_type,backend_name = None,
                 )
         }
     #FIXME why is the (), callable needed? 
-    quantum_instance = switcher.get(run_type, lambda: None)()
+    quantum_instance, backend = switcher.get(run_type, lambda: None)()
     if quantum_instance is None:
         raise TypeError('Specified programme run type does not exist!')
-    return quantum_instance
+    return quantum_instance, backend

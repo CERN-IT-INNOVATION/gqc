@@ -34,6 +34,13 @@ parser.add_argument('--output_folder', required=True,
                     help='The name of the model to be saved.')
 parser.add_argument('--c_param', type=float, default=1.,
                     help='The C parameter of the SVM.')
+parser.add_argument('--ntrain', type=int, default=600,
+                    help='Number of training events for the QSVM.')
+parser.add_argument('--nvalid', type=int, default=0,
+                    help='Number of validation events for the QSVM (typically)'
+                         'not used for the QSVM).')
+parser.add_argument('--ntest', type=int, default=720,
+                    help='Number of test events for the QSVM.')
 
 args = parser.parse_args()
 
@@ -70,7 +77,10 @@ args = {
     "backend_name": args.backend_name,
     "ibmq_token": ibmq_token,
     "run_type": args.run_type,
-    "config": config
+    "config": config,
+    "ntrain": args["ntrain"],
+    "nvalid": args["nvalid"],
+    "ntest": args["ntest"]
 }
 
 main(args)

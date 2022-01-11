@@ -69,7 +69,7 @@ def main(args):
 
     args["output_folder"] = args["output_folder"] + f"_c={qsvm.C}"
     util.create_output_folder(args["output_folder"])
-    util.save_qsvm(qsvm, "qsvm_models/" + args["output_folder"] + "/model")
+    util.save_qsvm(qsvm, "trained_qsvms/" + args["output_folder"] + "/model")
 
     print(tcols.OKCYAN +
           "\n\nComputing accuracies on kfolded test data..." +

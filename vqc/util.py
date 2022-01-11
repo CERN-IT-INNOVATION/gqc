@@ -2,6 +2,7 @@
 
 import os
 import joblib
+import warnings
 
 from .terminal_colors import tcols
 
@@ -61,6 +62,10 @@ def print_model_info(ae_path, qdata, vqc):
         f"nvalid = {len(qdata.ae_data.vatarget)}, "
         f"ntest  = {len(qdata.ae_data.tetarget)}, "
     )
-    print("The VQC circuit about to be trained.")
-    print(vqc.circuit())
     print("-------------------------------------------\n")
+
+    print(tcols.OKCYAN + "The VQC circuit about to be trained." + tcols.ENDC)
+    with warnings.catch_warnings(record=True) as w:
+        print(tcols.OKGREEN)
+        print(vqc.circuit)
+        print(tcols.ENDC)

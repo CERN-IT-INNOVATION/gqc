@@ -4,6 +4,7 @@
 # This is highly experimental and certain hacks are employed to make this
 # possible.
 
+from typing import cast
 import numpy as np
 
 from qiskit import QuantumCircuit
@@ -41,11 +42,11 @@ class VQC(NeuralNetworkClassifier):
         self._input_params = []
         self._weight_params = []
 
-        self._configure_vqc_circuit(num_qubits, feature_map, ansatz)
+        vforms = self._configure_vqc_circuit(num_qubits, feature_map, ansatz)
 
         # Construct the quantum circuit.
         self._circuit = QuantumCircuit(self._num_qubits)
-        for feature_map, ansatz in zip(self._vforms[0::2], self._vforms[1::2]):
+        for feature_map, ansatz in zip(vforms[0::2], vforms[1::2]):
             self._input_params += feature_map.parameters
             self._weight_params += ansatz.parameters
             self._circuit.compose(feature_map, inplace=True)
@@ -199,7 +200,7 @@ class VQC(NeuralNetworkClassifier):
         given by the user.
         """
         if num_qubits is None and feature_map is None and ansatz is None:
-            raise AttributeError("Input num_qubits, feature_map, or ansatz!")
+            raise AttributeError("Give num_qubits, feature_map, or ansatz!")
 
     def _check_input_compatibility(self, num_qubits):
         """
@@ -227,8 +228,8 @@ class VQC(NeuralNetworkClassifier):
         Thus, check if the provided target data is onehot encoded.
         @target :: Numpy array containing the target data.
         """
-        num_classes = len(np.unique(y, axis=0))
-        if num_classes == target.shape[1]:
+        num_classes = len(np.unique(target, axis=0))
+        if num_classes == target.shape[0]:
             return 1
         return 0
 
@@ -263,9 +264,10 @@ class VQC(NeuralNetworkClassifier):
         """
         if not self._check_target_encoding_onehot(y):
             y = self._encode_onehot(y)
-
+        print(y)
+        print(X)
         num_classes = len(np.unique(y, axis=0))
-        self._neural_network.set_interpret(
+        cast(CircuitQNN, self._neural_network).set_interpret(
             self._get_interpret(num_classes), num_classes)
 
         return super().fit(X, y)
@@ -285,6 +287,6 @@ class VQC(NeuralNetworkClassifier):
                         data, i.e., for one signal and one bkg this is 2.
         """
         def parity(x, num_classes=num_classes):
-            return "{:b}".format(x).count("1") % num_classes
+            return f"{x:b}".count("1") % num_classes
 
         return parity

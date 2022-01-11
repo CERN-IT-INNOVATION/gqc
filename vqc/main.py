@@ -71,35 +71,13 @@ def train(vqc, train_features, train_labels, valid_features, valid_labels,
     for epoch in range(epochs):
         print(f"Epoch: {epoch + 1}/{epochs}")
         for data_batch, target_batch in zip(train_features, train_labels):
+            fit_time_init = perf_counter()
             vqc.fit(data_batch, target_batch)
+            fit_time_fina = perf_counter()
+            print(f"Fit completed in: {fit_time_fina-fit_time_init:.2e} s")
 
-        # loss = vqc.score(valid_features, valid_labels)
-        # print(loss)
+        print("Calculating validation loss...")
+        loss = vqc.score(valid_features, valid_labels)
+        print(loss)
 
     return vqc
-
-
-def compute_model_scores(model, data_folds, output_folder) -> np.ndarray:
-    """
-    Computing the model scores on all the test data folds to construct
-    performance metrics of the model, e.g., ROC curve and AUC.
-
-    @model         :: The vqc model to compute the score for.
-    @data_folds    :: Numpy array of kfolded data.
-    @output_folder :: The folder where the results are saved.
-
-    returns :: Array of the qsvm scores obtained.
-    """
-    scores_time_init = perf_counter()
-    model_scores = np.array(
-        [model.predict(fold) for fold in data_folds]
-    )
-    scores_time_fina = perf_counter()
-    print(f"Completed in: {scores_time_fina-scores_time_init:2.2e} s")
-
-    path = "trained_vqcs/" + output_folder + "/y_score_list.npy"
-
-    print("Saving model scores array in: " + path)
-    np.save(path, model_scores)
-
-    return model_scores

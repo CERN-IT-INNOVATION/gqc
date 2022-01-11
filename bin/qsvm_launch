@@ -40,17 +40,24 @@ args = parser.parse_args()
 # Define token globally. It is needed to access IBM machines and calibration
 # info. Currently using vbelis token.
 ibmq_token = '3b5456f5831866975f67f7019292c399bcfc011672533ddaec2ae2bddf5ab29c2a17a0c6c176fce1df2408cd07b3be938ede816b120e97a350f0bb6a11d0bf6e'
+seed = 12345
 
 #FIXME Virtual to physical qubits, ordering is from 0->(n_qubits-1)
 #initial_layout = [9,8,11,14,16,19,22,25]
 initial_layout = None
 
-# Make also switcher for the config dictionary?
-# TODO make the config adjustable by the user to avoid if I choose 
-# run_type = 'ideal' then it errors due to unexpected keyword argument 'seed_transpiler'
-seed = 12345
-config = {'optimization_level':3, 'initial_layout':initial_layout,
-          'seed_transpiler':seed, 'seed_transpiler':seed, 'shots':5000}
+# Different configuration keyword arguments for the QuantumInstance depending 
+# on the run_type
+config_noisy = {'optimization_level':3, 'initial_layout': initial_layout,
+                'seed_transpiler':seed, 'seed_simulator':seed, 'shots':5000}
+config_hardware = {'optimization_level':3, 'initial_layout': initial_layout,
+                   'seed_transpiler':seed, 'shots':5000}
+config_ideal = {'seed_simulator': seed}
+
+switcher = {'ideal' : config_ideal, 'noisy' : config_noisy, 
+            'hardware' : config_hardware}
+
+config = switcher.get(args["run_type"], lambda: None)()
 
 args = {
     "feature_dim": 16,

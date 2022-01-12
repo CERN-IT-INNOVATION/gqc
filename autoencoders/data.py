@@ -225,7 +225,7 @@ class AE_data:
 
         return data_sig, data_bkg
 
-def get_data(self, data, target, nevents, seed) -> tuple:
+    def get_data(self, data, target, nevents, seed) -> tuple:
         """
         Cut the imported data and target and form new data sets with
         equal numbers of signal and background events.

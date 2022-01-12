@@ -76,8 +76,6 @@ def train(vqc, train_features, train_labels, valid_features, valid_labels,
             fit_time_fina = perf_counter()
             print(f"Fit completed in: {fit_time_fina-fit_time_init:.2e} s")
 
-        print("Calculating validation loss...")
         loss = vqc.score(valid_features, valid_labels)
-        print(loss)
 
     return vqc

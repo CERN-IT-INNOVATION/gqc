@@ -264,8 +264,6 @@ class VQC(NeuralNetworkClassifier):
         """
         if not self._check_target_encoding_onehot(y):
             y = self._encode_onehot(y)
-        print(y)
-        print(X)
         num_classes = len(np.unique(y, axis=0))
         cast(CircuitQNN, self._neural_network).set_interpret(
             self._get_interpret(num_classes), num_classes)

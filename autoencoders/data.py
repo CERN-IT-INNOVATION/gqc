@@ -17,6 +17,7 @@ class AE_data:
         train_events=-1,
         valid_events=-1,
         test_events=-1,
+        seed=np.random.randint(1000)
     ):
 
         self.norm_name = norm_name
@@ -35,19 +36,19 @@ class AE_data:
             self.trdata = self.get_numpy_data("train")
             self.trtarget = self.get_numpy_target("train")
             self.trdata, self.trtarget = self.get_data(
-                self.trdata, self.trtarget, train_events
+                self.trdata, self.trtarget, train_events, seed
             )
         if int(valid_events) > 0:
             self.vadata = self.get_numpy_data("valid")
             self.vatarget = self.get_numpy_target("valid")
             self.vadata, self.vatarget = self.get_data(
-                self.vadata, self.vatarget, valid_events
+                self.vadata, self.vatarget, valid_events, seed
             )
         if int(test_events) > 0:
             self.tedata = self.get_numpy_data("test")
             self.tetarget = self.get_numpy_target("test")
             self.tedata, self.tetarget = self.get_data(
-                self.tedata, self.tetarget, test_events
+                self.tedata, self.tetarget, test_events, seed
             )
 
         self.nfeats = self.trdata.shape[1]
@@ -224,7 +225,7 @@ class AE_data:
 
         return data_sig, data_bkg
 
-    def get_data(self, data, target, nevents) -> tuple:
+def get_data(self, data, target, nevents, seed) -> tuple:
         """
         Cut the imported data and target and form new data sets with
         equal numbers of signal and background events.
@@ -244,5 +245,6 @@ class AE_data:
         data_sig, data_bkg = self.split_sig_bkg(data, target)
         data = np.vstack((data_sig[:nevents, :], data_bkg[:nevents, :]))
         target = np.concatenate((np.ones(nevents), np.zeros(nevents)))
+        shuffling = np.random.RandomState(seed=seed).permutation(len(target))
 
-        return data, target
+        return data[shuffling], target[shuffling]

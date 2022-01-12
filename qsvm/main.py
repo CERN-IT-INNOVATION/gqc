@@ -32,9 +32,9 @@ def main(args):
         args["norm"],
         args["nevents"],
         args["model_path"],
-        train_events=4,
-        valid_events=0,
-        test_events=4,
+        train_events=args["ntrain"],
+        valid_events=args["nvalid"],
+        test_events=args["ntest"],
     )
 
     train_features = qdata.get_latent_space("train")
@@ -49,11 +49,8 @@ def main(args):
         backend_name= args["backend_name"],
         **args["config"]
     )
-    
     kernel = QuantumKernel(feature_map=feature_map, 
                            quantum_instance=quantum_instance)
-    
-
     print('Calculating the quantum kernel matrix elements... ', end="")
     train_time_init = perf_counter()
     quantum_kernel_matrix = kernel.evaluate(x_vec = train_features)

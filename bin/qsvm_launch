@@ -54,17 +54,17 @@ seed = 12345
 initial_layout = None
 
 # Different configuration keyword arguments for the QuantumInstance depending 
-# on the run_type
+# on the run_type. They can be tweaked as desired before running.
 config_noisy = {'optimization_level':3, 'initial_layout': initial_layout,
                 'seed_transpiler':seed, 'seed_simulator':seed, 'shots':5000}
 config_hardware = {'optimization_level':3, 'initial_layout': initial_layout,
                    'seed_transpiler':seed, 'shots':5000}
 config_ideal = {'seed_simulator': seed}
 
-switcher = {'ideal' : config_ideal, 'noisy' : config_noisy, 
-            'hardware' : config_hardware}
-
-config = switcher.get(args["run_type"], lambda: None)()
+switcher = {'ideal' : lambda: config_ideal, 'noisy' : lambda: config_noisy, 
+            'hardware' : lambda: config_hardware}
+# TODO ? save the run config in the model folder?
+config = switcher.get(args.run_type, lambda: None)()
 
 args = {
     "feature_dim": 16,
@@ -78,9 +78,9 @@ args = {
     "ibmq_token": ibmq_token,
     "run_type": args.run_type,
     "config": config,
-    "ntrain": args["ntrain"],
-    "nvalid": args["nvalid"],
-    "ntest": args["ntest"]
+    "ntrain": args.ntrain,
+    "nvalid": args.nvalid,
+    "ntest": args.ntest
 }
 
 main(args)

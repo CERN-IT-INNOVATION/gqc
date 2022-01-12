@@ -8,9 +8,10 @@
 
 usage() { echo "Usage: $0 [-n <normalization_name>] [-s <number_of_events>]"\
                 "[-p <model_path>] [-c <qsvm_constant_c>] [-f <output_folder>]"\
-                "[-b <backend_name>] [-r <run_type>]" 1>&2; exit 1; }
+                "[-b <backend_name>] [-r <run_type>] [-a <ntrain>]"\
+                "[-v <nvalid>] [-t <ntest>]" 1>&2; exit 1; }
 
-while getopts ":n:s:p:c:f:b:r:" o; do
+while getopts ":n:s:p:c:f:b:r:a:v:t:" o; do
     case "${o}" in
     n)
         n=${OPTARG}
@@ -33,6 +34,15 @@ while getopts ":n:s:p:c:f:b:r:" o; do
     r)
         r=${OPTARG}
         ;;
+    a)
+        a=${OPTARG}
+        ;;
+    v)
+        v=${OPTARG}
+        ;;
+    t)
+        t=${OPTARG}
+        ;;
     *)
         usage
         ;;
@@ -40,7 +50,7 @@ while getopts ":n:s:p:c:f:b:r:" o; do
 done
 shift $((OPTIND-1))
 
-if [ -z "${n}" ] || [ -z "${s}" ] || [ -z "${p}" ] || [ -z "${c}" ] || [ -z "${f}" ] || [ -z "${r}" ]; then
+if [ -z "${n}" ] || [ -z "${s}" ] || [ -z "${p}" ] || [ -z "${c}" ] || [ -z "${f}" ] || [ -z "${r}" ] || [-z "${a}"] || [-z ${v}] || [-z ${t}]; then
     usage
 fi
 
@@ -48,6 +58,9 @@ source /work/vabelis/miniconda3/bin/activate ae_qml
 export PYTHONUNBUFFERED=TRUE
 ./qsvm_launch --data_folder /work/vabelis/data/ae_input --norm ${n} \
               --nevents ${s} --model_path ${p} --c_param ${c} \
-              --output_folder ${f} --backend_name ${b} --run_type ${r}
+              --output_folder ${f} --backend_name ${b} --run_type ${r} \
+              --ntrain ${a} --nvalid ${v} --ntest ${t}
 export PYTHONUNBUFFERED=FALSE
-#FIXME how to have the option to not give any backend when having ideal simulation?
+# Move the stdout file to the corresponding trained model folder for more
+# efficient job testing.
+mv ./logs/qsvm_cpu_${SLURM_JOB_ID}.out models/${f}_c\=${c}_${r}_${b#ibmq_}

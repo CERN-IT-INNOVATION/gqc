@@ -40,7 +40,10 @@ def create_output_folder(args, qsvm):
     args["output_folder"] = args["output_folder"] + f"_c={qsvm.C}" \
                             + f"_{args['run_type']}"
     if (args["backend_name"] is not None): 
-        args["output_folder"] += f'_{args["backend_name"]}'
+        # For briefness remove the "ibmq" prefix from the backend_name for the
+        # output folder:
+        backend_name = args["backend_name"].replace('ibmq_','')
+        args["output_folder"] += f'_{backend_name}'
     out_path = "models/" + args["output_folder"]
     if not os.path.exists(out_path):
         os.makedirs(out_path)
@@ -78,19 +81,6 @@ def print_model_info(ae_path, qdata, qsvm):
         f"C = {qsvm.C}"
     )
     print("-------------------------------------------\n")
-
-
-def save_model(qdata, qsvm, train_acc, test_acc, output_folder, ae_path):
-    """
-    Save the model and a log of useful info regarding the saved model.
-    @qdata         :: The data that was processed by the qsvm.
-    @qsvm          :: The qiskit qsvm object.
-    @train_acc     :: Numpy array of the training accuracies.
-    @test_acc      :: Numpy array of the testing accuracies.
-    @output_folder :: String of the output folder where the saving is.
-    @ae_path       :: The path to the ae used in reducing the qdata.
-    """
-    save_qsvm(qsvm, "qsvm_models/" + output_folder + "/qsvm_model")
 
 
 def get_quantum_kernel_circuit(quantum_kernel, path, output_format='mpl',
@@ -305,12 +295,11 @@ def configure_quantum_instance(ibmq_token, run_type, backend_name = None,
     switcher = {
             'ideal'    : lambda: ideal_simulation(**kwargs),
             'noisy'    : lambda: noisy_simulation(ibmq_token=ibmq_token,
-                                                    backend_name=backend_name,
+                                                    backend_name = backend_name,
                                                     **kwargs),
             'hardware' : lambda: hardware_run(backend_name = backend_name, 
                                               ibmq_token = ibmq_token, 
-                                              **kwargs
-                )
+                                              **kwargs)
         }
     #FIXME why is the (), callable needed? 
     quantum_instance, backend = switcher.get(run_type, lambda: None)()

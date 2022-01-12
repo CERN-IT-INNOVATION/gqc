@@ -336,4 +336,3 @@ dependencies:
     - websocket-client==1.2.1
     - yfinance==0.1.66
 prefix: /work/vabelis/miniconda3/envs/ae_qml
-

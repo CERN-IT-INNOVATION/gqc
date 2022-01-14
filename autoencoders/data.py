@@ -24,13 +24,13 @@ class AE_data:
         self.nevents = nevents
         self.data_folder = data_folder
 
-        self.trdata = [[]]
-        self.vadata = [[]]
-        self.tedata = [[]]
+        self.trdata = np.array([[]])
+        self.vadata = np.array([[]])
+        self.tedata = np.array([[]])
 
-        self.trtarget = [[]]
-        self.vatarget = [[]]
-        self.tetarget = [[]]
+        self.trtarget = np.array([])
+        self.vatarget = np.array([])
+        self.tetarget = np.array([])
 
         if int(train_events) > 0:
             self.trdata = self.get_numpy_data("train")

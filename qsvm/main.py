@@ -35,7 +35,8 @@ def main(args):
         train_events=args["ntrain"],
         valid_events=args["nvalid"],
         test_events=args["ntest"],
-    )
+        seed=seed # FIXME make it user-adjustable from the launch scripts
+    )             # maybe changes needed (if-statememnt) in data.py too.
 
     train_features = qdata.get_latent_space("train")
     train_labels = qdata.ae_data.trtarget

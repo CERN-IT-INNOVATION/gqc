@@ -12,6 +12,33 @@ from autoencoders import util as aeutil
 
 
 class qdata:
+    '''
+    Data loader class. qdata is used to load the train/validation/test datasets
+    for the quantum ML model training given a pre-trained Auto-Encoder model
+    that reduces the number of features of the initial dataset.
+
+    Args:
+        data_folder (str): Path to the input data of the Auto-Encoder.
+        norm_name (str): Specify the normalisation of the input data
+                         e.g., minmax, maxabs etc.
+        nevents (float): Number of signal data samples in the input data file. 
+                         Conventionally, we encode this number in the file
+                         name, e.g., nevents = 7.20e+05.
+        model_path (str): Path to the save PyTorch Auto-Encoder model.
+        train_events (int): Number of desired train events to be loaded by
+                            qdata.
+        valid_events (int): Number of desired validation events to be loaded 
+                            by qdata.
+        test_events (int): Number of desired test events to be loaded by
+                            qdata.
+        kfolds (int): Number of folds (i.e. statistiaclly independent datasets)
+                      to use for validation/testing of the trained QML models.
+        seed (int): Seed for the shufling of the train/test/validation and
+                    k-folds datasets.
+
+    Attributes:
+    
+    '''
     def __init__(
         self,
         data_folder,
@@ -22,6 +49,7 @@ class qdata:
         valid_events=-1,
         test_events=-1,
         kfolds=0,
+        seed=np.random.randint(1000) # By default, dataset will be shuffled.
     ):
 
         device = "cpu"
@@ -37,6 +65,7 @@ class qdata:
             train_events,
             valid_events,
             test_events,
+            seed
         )
         self.model = aeutil.choose_ae_model(hp["ae_type"], device, hp)
         self.model.load_model(model_path)
@@ -54,6 +83,7 @@ class qdata:
             0,
             kfolds * valid_events,
             kfolds * test_events,
+            seed
         )
 
     def get_latent_space(self, datat) -> np.ndarray:

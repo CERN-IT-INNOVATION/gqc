@@ -34,18 +34,30 @@ def main(args):
         args["norm"],
         args["nevents"],
         args["model_path"],
-        train_events=600,
-        valid_events=720,
-        test_events=720,
-        kfolds=5,
-    )
+        train_events=2,
+        valid_events=0,
+        test_events=2,
+        kfolds=2,
+        seed=seed # FIXME make it user-adjustable from the launch scripts
+    )             # maybe changes needed (if-statememnt) in data.py too.
 
     train_features = qdata.get_latent_space("train")
     train_labels = qdata.ae_data.trtarget
     test_features = qdata.get_latent_space("test")
     test_labels = qdata.ae_data.tetarget
     test_folds = qdata.get_kfolded_data("test")
-
+    
+    print(train_features.shape)
+    print(train_labels.shape)
+    print(test_features.shape)
+    print(test_labels.shape)
+    print(test_folds.shape)
+    print(train_features)
+    print(train_labels)
+    print(test_features)
+    print(test_labels)
+    print(test_folds)
+    '''
     feature_map = u2Reuploading(nqubits=8, nfeatures=args["feature_dim"])
     backend = Aer.get_backend("aer_simulator_statevector")
     instance = QuantumInstance(
@@ -104,3 +116,4 @@ def compute_model_scores(model, data_folds, output_folder) -> np.ndarray:
     np.save(path, model_scores)
 
     return model_scores
+    '''

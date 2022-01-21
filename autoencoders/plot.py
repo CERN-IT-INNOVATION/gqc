@@ -61,18 +61,10 @@ def input_reco(input_sig, input_bkg, recon_sig, recon_bkg, model_path):
         plt.figure(figsize=(12, 10))
 
         input_vs_reco(
-            input_bkg[:, idx],
-            recon_bkg[:, idx],
-            idx,
-            "gray",
-            class_label="Background",
+            input_bkg[:, idx], recon_bkg[:, idx], idx, "gray", class_label="Background",
         )
         input_vs_reco(
-            input_sig[:, idx],
-            recon_sig[:, idx],
-            idx,
-            "navy",
-            class_label="Signal",
+            input_sig[:, idx], recon_sig[:, idx], idx, "navy", class_label="Signal",
         )
 
         plt.savefig(plots_folder + util.varname(idx) + ".pdf")
@@ -236,9 +228,7 @@ def roc_plots(sig, bkg, model_path, output_folder):
     for feature in range(data.shape[1]):
         fpr, tpr, mean_auc, std_auc = compute_auc(data, target, feature)
         fig = plt.figure(figsize=(12, 10))
-        plt.plot(
-            fpr, tpr, label=f"AUC: {mean_auc:.3f} ± {std_auc:.3f}", color="navy"
-        )
+        plt.plot(fpr, tpr, label=f"AUC: {mean_auc:.3f} ± {std_auc:.3f}", color="navy")
         plt.plot([0, 1], [0, 1], ls="--", color="gray")
 
         plt.xlabel("False Positive Rate")

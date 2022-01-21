@@ -159,12 +159,8 @@ def met_formatting(data, flats) -> np.ndarray:
     """
     print(tcols.OKBLUE + "Formatting missing energy features..." + tcols.ENDC)
 
-    data["met_px"] = data["met_" + met_feats[1]] * np.cos(
-        data["met_" + met_feats[0]]
-    )
-    data["met_py"] = data["met_" + met_feats[1]] * np.sin(
-        data["met_" + met_feats[0]]
-    )
+    data["met_px"] = data["met_" + met_feats[1]] * np.cos(data["met_" + met_feats[0]])
+    data["met_py"] = data["met_" + met_feats[1]] * np.sin(data["met_" + met_feats[0]])
     meta = data[["met_%s" % feat for feat in met_feats]].values
     if flats[1].size == 0:
         flats[1] = meta
@@ -188,11 +184,7 @@ def lep_formatting(data, flats) -> np.ndarray:
 
     number_lep_feats = len(lep_feats)
     lepsa = data[
-        [
-            "leps_%s_%d" % (feat, lep)
-            for lep in range(nleps)
-            for feat in lep_feats
-        ]
+        ["leps_%s_%d" % (feat, lep) for lep in range(nleps) for feat in lep_feats]
     ].values
     if flats[2].size == 0:
         flats[2] = lepsa

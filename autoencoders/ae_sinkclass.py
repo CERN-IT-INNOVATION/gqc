@@ -145,9 +145,9 @@ class AE_sinkclass(AE_vanilla):
         y_batch = y_batch.to(self.device)
         y_map.zero_()
 
-        return y_map.scatter_(
-            1, y_batch.reshape([-1, 1]).type(torch.int64), 1
-        ).to(self.device)
+        return y_map.scatter_(1, y_batch.reshape([-1, 1]).type(torch.int64), 1).to(
+            self.device
+        )
 
     def forward(self, x):
         """

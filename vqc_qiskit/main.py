@@ -32,8 +32,7 @@ def main(args):
         test_events=args["test_events"],
     )
 
-    train_features = qdata.batchify(qdata.get_latent_space("train"),
-                                    args["batch_size"])
+    train_features = qdata.batchify(qdata.get_latent_space("train"), args["batch_size"])
     train_labels = qdata.batchify(qdata.ae_data.trtarget, args["batch_size"])
     valid_features = qdata.get_latent_space("valid")
     valid_labels = qdata.ae_data.vatarget
@@ -42,17 +41,24 @@ def main(args):
     qinst = QuantumInstance(backend, seed_simulator=seed, seed_transpiler=seed)
 
     optimizer = ADAM(maxiter=100, lr=0.001)
-    vqc = VQC(args["nqubits"], args["feature_map"], args["ansatz"],
-              train_features.shape[2], warm_start=False,
-              quantum_instance=qinst, loss=args["loss"],
-              optimizer=optimizer)
+    vqc = VQC(
+        args["nqubits"],
+        args["feature_map"],
+        args["ansatz"],
+        train_features.shape[2],
+        warm_start=False,
+        quantum_instance=qinst,
+        loss=args["loss"],
+        optimizer=optimizer,
+    )
 
     print(tcols.OKCYAN + "Training the VQC..." + tcols.ENDC)
     util.print_model_info(args["model_path"], qdata, vqc)
 
     train_time_init = perf_counter()
-    vqc = train(vqc, train_features, train_labels, valid_features,
-                valid_labels, args["epochs"])
+    vqc = train(
+        vqc, train_features, train_labels, valid_features, valid_labels, args["epochs"]
+    )
     train_time_fina = perf_counter()
     print(f"Training completed in: {train_time_fina-train_time_init:.2e} s")
 
@@ -60,8 +66,7 @@ def main(args):
     util.save_vqc(vqc, "trained_vqcs/" + args["output_folder"] + "/model")
 
 
-def train(vqc, train_features, train_labels, valid_features, valid_labels,
-          epochs):
+def train(vqc, train_features, train_labels, valid_features, valid_labels, epochs):
     """
     Training the vqc.
     @vqc            :: The vqc qiskit object to be trained.

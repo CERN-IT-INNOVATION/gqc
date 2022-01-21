@@ -121,9 +121,9 @@ class AE_sinkhorn(AE_vanilla):
         y_batch = y_batch.to(self.device)
         y_map.zero_()
 
-        return y_map.scatter_(
-            1, y_batch.reshape([-1, 1]).type(torch.int64), 1
-        ).to(self.device)
+        return y_map.scatter_(1, y_batch.reshape([-1, 1]).type(torch.int64), 1).to(
+            self.device
+        )
 
     def compute_loss(self, x_data, y_data) -> float:
         """
@@ -154,10 +154,7 @@ class AE_sinkhorn(AE_vanilla):
         laten_loss = self.laten_loss_function(latent, latent_noise)
         recon_loss = self.recon_loss_function(recon, x_data.float())
 
-        return (
-            self.recon_loss_weight * recon_loss
-            + self.laten_loss_weight * laten_loss
-        )
+        return self.recon_loss_weight * recon_loss + self.laten_loss_weight * laten_loss
 
     @staticmethod
     def print_losses(epoch, epochs, train_loss, valid_losses):
@@ -214,8 +211,7 @@ class AE_sinkhorn(AE_vanilla):
         laten_loss = self.laten_loss_function(latent, latent_noise)
 
         valid_loss = (
-            self.recon_loss_weight * recon_loss
-            + self.laten_loss_weight * laten_loss
+            self.recon_loss_weight * recon_loss + self.laten_loss_weight * laten_loss
         )
         self.save_best_loss_model(valid_loss, outdir)
 

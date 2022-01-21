@@ -11,16 +11,26 @@ from qiskit import QuantumCircuit
 from qiskit.circuit.library import TwoLocal
 
 from qiskit_machine_learning.neural_networks import CircuitQNN
-from qiskit_machine_learning.algorithms.classifiers.neural_network_classifier \
-    import NeuralNetworkClassifier
+from qiskit_machine_learning.algorithms.classifiers.neural_network_classifier import (
+    NeuralNetworkClassifier,
+)
 
 from .zzfeaturemap import ZZFeatureMap
 
 
 class VQC(NeuralNetworkClassifier):
-    def __init__(self, num_qubits=None, feature_map=None, ansatz=None,
-                 input_dim=None, warm_start=False, quantum_instance=None,
-                 initial_point=None, loss=None, optimizer=None):
+    def __init__(
+        self,
+        num_qubits=None,
+        feature_map=None,
+        ansatz=None,
+        input_dim=None,
+        warm_start=False,
+        quantum_instance=None,
+        initial_point=None,
+        loss=None,
+        optimizer=None,
+    ):
         """
         @num_qubits    :: The number of qubits for the underlying CircuitQNN.
                           If None, derive from feature_map or ansatz.
@@ -33,8 +43,8 @@ class VQC(NeuralNetworkClassifier):
         @initial_point :: Initial point for the optimizer to start from.
         """
         self._check_input_arguments(num_qubits, feature_map, ansatz)
-        self._roman_letters = 'abcdefghijklmnopqrstuvwxyz'
-        self._greek_letters = 'αβγδεζηθικλμνξοπρστυφχψω'
+        self._roman_letters = "abcdefghijklmnopqrstuvwxyz"
+        self._greek_letters = "αβγδεζηθικλμνξοπρστυφχψω"
 
         self._input_dim = input_dim
         self._num_qubits = None
@@ -106,7 +116,7 @@ class VQC(NeuralNetworkClassifier):
         self._num_qubits = num_qubits
         vforms = []
 
-        for form_nb in range(int(self._input_dim/num_qubits)):
+        for form_nb in range(int(self._input_dim / num_qubits)):
             vforms.append(self._set_feature_map(feature_map))
             vforms.append(self._set_ansatz(ansatz))
 
@@ -127,7 +137,7 @@ class VQC(NeuralNetworkClassifier):
         self._num_qubits = feature_map.num_qubits
         vforms = []
 
-        for form_nb in range(int(self._input_dim/num_qubits)):
+        for form_nb in range(int(self._input_dim / num_qubits)):
             vforms.append(self._set_feature_map(feature_map))
             vforms.append(self._set_ansatz(ansatz))
 
@@ -147,7 +157,7 @@ class VQC(NeuralNetworkClassifier):
         self._num_qubits = ansatz.num_qubits
         vforms = []
 
-        for form_nb in range(int(self._input_dim/num_qubits)):
+        for form_nb in range(int(self._input_dim / num_qubits)):
             vforms.append(self._set_feature_map(feature_map))
             vforms.append(self._set_ansatz(ansatz))
 
@@ -170,8 +180,9 @@ class VQC(NeuralNetworkClassifier):
         param_prefix = self._roman_letters[-1]
         self._roman_letters = self._roman_letters[:-1]
 
-        return ZZFeatureMap(self._num_qubits, 1, "linear",
-                            parameter_prefix=param_prefix)
+        return ZZFeatureMap(
+            self._num_qubits, 1, "linear", parameter_prefix=param_prefix
+        )
 
     def _set_ansatz(self, ansatz):
         """
@@ -190,8 +201,9 @@ class VQC(NeuralNetworkClassifier):
         param_prefix = self._greek_letters[-1]
         self._greek_letters = self._greek_letters[:-1]
 
-        return TwoLocal(self._num_qubits, 'ry', 'cx', 'linear', 1,
-                        parameter_prefix=param_prefix)
+        return TwoLocal(
+            self._num_qubits, "ry", "cx", "linear", 1, parameter_prefix=param_prefix
+        )
 
     @staticmethod
     def _check_input_arguments(num_qubits, feature_map, ansatz):
@@ -209,15 +221,17 @@ class VQC(NeuralNetworkClassifier):
         @num_qubits :: Int of the number of qubits used in the vqc.
         """
         if self._input_dim % num_qubits != 0:
-            raise AttributeError("The dimensions of your input should be "
-                                 "divisible by the number of qubits.")
+            raise AttributeError(
+                "The dimensions of your input should be "
+                "divisible by the number of qubits."
+            )
 
     def _encode_onehot(self, target):
         """
         Reshape the target that such that it follows onehot encoding.
         @target :: Numpy array with target data.
         """
-        onehot_target = np.zeros((target.size, int(target.max()+1)))
+        onehot_target = np.zeros((target.size, int(target.max() + 1)))
         onehot_target[np.arange(target.size), target.astype(int)] = 1
 
         return onehot_target
@@ -266,7 +280,8 @@ class VQC(NeuralNetworkClassifier):
             y = self._encode_onehot(y)
         num_classes = len(np.unique(y, axis=0))
         cast(CircuitQNN, self._neural_network).set_interpret(
-            self._get_interpret(num_classes), num_classes)
+            self._get_interpret(num_classes), num_classes
+        )
 
         return super().fit(X, y)
 
@@ -284,6 +299,7 @@ class VQC(NeuralNetworkClassifier):
         @num_classes :: Int of the number of classes that are present in the
                         data, i.e., for one signal and one bkg this is 2.
         """
+
         def parity(x, num_classes=num_classes):
             return f"{x:b}".count("1") % num_classes
 

@@ -12,7 +12,7 @@ from autoencoders import util as aeutil
 
 
 class qdata:
-    '''
+    """
     Data loader class. qdata is used to load the train/validation/test datasets
     for the quantum ML model training given a pre-trained Auto-Encoder model
     that reduces the number of features of the initial dataset.
@@ -38,7 +38,8 @@ class qdata:
 
     Attributes:
     
-    '''
+    """
+
     def __init__(
         self,
         data_folder,
@@ -49,7 +50,7 @@ class qdata:
         valid_events=-1,
         test_events=-1,
         kfolds=0,
-        seed=np.random.randint(1000) # By default, dataset will be shuffled.
+        seed=np.random.randint(1000),  # By default, dataset will be shuffled.
     ):
 
         device = "cpu"
@@ -65,7 +66,7 @@ class qdata:
             train_events,
             valid_events,
             test_events,
-            seed
+            seed,
         )
         self.model = aeutil.choose_ae_model(hp["ae_type"], device, hp)
         self.model.load_model(model_path)
@@ -83,7 +84,7 @@ class qdata:
             0,
             kfolds * valid_events,
             kfolds * test_events,
-            seed
+            seed,
         )
 
     def get_latent_space(self, datat) -> np.ndarray:
@@ -128,12 +129,8 @@ class qdata:
             per fold.
         """
         data_sig, data_bkg = self.ae_data.split_sig_bkg(data, target)
-        data_sig = data_sig.reshape(
-            -1, int(events_per_kfold / 2), data_sig.shape[1]
-        )
-        data_bkg = data_bkg.reshape(
-            -1, int(events_per_kfold / 2), data_bkg.shape[1]
-        )
+        data_sig = data_sig.reshape(-1, int(events_per_kfold / 2), data_sig.shape[1])
+        data_bkg = data_bkg.reshape(-1, int(events_per_kfold / 2), data_bkg.shape[1])
 
         return np.concatenate((data_sig, data_bkg), axis=1)
 

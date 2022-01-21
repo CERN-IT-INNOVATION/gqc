@@ -31,12 +31,7 @@ class qdata:
 
         print(tcols.OKCYAN + "\nLoading training data:" + tcols.ENDC)
         self.ae_data = aedata.AE_data(
-            data_folder,
-            norm_name,
-            nevents,
-            train_events,
-            valid_events,
-            test_events,
+            data_folder, norm_name, nevents, train_events, valid_events, test_events,
         )
         self.model = aeutil.choose_ae_model(hp["ae_type"], device, hp)
         self.model.load_model(model_path)
@@ -99,12 +94,8 @@ class qdata:
             per fold.
         """
         data_sig, data_bkg = self.ae_data.split_sig_bkg(data, target)
-        data_sig = data_sig.reshape(
-            -1, int(events_per_kfold / 2), data_sig.shape[1]
-        )
-        data_bkg = data_bkg.reshape(
-            -1, int(events_per_kfold / 2), data_bkg.shape[1]
-        )
+        data_sig = data_sig.reshape(-1, int(events_per_kfold / 2), data_sig.shape[1])
+        data_bkg = data_bkg.reshape(-1, int(events_per_kfold / 2), data_bkg.shape[1])
 
         return np.concatenate((data_sig, data_bkg), axis=1)
 
@@ -144,8 +135,9 @@ class qdata:
         elif len(data.shape) == 2:
             return data.reshape(-1, batch_size, data.shape[1])
         else:
-            raise RuntimeError("Batchify does not cover arrays with "
-                               "dimension larger than 2.")
+            raise RuntimeError(
+                "Batchify does not cover arrays with " "dimension larger than 2."
+            )
 
     @staticmethod
     def to_onehot(target):
@@ -153,7 +145,7 @@ class qdata:
         Reshape the target that such that it follows onehot encoding.
         @target :: Numpy array with target data.
         """
-        onehot_target = np.zeros((target.size, int(target.max()+1)))
+        onehot_target = np.zeros((target.size, int(target.max() + 1)))
         onehot_target[np.arange(target.size), target.astype(int)] = 1
 
         return onehot_target

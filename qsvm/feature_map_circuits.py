@@ -16,9 +16,7 @@ def u2Reuploading(nqubits=8, nfeatures=16) -> QuantumCircuit:
     x = ParameterVector("x", nfeatures)
     qc = QuantumCircuit(nqubits)
     for feature, qubit in zip(range(0, 2 * nqubits, 2), range(nqubits)):
-        qc.u(
-            np.pi / 2, x[feature], x[feature + 1], qubit
-        )  # u2(φ,λ) = u(π/2,φ,λ)
+        qc.u(np.pi / 2, x[feature], x[feature + 1], qubit)  # u2(φ,λ) = u(π/2,φ,λ)
     for i in range(nqubits):
         if i == nqubits - 1:
             break

@@ -45,7 +45,7 @@ setup(
         "qiskit>=0.32.0",
         "qiskit-machine-learning>=0.2.1",
         "optuna>=2.10.0",
-        "cmake>=3.21.4"
+        "cmake>=3.21.4",
     ],
     classifiers=[
         "Environment :: Console",

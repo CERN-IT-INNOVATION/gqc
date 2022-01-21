@@ -32,13 +32,10 @@ def roc_plot(scores, qdata_loader, output_folder, model_name):
     )
     auc_mean, auc_std = np.mean(auc), np.std(auc)
     print(f"AUC's: {auc}")
-    print(tcols.OKGREEN +
-          f"AUC (mean) = {auc_mean} +/- {auc_std}" +
-          tcols.ENDC)
+    print(tcols.OKGREEN + f"AUC (mean) = {auc_mean} +/- {auc_std}" + tcols.ENDC)
     y_scores_flat = y_scores.flatten()
     fpr, tpr, _ = metrics.roc_curve(
-        np.tile(qdata_loader.ae_data.tetarget, qdata_loader.kfolds),
-        y_scores_flat,
+        np.tile(qdata_loader.ae_data.tetarget, qdata_loader.kfolds), y_scores_flat,
     )
     plt.plot(
         fpr,

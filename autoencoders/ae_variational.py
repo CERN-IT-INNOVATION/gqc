@@ -43,9 +43,7 @@ class AE_variational(AE_vanilla):
         del self.encoder
 
         self.encoder = self.construct_encoder(self.hp["ae_layers"])
-        self.encode_mean = nn.Linear(
-            self.hp["ae_layers"][-2], self.hp["ae_layers"][-1]
-        )
+        self.encode_mean = nn.Linear(self.hp["ae_layers"][-2], self.hp["ae_layers"][-1])
         self.encode_logvar = nn.Linear(
             self.hp["ae_layers"][-2], self.hp["ae_layers"][-1]
         )
@@ -124,10 +122,7 @@ class AE_variational(AE_vanilla):
         laten_loss = self.laten_loss_function(latent_log_probs, comp_probs)
         recon_loss = self.recon_loss_function(recon, x_data.float())
 
-        return (
-            self.recon_loss_weight * recon_loss
-            + self.laten_loss_weight * laten_loss
-        )
+        return self.recon_loss_weight * recon_loss + self.laten_loss_weight * laten_loss
 
     @staticmethod
     def print_losses(epoch, epochs, train_loss, valid_losses):
@@ -181,8 +176,7 @@ class AE_variational(AE_vanilla):
         laten_loss = self.laten_loss_function(latent_log_probs, comp_probs)
 
         valid_loss = (
-            self.recon_loss_weight * recon_loss
-            + self.laten_loss_weight * laten_loss
+            self.recon_loss_weight * recon_loss + self.laten_loss_weight * laten_loss
         )
         self.save_best_loss_model(valid_loss, outdir)
 

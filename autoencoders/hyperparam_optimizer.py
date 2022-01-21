@@ -31,9 +31,7 @@ def main(args):
         print("{}: {}".format(key, value))
 
 
-def optuna_train(
-    train_loader, valid_loader, model, epochs, trial, woptim
-) -> float:
+def optuna_train(train_loader, valid_loader, model, epochs, trial, woptim) -> float:
     """
     Training the autoencoder in a way that is compatible with optuna.
     @train_loader :: Pytorch loader object containing training data.
@@ -107,8 +105,12 @@ def objective(trial, args) -> float:
 
     batch = trial.suggest_categorical("batch", args["batch"])
     args.update(
-        {"lr": lr, "class_weight": class_weight, "sinkh_weight": sinkh_weight,
-         "varia_weight": varia_weight}
+        {
+            "lr": lr,
+            "class_weight": class_weight,
+            "sinkh_weight": sinkh_weight,
+            "varia_weight": varia_weight,
+        }
     )
 
     # Load the data.

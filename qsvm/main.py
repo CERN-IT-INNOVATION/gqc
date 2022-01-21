@@ -38,15 +38,15 @@ def main(args):
         valid_events=0,
         test_events=2,
         kfolds=2,
-        seed=seed # FIXME make it user-adjustable from the launch scripts
-    )             # maybe changes needed (if-statememnt) in data.py too.
+        seed=seed,  # FIXME make it user-adjustable from the launch scripts
+    )  # maybe changes needed (if-statememnt) in data.py too.
 
     train_features = qdata.get_latent_space("train")
     train_labels = qdata.ae_data.trtarget
     test_features = qdata.get_latent_space("test")
     test_labels = qdata.ae_data.tetarget
     test_folds = qdata.get_kfolded_data("test")
-    
+
     print(train_features.shape)
     print(train_labels.shape)
     print(test_features.shape)

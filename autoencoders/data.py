@@ -17,7 +17,7 @@ class AE_data:
         train_events=-1,
         valid_events=-1,
         test_events=-1,
-        seed=np.random.randint(1000)
+        seed=np.random.randint(1000),
     ):
 
         self.norm_name = norm_name
@@ -66,13 +66,7 @@ class AE_data:
         returns :: The name of the data file to be imported.
         """
         return (
-            "x_data_"
-            + self.norm_name
-            + "_"
-            + self.nevents
-            + "_"
-            + data_type
-            + ".npy"
+            "x_data_" + self.norm_name + "_" + self.nevents + "_" + data_type + ".npy"
         )
 
     def get_target_file(self, data_type) -> str:
@@ -86,13 +80,7 @@ class AE_data:
         returns :: The name of the target file to be imported.
         """
         return (
-            "y_data_"
-            + self.norm_name
-            + "_"
-            + self.nevents
-            + "_"
-            + data_type
-            + ".npy"
+            "y_data_" + self.norm_name + "_" + self.nevents + "_" + data_type + ".npy"
         )
 
     def get_numpy_data(self, data_type) -> np.ndarray:
@@ -109,9 +97,7 @@ class AE_data:
             data = np.load(path)
         except Exception as e:
             print(f"Exception that occured: {e}")
-            print(
-                tcols.WARNING + data_type + " data file not found!" + tcols.ENDC
-            )
+            print(tcols.WARNING + data_type + " data file not found!" + tcols.ENDC)
 
         return data
 
@@ -129,9 +115,7 @@ class AE_data:
             data = np.load(path)
         except Exception as e:
             print(f"Exception that occured: {e}")
-            print(
-                tcols.WARNING + data_type + " data file not found!" + tcols.ENDC
-            )
+            print(tcols.WARNING + data_type + " data file not found!" + tcols.ENDC)
 
         return data
 

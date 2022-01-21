@@ -13,6 +13,7 @@ from qiskit.providers.exceptions import QiskitBackendNotFoundError
 from qiskit.circuit import ParameterVector
 from qiskit.visualization import plot_circuit_layout
 from qiskit.providers.aer.backends import AerSimulator
+import re
 
 from .terminal_colors import tcols
 
@@ -42,7 +43,7 @@ def create_output_folder(args, qsvm):
     if (args["backend_name"] is not None): 
         # For briefness remove the "ibmq" prefix from the backend_name for the
         # output folder:
-        backend_name = args["backend_name"].replace('ibmq_','')
+        backend_name = re.sub('ibmq?_', '', args["backend_name"])
         args["output_folder"] += f'_{backend_name}'
     out_path = "models/" + args["output_folder"]
     if not os.path.exists(out_path):

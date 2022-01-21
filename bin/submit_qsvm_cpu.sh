@@ -2,8 +2,9 @@
 #SBATCH --job-name=qsvm_train
 #SBATCH --partition=long
 #SBATCH --ntasks=1
-#SBATCH --cpus-per-task=8
-#SBATCH --mem=3000M
+#SBATCH --cpus-per-task=16
+#SBATCH --mem=12000M
+#SBATCH --time=7-00:00:00
 #SBATCH -o ./logs/qsvm_cpu_%j.out
 
 usage() { echo "Usage: $0 [-n <normalization_name>] [-s <number_of_events>]"\
@@ -50,7 +51,7 @@ while getopts ":n:s:p:c:f:b:r:a:v:t:" o; do
 done
 shift $((OPTIND-1))
 
-if [ -z "${n}" ] || [ -z "${s}" ] || [ -z "${p}" ] || [ -z "${c}" ] || [ -z "${f}" ] || [ -z "${r}" ] || [-z "${a}"] || [-z ${v}] || [-z ${t}]; then
+if [ -z "${n}" ] || [ -z "${s}" ] || [ -z "${p}" ] || [ -z "${c}" ] || [ -z "${f}" ] || [ -z "${r}" ] || [ -z "${a}" ] || [ -z ${v} ] || [ -z ${t} ]; then
     usage
 fi
 
@@ -62,5 +63,6 @@ export PYTHONUNBUFFERED=TRUE
               --ntrain ${a} --nvalid ${v} --ntest ${t}
 export PYTHONUNBUFFERED=FALSE
 # Move the stdout file to the corresponding trained model folder for more
-# efficient job testing.
-mv ./logs/qsvm_cpu_${SLURM_JOB_ID}.out models/${f}_c\=${c}_${r}_${b#ibmq_}
+# efficient job testing. Also remove the ibm_ or ibmq_ prefix.
+b=`sed -e s'/ibmq\?_'//g <<< ${b}`
+mv ./logs/qsvm_cpu_${SLURM_JOB_ID}.out models/${f}_c\=${c}_${r}_${b}

@@ -24,6 +24,12 @@ parser.add_argument('--batch', type=int, nargs="+",
                     help='The batch options, e.g., [128 256 512].')
 parser.add_argument('--epochs', type=int,
                     help='The number of training epochs.')
+parser.add_argument("--varia_weight", type=float, default=1, nargs=2,
+                    help="The weight of the variational AE loss.")
+parser.add_argument("--class_weight", type=int, default=1, nargs=2,
+                    help="The weight of the classifier BCE loss.")
+parser.add_argument("--sinkh_weight", type=int, default=1, nargs=2,
+                    help="The weight of the sinkhorn AE latent space loss.")
 parser.add_argument('--study_name', type=str, default='optuna_study',
                     help='The name of the optuna study.')
 parser.add_argument('--ntrials', type=int, default=1,
@@ -50,8 +56,9 @@ args = {
     "enc_activ":    'nn.Tanh()',
     "dec_activ":    'nn.Tanh()',
     "vqc_specs":    vqc_specs,
-    "loss_weight":  1,
-    "weight_sink":  1,
+    "class_weight": args.class_weight,
+    "varia_weight": args.varia_weight,
+    "sinkh_weight": args.sinkh_weight,
     "adam_betas":   (0.9, 0.999),
     "study_name":   args.study_name,
     "ntri":         args.ntrials,

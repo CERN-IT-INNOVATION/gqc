@@ -81,7 +81,7 @@ def main(args):
 
     args["output_folder"] = args["output_folder"] + f"_c={qsvm.C}"
     util.create_output_folder(args["output_folder"])
-    util.save_qsvm(qsvm, "qsvm_models/" + args["output_folder"] + "/model")
+    util.save_qsvm(qsvm, "trained_qsvms/" + args["output_folder"] + "/model")
 
     print(tcols.OKCYAN +
           "\n\nComputing accuracies on kfolded test data..." +
@@ -110,7 +110,7 @@ def compute_model_scores(model, data_folds, output_folder) -> np.ndarray:
     scores_time_fina = perf_counter()
     print(f"Completed in: {scores_time_fina-scores_time_init:2.2e} s")
 
-    path = "qsvm_models/" + output_folder + "/y_score_list.npy"
+    path = "trained_qsvms/" + output_folder + "/y_score_list.npy"
 
     print("Saving model scores array in: " + path)
     np.save(path, model_scores)

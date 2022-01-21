@@ -8,6 +8,7 @@ import numpy as np
 from qiskit import Aer
 from qiskit.utils import QuantumInstance
 from qiskit.utils import algorithm_globals
+from qiskit.algorithms.optimizers import ADAM
 
 from .vqc import VQC
 from .terminal_colors import tcols
@@ -37,14 +38,14 @@ def main(args):
     valid_features = qdata.get_latent_space("valid")
     valid_labels = qdata.ae_data.vatarget
 
-    backend = Aer.get_backend("aer_simulator_statevector")
-
+    backend = Aer.get_backend("statevector_simulator")
     qinst = QuantumInstance(backend, seed_simulator=seed, seed_transpiler=seed)
 
+    optimizer = ADAM(maxiter=100, lr=0.001)
     vqc = VQC(args["nqubits"], args["feature_map"], args["ansatz"],
-              train_features.shape[2], warm_start=True,
+              train_features.shape[2], warm_start=False,
               quantum_instance=qinst, loss=args["loss"],
-              optimizer=None)
+              optimizer=optimizer)
 
     print(tcols.OKCYAN + "Training the VQC..." + tcols.ENDC)
     util.print_model_info(args["model_path"], qdata, vqc)

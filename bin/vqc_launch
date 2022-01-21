@@ -6,6 +6,9 @@ import sys
 sys.path.append("..")
 
 from vqc.main import main
+from vqc.zzfeaturemap import ZZFeatureMap
+from qiskit.circuit.library import TwoLocal
+
 parser = argparse.ArgumentParser(formatter_class=argparse.
                                  ArgumentDefaultsHelpFormatter)
 parser.add_argument("--data_folder", type=str, default='../../data/input_ae/',
@@ -29,8 +32,8 @@ parser.add_argument('--loss', type=str, default="cross_entropy",
 
 args = parser.parse_args()
 
-feature_map = None
-ansatz = None
+feature_map = ZZFeatureMap(16, 1, "linear")
+ansatz = TwoLocal(16, 'ry', 'cx', 'linear', 1)
 
 args = {
     "data_folder": args.data_folder,

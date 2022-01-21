@@ -2,7 +2,7 @@
 #SBATCH --job-name=ae_train
 #SBATCH --partition=long
 #SBATCH --ntasks=1
-#SBATCH --cpus-per-task=8
+#SBATCH --cpus-per-task=12
 #SBATCH --mem=7000M
 #SBATCH -o ./logs/vqc_cpu_%j.out
 
@@ -49,3 +49,5 @@ source /work/deodagiu/miniconda/bin/activate ae_qml
 export PYTHONUNBUFFERED=TRUE
 python vqc_launch --data_folder /work/deodagiu/data/ae_input --norm ${n} --nevents ${s} --model_path ${p} --nqubits ${q} --epochs ${e} --batch_size ${b} --loss ${l} --output_folder ${f}
 export PYTHONUNBUFFERED=FALSE
+
+mv ./logs/vqc_cpu_${SLURM_JOBID}.out ./trained_vqcs/${f}/

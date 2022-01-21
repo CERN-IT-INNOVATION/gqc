@@ -47,9 +47,9 @@ args = {
     "epochs": args.epochs,
     "batch_size": args.batch_size,
     "loss": args.loss,
-    "train_events": 500,
-    "valid_events": 500,
-    "test_events": 500,
+    "train_events": 100,
+    "valid_events": 100,
+    "test_events": 100,
 }
 
 main(args)

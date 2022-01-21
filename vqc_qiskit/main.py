@@ -37,7 +37,7 @@ def main(args):
     valid_features = qdata.get_latent_space("valid")
     valid_labels = qdata.ae_data.vatarget
 
-    backend = Aer.get_backend("statevector_simulator")
+    backend = Aer.get_backend("aer_simulator_statevector")
     qinst = QuantumInstance(backend, seed_simulator=seed, seed_transpiler=seed)
 
     optimizer = ADAM(maxiter=100, lr=0.001)

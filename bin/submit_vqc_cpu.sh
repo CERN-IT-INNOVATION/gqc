@@ -2,7 +2,7 @@
 #SBATCH --job-name=ae_train
 #SBATCH --partition=long
 #SBATCH --ntasks=1
-#SBATCH --cpus-per-task=12
+#SBATCH --cpus-per-task=10
 #SBATCH --mem=7000M
 #SBATCH -o ./logs/vqc_cpu_%j.out
 

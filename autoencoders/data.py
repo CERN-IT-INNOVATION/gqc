@@ -17,7 +17,7 @@ class AE_data:
         train_events=-1,
         valid_events=-1,
         test_events=-1,
-        seed=np.random.randint(1000)
+        seed=None
     ):
 
         self.norm_name = norm_name

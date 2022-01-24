@@ -46,12 +46,13 @@ args = parser.parse_args()
 
 # Define token globally. It is needed to access IBM machines and calibration
 # info. Currently using vbelis token.
+# TODO private token via external file.
 ibmq_token = '3b5456f5831866975f67f7019292c399bcfc011672533ddaec2ae2bddf5ab29c2a17a0c6c176fce1df2408cd07b3be938ede816b120e97a350f0bb6a11d0bf6e'
 seed = 12345
 
 #FIXME Virtual to physical qubits, ordering is from 0->(n_qubits-1)
-#initial_layout = [9,8,11,14,16,19,22,25]
 initial_layout = None
+#initial_layout = [12,15,18,21,23,24,25,22] # for cairo
 
 # Different configuration keyword arguments for the QuantumInstance depending 
 # on the run_type. They can be tweaked as desired before running.
@@ -63,7 +64,6 @@ config_ideal = {'seed_simulator': seed}
 
 switcher = {'ideal' : lambda: config_ideal, 'noisy' : lambda: config_noisy, 
             'hardware' : lambda: config_hardware}
-# TODO ? save the run config in the model folder?
 config = switcher.get(args.run_type, lambda: None)()
 
 args = {
@@ -80,7 +80,8 @@ args = {
     "config": config,
     "ntrain": args.ntrain,
     "nvalid": args.nvalid,
-    "ntest": args.ntest
+    "ntest": args.ntest,
+    "seed": seed # For the data shuffling.
 }
 
 main(args)

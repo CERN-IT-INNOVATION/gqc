@@ -49,7 +49,7 @@ class qdata:
         valid_events=-1,
         test_events=-1,
         kfolds=0,
-        seed=np.random.randint(1000) # By default, dataset will be shuffled.
+        seed=None # By default, dataset will be shuffled.
     ):
 
         device = "cpu"

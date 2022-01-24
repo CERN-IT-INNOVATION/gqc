@@ -71,6 +71,8 @@ def main(args):
     qsvm.fit(quantum_kernel_matrix, train_labels)
     train_time_fina = perf_counter()
     print(f"Training completed in: {train_time_fina-train_time_init:.2e} s")
+    print(f'For classes: {qsvm.classes_}, the number of support vectors for' 
+          f' each class are: {qsvm.n_support_}')
 
     train_acc = qsvm.score(quantum_kernel_matrix, train_labels)
     # Evaluate test kernel matrix

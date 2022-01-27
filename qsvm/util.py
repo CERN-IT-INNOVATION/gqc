@@ -151,7 +151,7 @@ def save_circuit_physical_layout(circuit, backend, save_path):
     fig.savefig(save_path)
     
 
-def connect_quantum_computer(ibmq_token, backend_name):
+def connect_quantum_computer(ibmq_api_config, backend_name):
     '''
     Load a IBMQ-experience backend using a token (IBM-CERN hub credentials)
     This backend (i.e. quantum computer) can either be used for running on
@@ -159,17 +159,19 @@ def connect_quantum_computer(ibmq_token, backend_name):
     latter data we can do a simulation of the hardware behaviour.
     
     Args:
-
-    @ibmq_token (string)   :: Token for authentication by IBM to give access
-                              to non-pubic hardware.
-    @backend_name (string) :: Quantum computer name.
-    
-    Returns: IBMQBackend qiskit object.
+        @ibmq_api_config (dict) :: Configuration file for the IBMQ API token
+                                   and provider information.   
+        @backend_name (string) :: Quantum computer name.
+    Returns: 
+        IBMQBackend qiskit object.
     '''
     print('Enabling IBMQ account using provided token...', end="")
-    IBMQ.enable_account(ibmq_token)
-    provider = IBMQ.get_provider(hub='ibm-q-cern', group='internal', 
-                                 project='qvsm4higgs')
+    IBMQ.enable_account(ibmq_api_config["ibmq_api_token"])
+    provider = IBMQ.get_provider(
+        hub=ibmq_api_config["hub"], 
+        group=ibmq_api_config["group"], 
+        project=ibmq_api_config["project"]
+    )
     try: 
         quantum_computer_backend = provider.get_backend(backend_name)
     except QiskitBackendNotFoundError:
@@ -228,8 +230,8 @@ def ideal_simulation(**kwargs) -> QuantumInstance:
     '''
 
 
-def noisy_simulation(ibmq_token,backend_name,**kwargs)\
-                      -> QuantumInstance:
+def noisy_simulation(ibmq_api_config, backend_name, **kwargs)\
+                      -> Tuple:
     '''
     Prepare a QuantumInstance object for simulation with noise based on the 
     real quantum computer calibration data.
@@ -242,8 +244,10 @@ def noisy_simulation(ibmq_token,backend_name,**kwargs)\
             @backend on which the noisy simulation is based.
     '''
     print(tcols.BOLD + '\nInitialising noisy simulation.' + tcols.ENDC)
-    quantum_computer_backend = connect_quantum_computer(ibmq_token,
-                                                        backend_name)
+    quantum_computer_backend = connect_quantum_computer(
+        ibmq_api_config,
+        backend_name
+    )
     backend = AerSimulator.from_backend(quantum_computer_backend)
     
     quantum_instance = QuantumInstance(
@@ -253,22 +257,24 @@ def noisy_simulation(ibmq_token,backend_name,**kwargs)\
     return quantum_instance, quantum_computer_backend
 
 
-def hardware_run(backend_name, ibmq_token, **kwargs):
+def hardware_run(backend_name, ibmq_api_config, **kwargs) -> Tuple:
     '''
     Configure QuantumInstance based on a quantum computer. The circuits will
     be sent as jobs to be exececuted on the specified device in IBMQ.
     
     Args:
-         @backend_name :: Name of the quantum computer, form ibmq_<city_name>.
-         @ibmq_token   :: Token for authentication by IBM to give access
-                          to non-pubic hardware.
-
+         @backend_name (str) :: Name of the quantum computer, form ibmq_<city_name>.
+         @ibmq_api_config (dict) :: Configuration file for the IBMQ API token
+                                    and provider information. 
     Returns:
             @QuantumInstance object with quantum computer backend.
             @The quantum computer backend object.
     '''
     print(tcols.BOLD + '\nInitialising run on a quantum computer.' + tcols.ENDC)
-    quantum_computer_backend = connect_quantum_computer(ibmq_token,backend_name)
+    quantum_computer_backend = connect_quantum_computer(
+        ibmq_api_config,
+        backend_name
+    )
     quantum_instance = QuantumInstance(
         backend = quantum_computer_backend, 
         **kwargs
@@ -276,7 +282,7 @@ def hardware_run(backend_name, ibmq_token, **kwargs):
     return quantum_instance, quantum_computer_backend
 
 
-def configure_quantum_instance(ibmq_token, run_type, backend_name = None,
+def configure_quantum_instance(ibmq_api_config, run_type, backend_name = None,
                                 **kwargs) -> QuantumInstance:
     '''
     Gives the QuantumInstance object required for running the Quantum kernel.
@@ -284,17 +290,18 @@ def configure_quantum_instance(ibmq_token, run_type, backend_name = None,
     noise, an ideal (statevector) simulation or running on a real quantum 
     device.
     Args:
-         @ibmq_token (string)   :: Token for authentication by IBM to give 
-                                   access to non-pubic hardware.
-         @run_type (string)     :: Takes values the possible values {ideal, 
-                                   noisy, hardware} to specify what type of 
-                                   backend will be provided to the quantum
-                                   instance object.
-         @backend_name (string) :: Name of the quantum computer to run or base
-                                   the noisy simulation on. For ideal runs it 
-                                   can be set ton "none".
-         @**kwargs     (dict)   :: Dictionary of keyword arguments for the 
-                                   QuantumInstance.
+         @ibmq_api_config (dict) :: Configuration file for the IBMQ API token
+                                    and provider information. 
+
+         @run_type (string)      :: Takes values the possible values {ideal, 
+                                    noisy, hardware} to specify what type of 
+                                    backend will be provided to the quantum
+                                    instance object.
+         @backend_name (string)  :: Name of the quantum computer to run or base
+                                    the noisy simulation on. For ideal runs it 
+                                    can be set ton "none".
+         @**kwargs     (dict)    :: Dictionary of keyword arguments for the 
+                                    QuantumInstance.
     Returns:
             @QuantumInstance object to be used in the QuantumKernel training.
             @backend that is being used. None if an ideal simulation is initi-
@@ -307,14 +314,14 @@ def configure_quantum_instance(ibmq_token, run_type, backend_name = None,
     
     switcher = {
             'ideal'    : lambda: ideal_simulation(**kwargs),
-            'noisy'    : lambda: noisy_simulation(ibmq_token=ibmq_token,
+            'noisy'    : lambda: noisy_simulation(ibmq_api_config = ibmq_api_config,
                                                     backend_name = backend_name,
                                                     **kwargs),
             'hardware' : lambda: hardware_run(backend_name = backend_name, 
-                                              ibmq_token = ibmq_token, 
+                                              ibmq_api_config = ibmq_api_config, 
                                               **kwargs)
         }
-    #FIXME why is the (), callable needed? 
+
     quantum_instance, backend = switcher.get(run_type, lambda: None)()
     if quantum_instance is None:
         raise TypeError('Specified programme run type does not exist!')

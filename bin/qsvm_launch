@@ -5,6 +5,7 @@
 
 import argparse
 import sys
+import json
 sys.path.append("..")
 
 from qsvm.main import main #TODO rename the module to train?
@@ -44,13 +45,18 @@ parser.add_argument('--ntest', type=int, default=720,
 
 args = parser.parse_args()
 
-ibmq_token = '3b5456f5831866975f67f7019292c399bcfc011672533ddaec2ae2bddf5ab29c2a17a0c6c176fce1df2408cd07b3be938ede816b120e97a350f0bb6a11d0bf6e'
-seed = 12345
+# Load private configuration file for ibmq_api_token and provider details.   
+try:
+    with open('private_config.json') as pconfig:
+        private_configuration = json.load(pconfig)
+except:
+    print("Error in reading private config: Process aborted")
 
 # Different configuration keyword arguments for the QuantumInstance depending 
 # on the run_type. They can be tweaked as desired before running.
 initial_layout = [1,2,3,5,8,11,14,16] # for Cairo
 
+seed = 12345
 config_noisy = {'optimization_level':3, 'initial_layout': initial_layout,
                 'seed_transpiler':seed, 'seed_simulator':seed, 'shots':5000}
 config_hardware = {'optimization_level':3, 'initial_layout': initial_layout,
@@ -70,7 +76,7 @@ args = {
     "c_param": args.c_param,
     "output_folder": args.output_folder,
     "backend_name": args.backend_name,
-    "ibmq_token": ibmq_token,
+    "ibmq_api_config": private_configuration["IBMQ"],
     "run_type": args.run_type,
     "config": config,
     "ntrain": args.ntrain,

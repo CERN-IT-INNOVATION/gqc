@@ -1,7 +1,7 @@
 {
     "IBMQ": {
                "ibmq_api_token" : "",
-               "hub": "ibm-q-cern'",
+               "hub": "ibm-q-cern",
                "group": "internal",
                "project":"qvsm4higgs"
             }

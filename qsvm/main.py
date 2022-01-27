@@ -45,7 +45,7 @@ def main(args):
     feature_map = u2Reuploading(nqubits=8, nfeatures=args["feature_dim"])
     
     quantum_instance, backend = util.configure_quantum_instance(
-        ibmq_token=args["ibmq_token"],
+        ibmq_api_config=args["ibmq_api_config"],
         run_type = args["run_type"],
         backend_name= args["backend_name"],
         **args["config"]

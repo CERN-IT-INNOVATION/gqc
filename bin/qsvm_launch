@@ -44,9 +44,6 @@ parser.add_argument('--ntest', type=int, default=720,
 
 args = parser.parse_args()
 
-# Define token globally. It is needed to access IBM machines and calibration
-# info. Currently using vbelis token.
-# TODO private token via external file.
 ibmq_token = '3b5456f5831866975f67f7019292c399bcfc011672533ddaec2ae2bddf5ab29c2a17a0c6c176fce1df2408cd07b3be938ede816b120e97a350f0bb6a11d0bf6e'
 seed = 12345
 

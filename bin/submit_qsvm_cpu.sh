@@ -2,8 +2,8 @@
 #SBATCH --job-name=qsvm_train
 #SBATCH --partition=long
 #SBATCH --ntasks=1
-#SBATCH --cpus-per-task=16
-#SBATCH --mem=12000M
+#SBATCH --cpus-per-task=8
+#SBATCH --mem=4000M
 #SBATCH --time=7-00:00:00
 #SBATCH -o ./logs/qsvm_cpu_%j.out
 

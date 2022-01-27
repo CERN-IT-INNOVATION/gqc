@@ -50,12 +50,10 @@ args = parser.parse_args()
 ibmq_token = '3b5456f5831866975f67f7019292c399bcfc011672533ddaec2ae2bddf5ab29c2a17a0c6c176fce1df2408cd07b3be938ede816b120e97a350f0bb6a11d0bf6e'
 seed = 12345
 
-#FIXME Virtual to physical qubits, ordering is from 0->(n_qubits-1)
-initial_layout = None
-#initial_layout = [12,15,18,21,23,24,25,22] # for cairo
-
 # Different configuration keyword arguments for the QuantumInstance depending 
 # on the run_type. They can be tweaked as desired before running.
+initial_layout = [1,2,3,5,8,11,14,16] # for Cairo
+
 config_noisy = {'optimization_level':3, 'initial_layout': initial_layout,
                 'seed_transpiler':seed, 'seed_simulator':seed, 'shots':5000}
 config_hardware = {'optimization_level':3, 'initial_layout': initial_layout,

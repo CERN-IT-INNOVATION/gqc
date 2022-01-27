@@ -71,6 +71,18 @@ def load_qsvm(path):
     return joblib.load(path)
 
 
+def save_backend_properties(backend,path):
+    """
+    Saves a dictionary to file using the Joblib is a set of tools.
+    @IBMQ backend :: IBM Quantum computer backend from which we save the 
+                     calibration data.
+    @path (str)  :: String of full path to save the model in.
+    """
+    properties_dict = backend.properties().to_dict()
+    joblib.dump(properties_dict,path)
+    print(tcols.OKCYAN + 'Quantum computer backend properties saved in Python' 
+          ' dictionary format in:' + tcols.ENDC, path)
+
 def print_model_info(ae_path, qdata, qsvm):
 
     print("\n-------------------------------------------")
@@ -112,7 +124,7 @@ def get_quantum_kernel_circuit(quantum_kernel, path, output_format='mpl',
                     .transpile(qc_kernel_circuit)[0]
     
     path += '/quantum_kernel_circuit_plot'
-    print(tcols.OKCYAN + 'Saving quantum kernel circuit in: ' + tcols.ENDC, 
+    print(tcols.OKCYAN + 'Saving quantum kernel circuit in:' + tcols.ENDC, 
           path)
     qc_transpiled.draw(
         output = output_format,
@@ -134,7 +146,7 @@ def save_circuit_physical_layout(circuit, backend, save_path):
     '''
     fig = plot_circuit_layout(circuit,backend)
     save_path += '/circuit_physical_layout'
-    print(tcols.OKCYAN + 'Saving physical circuit layout in: ' + tcols.ENDC, 
+    print(tcols.OKCYAN + 'Saving physical circuit layout in:' + tcols.ENDC, 
           save_path)    
     fig.savefig(save_path)
     

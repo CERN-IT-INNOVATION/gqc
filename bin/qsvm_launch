@@ -8,7 +8,7 @@ import sys
 import json
 sys.path.append("..")
 
-from qsvm.main import main #TODO rename the module to train?
+from qsvm.main import main
 
 
 parser = argparse.ArgumentParser(formatter_class=argparse.

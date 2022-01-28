@@ -7,6 +7,7 @@ from datetime import datetime
 from typing import Tuple, Type
 from qiskit import IBMQ
 from qiskit import Aer
+from qiskit import QuantumCircuit
 from qiskit.utils import QuantumInstance
 from qiskit.providers.aer.noise import NoiseModel
 from qiskit.providers.exceptions import QiskitBackendNotFoundError
@@ -28,7 +29,7 @@ def print_accuracies(test_accuracy, train_accuracy):
     print(f"Test Accuracy     = {test_accuracy}" + tcols.ENDC)
 
 
-def create_output_folder(args, qsvm):
+def create_output_folder(args, qsvm) -> str:
     """
     Creates output folder for the qsvm and returns the path (str)
     @args (dict)         :: The argument dictionary defined in the qsvm_launch
@@ -97,7 +98,7 @@ def print_model_info(ae_path, qdata, qsvm):
 
 
 def get_quantum_kernel_circuit(quantum_kernel, path, output_format='mpl',
-                                **kwargs):
+                                **kwargs) -> QuantumCircuit:
     '''
     Save the transpiled quantum kernel circuit
     Args:
@@ -136,8 +137,8 @@ def get_quantum_kernel_circuit(quantum_kernel, path, output_format='mpl',
 
 def save_circuit_physical_layout(circuit, backend, save_path):
     '''
-    Plot and save the quantum circuit and its physical layout on the backend 
-    .
+    Plot and save the quantum circuit and its physical layout on the backend.
+    
     Args:
          @circuit (QuantumCircuit) :: Circuit to plot on the backend.
          @backend                  :: The physical quantum computer or 
@@ -161,7 +162,7 @@ def connect_quantum_computer(ibmq_api_config, backend_name):
     Args:
         @ibmq_api_config (dict) :: Configuration file for the IBMQ API token
                                    and provider information.   
-        @backend_name (string) :: Quantum computer name.
+        @backend_name (string)  :: Quantum computer name.
     Returns: 
         IBMQBackend qiskit object.
     '''
@@ -175,33 +176,10 @@ def connect_quantum_computer(ibmq_api_config, backend_name):
     try: 
         quantum_computer_backend = provider.get_backend(backend_name)
     except QiskitBackendNotFoundError:
-        raise AttributeError(tcols.FAIL + 'Backend name not found in provider\'s '
-                             'list'+tcols.ENDC)
+        raise AttributeError(tcols.FAIL + 'Backend name not found in provider\'s'
+                             ' list'+tcols.ENDC)
     print(tcols.OKGREEN +' Loaded IBMQ backend: ' + backend_name+'.' + tcols.ENDC)
     return quantum_computer_backend
-
-
-def get_backend_configuration(backend) -> Tuple:
-    '''
-    @ DEPRECATED
-    
-    Gather backend configuration and properties from the calibration data.
-    
-    Args:
-    @backend :: IBMQBackend object representing a a real quantum computer.
-
-    Returns:
-            @noise_model from the 1-gate, 2-gate (CX) errors, thermal relaxation,
-            etc.
-            @coupling_map: connectivity of the physical qubits.
-            @basis_gates: gates that are physically implemented on the hardware.
-            the transpiler decomposes the generic/abstract circuit to these
-            physical basis gates, taking into acount also the coupling_map.
-    '''
-    noise_model = NoiseModel.from_backend(backend)
-    coupling_map = backend.configuration().coupling_map
-    basis_gates = noise_model.basis_gates
-    return noise_model, coupling_map, basis_gates
 
 
 def ideal_simulation(**kwargs) -> QuantumInstance:
@@ -220,14 +198,7 @@ def ideal_simulation(**kwargs) -> QuantumInstance:
          **kwargs
          )
     # None needed to specify that no backend device is loaded for ideal sim.
-    return quantum_instance, None 
-
-#def custom_aer_simulation(**kwargs):
-    '''
-    Method that prepares aer_simulator (i.e. with statistical measurement uncertainty)
-    and on top one can add whatever tunable noise type they want (1-gate errors, 2-gate errors)
-    etc.
-    '''
+    return quantum_instance, None
 
 
 def noisy_simulation(ibmq_api_config, backend_name, **kwargs)\
@@ -237,8 +208,11 @@ def noisy_simulation(ibmq_api_config, backend_name, **kwargs)\
     real quantum computer calibration data.
 
     Args:
-         @qubit_layout :: Map of abstract circuit qubits to physical qubits as
-                          defined on the hardware.
+        @ibmq_api_config (dict) :: Configuration file for the IBMQ API token
+                                   and provider information. 
+        @backend_name (str)     :: Name of the quantum computer, 
+                                   form ibm(q)_<city_name>.
+        @kwargs                 :: Keyword arguments for the QuantumInstance.
     Returns:
             @QuantumInstance object to be used for the simulation.
             @backend on which the noisy simulation is based.
@@ -283,7 +257,7 @@ def hardware_run(backend_name, ibmq_api_config, **kwargs) -> Tuple:
 
 
 def configure_quantum_instance(ibmq_api_config, run_type, backend_name = None,
-                                **kwargs) -> QuantumInstance:
+                                **kwargs) -> Tuple:
     '''
     Gives the QuantumInstance object required for running the Quantum kernel.
     The quantum instance can be configured for a simulation of a backend with
@@ -324,5 +298,6 @@ def configure_quantum_instance(ibmq_api_config, run_type, backend_name = None,
 
     quantum_instance, backend = switcher.get(run_type, lambda: None)()
     if quantum_instance is None:
-        raise TypeError('Specified programme run type does not exist!')
+        raise TypeError(tcols.FAIL + 'Specified programme run type does not'
+                        'exist!' + tcols.ENDC)
     return quantum_instance, backend

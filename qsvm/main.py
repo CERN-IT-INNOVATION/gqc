@@ -81,8 +81,7 @@ def main(args):
     util.print_accuracies(test_acc, train_acc)
 
     util.save_qsvm(qsvm, out_path + "/model")
-    util.save_backend_properties(backend, 
-                                 out_path + "/backend_properties_dict")
+
     qc_transpiled = util.get_quantum_kernel_circuit(kernel, out_path)
     if backend is not None:
         util.save_circuit_physical_layout(
@@ -90,3 +89,5 @@ def main(args):
             backend,
             out_path
         )
+        util.save_backend_properties(backend, 
+                                     out_path + "/backend_properties_dict")

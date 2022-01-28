@@ -2,8 +2,9 @@
 #SBATCH --job-name=ae_train
 #SBATCH --partition=long
 #SBATCH --ntasks=1
-#SBATCH --cpus-per-task=10
-#SBATCH --mem=7000M
+#SBATCH --cpus-per-task=12
+#SBATCH --mem=8000M
+#SBATCH --time=7-00:00:00
 #SBATCH -o ./logs/vqc_cpu_%j.out
 
 usage() { echo "Usage: $0 [-n <normalization_name>] [-s <number_of_events>] [-p <model_path>] [-l <loss_name>] [-q <nb_of_qubits>] [-e <epochs>] [-b <batch_size>] [-f <output_folder>]" 1>&2; exit 1; }

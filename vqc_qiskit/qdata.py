@@ -136,7 +136,7 @@ class qdata:
             return data.reshape(-1, batch_size, data.shape[1])
         else:
             raise RuntimeError(
-                "Batchify does not cover arrays with " "dimension larger than 2."
+                "Batchify does not cover arrays with dimension larger than 2."
             )
 
     @staticmethod

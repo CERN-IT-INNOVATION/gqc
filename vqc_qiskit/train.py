@@ -1,7 +1,5 @@
-# Main script of the vqc.
-# Imports the data for training. Imports the data for validation and testing
-# and kfolds it into k=5.
-# Computes the ROC curve of the qsvm and the AUC, saves the ROC plot.
+# Main script of the vqc. Imports the data and runs the training of the
+# VQC. A plot of the loss function is made using
 from time import perf_counter
 import numpy as np
 
@@ -29,7 +27,7 @@ def main(args):
         args["model_path"],
         train_events=args["train_events"],
         valid_events=args["valid_events"],
-        test_events=args["test_events"],
+        test_events=0
     )
 
     train_features = qdata.batchify(qdata.get_latent_space("train"), args["batch_size"])
@@ -40,16 +38,16 @@ def main(args):
     backend = Aer.get_backend("aer_simulator_statevector")
     qinst = QuantumInstance(backend, seed_simulator=seed, seed_transpiler=seed)
 
-    optimizer = ADAM(maxiter=100, lr=0.001)
+    # optimizer = ADAM(maxiter=100, lr=0.001)
     vqc = VQC(
         args["nqubits"],
         args["feature_map"],
         args["ansatz"],
         train_features.shape[2],
-        warm_start=False,
+        warm_start=True,
         quantum_instance=qinst,
         loss=args["loss"],
-        optimizer=optimizer,
+        optimizer=None,
     )
 
     print(tcols.OKCYAN + "Training the VQC..." + tcols.ENDC)
@@ -57,7 +55,8 @@ def main(args):
 
     train_time_init = perf_counter()
     vqc = train(
-        vqc, train_features, train_labels, valid_features, valid_labels, args["epochs"]
+        vqc, train_features, train_labels, valid_features, valid_labels,
+        args["epochs"]
     )
     train_time_fina = perf_counter()
     print(f"Training completed in: {train_time_fina-train_time_init:.2e} s")
@@ -81,7 +80,5 @@ def train(vqc, train_features, train_labels, valid_features, valid_labels, epoch
             vqc.fit(data_batch, target_batch)
             fit_time_fina = perf_counter()
             print(f"Fit completed in: {fit_time_fina-fit_time_init:.2e} s")
-
-        loss = vqc.score(valid_features, valid_labels)
 
     return vqc

@@ -28,4 +28,4 @@ pip-wheel-metadata/
 .eggs
 
 # Private configuration files
-bin/private_config.json
+private_config.json

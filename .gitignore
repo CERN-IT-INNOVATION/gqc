@@ -26,3 +26,6 @@ build/
 dist/
 pip-wheel-metadata/
 .eggs
+
+# Private configuration files
+bin/private_config.json

@@ -9,12 +9,14 @@ def main(args):
     qdata = qd.qdata(
         args["data_folder"],
         args["norm"],
-        args["nevents"],                    
+        args["nevents"],
         args["model_path"],
-        test_events=args["n_test"],
+        0, #For the test module, we don't load any training data
+        valid_events=args["nvalid"],
+        test_events=args["ntest"],
         kfolds=5,
+        seed=args["seed"],
     )
-    print(f'\n----------------\n Loading QSVM model: {args["qsvm_model"]}')
     qsvm = util.load_qsvm(args["qsvm_model"]+'model')
     
     #TODO specify output folder 

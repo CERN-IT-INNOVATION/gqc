@@ -282,10 +282,6 @@ class VQC(NeuralNetworkClassifier):
         cast(CircuitQNN, self._neural_network).set_interpret(
             self._get_interpret(num_classes), num_classes
         )
-        print("Data matrix: ")
-        print(X)
-        print("Target matrix: ")
-        print(y)
         return super().fit(X, y)
 
     def _get_interpret(self, num_classes):

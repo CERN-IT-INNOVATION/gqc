@@ -27,5 +27,4 @@ dist/
 pip-wheel-metadata/
 .eggs
 
-# Private configuration files
-private_config.json
+bin/private_config_vasilis.json

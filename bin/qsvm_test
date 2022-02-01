@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-# Run script of the qsvm training. See the main file for more details 
+# Run script of the qsvm testing. See the test.py file for more details 
 # on how it works.
 
 import argparse
@@ -8,7 +8,7 @@ import sys
 import json
 sys.path.append("..")
 
-from qsvm.main import main
+from qsvm.test import main
 
 
 parser = argparse.ArgumentParser(formatter_class=argparse.
@@ -35,8 +35,6 @@ parser.add_argument('--output_folder', required=True,
                     help='The name of the model to be saved.')
 parser.add_argument('--c_param', type=float, default=1.,
                     help='The C parameter of the SVM.')
-parser.add_argument('--ntrain', type=int, default=600,
-                    help='Number of training events for the QSVM.')
 parser.add_argument('--nvalid', type=int, default=0,
                     help='Number of validation events for the QSVM (typically)'
                          'not used for the QSVM).')
@@ -47,14 +45,14 @@ args = parser.parse_args()
 
 # Load private configuration file for ibmq_api_token and provider details.   
 try:
-    with open('private_config_vasilis.json') as pconfig:
+    with open('private_config.json') as pconfig:
         private_configuration = json.load(pconfig)
 except:
     print("Error in reading private config: Process aborted")
 
 # Different configuration keyword arguments for the QuantumInstance depending 
 # on the run_type. They can be tweaked as desired before running.
-initial_layout = [22,25,24,23,21,18,15,12] # for Cairo
+initial_layout = [1,2,3,5,8,11,14,16] # for Cairo
 
 seed = 12345
 config_noisy = {'optimization_level':3, 'initial_layout': initial_layout,

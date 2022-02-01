@@ -38,7 +38,6 @@ def main(args):
     backend = Aer.get_backend("aer_simulator_statevector")
     qinst = QuantumInstance(backend, seed_simulator=seed, seed_transpiler=seed)
 
-    # optimizer = ADAM(maxiter=100, lr=0.001)
     vqc = VQC(
         args["nqubits"],
         args["feature_map"],

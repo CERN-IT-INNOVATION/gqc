@@ -48,7 +48,7 @@ fi
 
 source /work/deodagiu/miniconda/bin/activate ae_qml
 export PYTHONUNBUFFERED=TRUE
-python vqc_launch --data_folder /work/deodagiu/data/ae_input --norm ${n} --nevents ${s} --model_path ${p} --nqubits ${q} --epochs ${e} --batch_size ${b} --loss ${l} --output_folder ${f}
+python vqc_train --data_folder /work/deodagiu/data/ae_input --norm ${n} --nevents ${s} --model_path ${p} --nqubits ${q} --epochs ${e} --batch_size ${b} --loss ${l} --output_folder ${f}
 export PYTHONUNBUFFERED=FALSE
 
 mv ./logs/vqc_cpu_${SLURM_JOBID}.out ./trained_vqcs/${f}/

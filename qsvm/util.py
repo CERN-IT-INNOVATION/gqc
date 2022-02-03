@@ -4,7 +4,7 @@ import os
 import warnings
 import joblib
 from datetime import datetime
-from typing import Tuple, Type
+from typing import Tuple, Dict
 from qiskit import IBMQ
 from qiskit import Aer
 from qiskit import QuantumCircuit
@@ -71,6 +71,20 @@ def load_qsvm(path):
     """
     return joblib.load(path)
 
+def save_hyperparameters(path) -> Dict:
+    """
+    Saves the hyperparameters of the QSVM and the configuration arguments 
+    used during training in main.py.
+    """
+    pass
+
+
+def load_hyperparameters(file) -> Dict:
+    """
+    Loads the hyperparameters used in the QSVM training to ensure consistency
+    during testing of a QSVM in the test.py module.
+    """
+    pass
 
 def save_backend_properties(backend,path):
     """

@@ -33,6 +33,8 @@ parser.add_argument('--run_type', type=str, required=True,
                     'noisy simulation or on real quantum hardware.')
 parser.add_argument('--qsvm_model', type=str, required=True,
                     help="The folder path of the QSVM model.")
+parser.add_argument('--ntrain', type=int, default=600,
+                    help='Number of training events for the QSVM.')
 parser.add_argument('--nvalid', type=int, default=0,
                     help='Number of validation events for the QSVM (typically)'
                          'not used for the QSVM).')
@@ -54,6 +56,8 @@ except:
 # on the run_type. They can be tweaked as desired before running.
 initial_layout = [1,2,3,5,8,11,14,16] # for Cairo
 
+# TODO get these configs from a .json file with hyperparameters that is saved
+# after the training in qsvm/main.py
 seed = 12345
 config_noisy = {'optimization_level':3, 'initial_layout': initial_layout,
                 'seed_transpiler':seed, 'seed_simulator':seed, 'shots':5000}
@@ -66,6 +70,7 @@ switcher = {'ideal' : lambda: config_ideal, 'noisy' : lambda: config_noisy,
 config = switcher.get(args.run_type, lambda: None)()
 
 args = {
+    "feature_dim": 16,
     "data_folder": args.data_folder,
     "norm": args.norm,
     "nevents": args.nevents,
@@ -75,6 +80,7 @@ args = {
     "run_type": args.run_type,
     "qsvm_model": args.qsvm_model,
     "config": config,
+    "ntrain": args.ntrain,
     "nvalid": args.nvalid,
     "ntest": args.ntest,
     "kfolds": args.kfolds,

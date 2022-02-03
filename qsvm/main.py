@@ -5,7 +5,6 @@
 import warnings
 from time import perf_counter
 
-from qiskit.providers.aer import AerSimulator
 from qiskit.utils import algorithm_globals
 from qiskit_machine_learning.kernels import QuantumKernel
 import numpy as np

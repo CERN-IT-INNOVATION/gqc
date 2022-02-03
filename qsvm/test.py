@@ -14,20 +14,18 @@ def main(args):
         0, #For the test module, we don't load any training data
         valid_events=args["nvalid"],
         test_events=args["ntest"],
-        kfolds=5,
+        kfolds=args["kfolds"],
         seed=args["seed"],
     )
     qsvm = util.load_qsvm(args["qsvm_model"]+'model')
-    
-    #TODO specify output folder 
-    print(tcols.OKCYAN +
-          "\n\nComputing accuracies on kfolded test data..." +
+    print('qsvm:', qsvm)
+    print(tcols.BOLD +
+          "\n\nComputing ROC curves on kfolded test data..." +
           tcols.ENDC)
           
-    #TODO with kernel.evaluate()
     test_folds = qdata.get_kfolded_data("test")
     print(test_folds.shape)
-    scores = compute_model_scores(qsvm, test_folds, args["qsvm_model"])
+    #scores = compute_model_scores(qsvm, test_folds, args["qsvm_model"])
     print(tcols.OKCYAN + "\n\nPlotting and saving ROC figure..." + tcols.ENDC)
     #FIXME path to save the y_scores_list and roc plot needs to be in qsvm/
     #plot.roc_plot(scores, qdata, args["output_folder"], args["display_name"])

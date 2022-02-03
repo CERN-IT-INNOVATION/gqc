@@ -31,21 +31,21 @@ parser.add_argument('--run_type', type=str, required=True,
                     choices=['ideal', 'noisy', 'hardware'],
                     help='Choose way to run the QSVM: Ideal computation,'
                     'noisy simulation or on real quantum hardware.')
-parser.add_argument('--output_folder', required=True,
-                    help='The name of the model to be saved.')
-parser.add_argument('--c_param', type=float, default=1.,
-                    help='The C parameter of the SVM.')
+parser.add_argument('--qsvm_model', type=str, required=True,
+                    help="The folder path of the QSVM model.")
 parser.add_argument('--nvalid', type=int, default=0,
                     help='Number of validation events for the QSVM (typically)'
                          'not used for the QSVM).')
 parser.add_argument('--ntest', type=int, default=720,
                     help='Number of test events for the QSVM.')
+parser.add_argument('--kfolds', type=int, default=5,
+                    help='Number of k-validation/test folds used.')                  
 
 args = parser.parse_args()
 
 # Load private configuration file for ibmq_api_token and provider details.   
 try:
-    with open('private_config.json') as pconfig:
+    with open('private_config_vasilis.json') as pconfig:
         private_configuration = json.load(pconfig)
 except:
     print("Error in reading private config: Process aborted")
@@ -66,20 +66,18 @@ switcher = {'ideal' : lambda: config_ideal, 'noisy' : lambda: config_noisy,
 config = switcher.get(args.run_type, lambda: None)()
 
 args = {
-    "feature_dim": 16,
     "data_folder": args.data_folder,
     "norm": args.norm,
     "nevents": args.nevents,
     "model_path": args.model_path,
-    "c_param": args.c_param,
-    "output_folder": args.output_folder,
     "backend_name": args.backend_name,
     "ibmq_api_config": private_configuration["IBMQ"],
     "run_type": args.run_type,
+    "qsvm_model": args.qsvm_model,
     "config": config,
-    "ntrain": args.ntrain,
     "nvalid": args.nvalid,
     "ntest": args.ntest,
+    "kfolds": args.kfolds,
     "seed": seed # For the data shuffling.
 }
 

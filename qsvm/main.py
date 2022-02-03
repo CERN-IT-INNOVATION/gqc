@@ -21,7 +21,7 @@ from .feature_map_circuits import u2Reuploading
 # script otherwise (IBM's fault not ours.)
 warnings.filterwarnings("ignore", category=DeprecationWarning)
 
-seed = 12345
+seed = 12345 # TODO is this really needed anymore?
 # Ensure same global behaviour.
 algorithm_globals.random_seed = seed
 

@@ -41,7 +41,9 @@ parser.add_argument('--nvalid', type=int, default=0,
 parser.add_argument('--ntest', type=int, default=720,
                     help='Number of test events for the QSVM.')
 parser.add_argument('--kfolds', type=int, default=5,
-                    help='Number of k-validation/test folds used.')                  
+                    help='Number of k-validation/test folds used.')   
+parser.add_argument('--display_name', type=str, required=True,
+                    help='Display name on the roc plot.')                                    
 
 args = parser.parse_args()
 
@@ -84,7 +86,8 @@ args = {
     "nvalid": args.nvalid,
     "ntest": args.ntest,
     "kfolds": args.kfolds,
-    "seed": seed # For the data shuffling.
+    "seed": seed, # For the data shuffling.
+    "display_name": args.display_name
 }
 
 main(args)

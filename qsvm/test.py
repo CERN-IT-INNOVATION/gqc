@@ -21,6 +21,8 @@ def main(args):
         seed=args["seed"],
     )
     train_features = qdata.get_latent_space("train")
+    test_features = qdata.get_latent_space("test")
+    test_labels = qdata.ae_data.tetarget
     test_folds = qdata.get_kfolded_data("test")
     
     qsvm = util.load_qsvm(args["qsvm_model"]+'model')
@@ -36,10 +38,16 @@ def main(args):
     )
     kernel = QuantumKernel(feature_map=feature_map, 
                            quantum_instance=quantum_instance)
+    print('test_folds[0]:',test_folds[0].shape)
+    print('test_features:', test_features.shape)
+    #acc = qsvm.score(kernel.evaluate(x_vec=test_folds[0],y_vec=train_features),test_labels)
+    
+    print(f"x-check with test accuracy {acc}")
+    '''
     scores = compute_model_scores(qsvm, kernel, train_features,test_folds, 
                                   args["qsvm_model"])
-    #plot.roc_plot(scores, qdata, args["output_folder"], args["display_name"])
-
+    plot.roc_plot(scores, qdata, args["qsvm_model"], args["display_name"])
+    '''
 
 def compute_model_scores(model, kernel, x_train, data_folds, output_folder) \
                          -> np.ndarray:

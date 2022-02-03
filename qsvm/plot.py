@@ -14,7 +14,8 @@ def roc_plot(scores, qdata_loader, output_folder, model_name):
     @qdata_loader     :: Data class that contains the kfolded data.
     @output_folder    :: Name of the folder where the plot will be saved.
     """
-
+    print(tcols.OKCYAN + "\nPlotting and saving ROC figure..." + tcols.ENDC)
+    
     f1 = plt.figure(1, figsize=(10, 10))
     plt.rc("xtick", labelsize=20)  # fontsize of the tick labels
     plt.rc("ytick", labelsize=20)  # fontsize of the tick labels
@@ -44,8 +45,7 @@ def roc_plot(scores, qdata_loader, output_folder, model_name):
         fpr,
         tpr,
         label=model_name
-        + fr": AUC = {auc_mean:.3f} $\pm$ \
-        {auc_std:.3f}",
+        + fr": AUC = {auc_mean:.3f} $\pm$ {auc_std:.3f}",
     )
 
     plt.title(
@@ -64,5 +64,5 @@ def roc_plot(scores, qdata_loader, output_folder, model_name):
     plt.ylim([0.0, 1.0])
     plt.tight_layout()
     plt.legend()
-    f1.savefig("models/" + output_folder + "/roc_plot.pdf")
+    f1.savefig(output_folder + "roc_plot.pdf")
     plt.close()

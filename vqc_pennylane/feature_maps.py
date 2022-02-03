@@ -1,5 +1,10 @@
+# Feature map architectures implemented in pennylane, to be used in buidling
+# the trainable variational quantum circuit. The feature maps are responsible
+# with loading the data into the circuit and do not learn during training.
 import pennylane as pnl
 import numpy as np
+
+from itertools import combinations
 
 def zzfm(nqubits, inputs):
     """
@@ -8,11 +13,12 @@ def zzfm(nqubits, inputs):
     @nqubits :: The number of qubits to use.
     @inputs  :: Mapping of inputs into the qubits.
     """
-    for idx in range(len(inputs)):
-        pnl.Hadamard(idx)
-        pnl.RZ(2.0*inputs[idx], wires=idx)
+    for x in range(len(inputs)):
+        pnl.Hadamard(x)
+        pnl.RZ(2.0*inputs[x], wires=x)
 
-    for qpair in list(combinations(range(len(inputs), 2))):
-        pnl.CZ(qpair[0], qpair[1])
-        pnl.RZ(2.0*(np.pi - inputs[qpair[0]])*(np.pi - inputs[qpair[1]])
-        pnl.CZ(qpair[0], qpair[1])
+    for qpair in list(combinations(range(len(inputs)), 2)):
+        pnl.CZ(wires=[qpair[0], qpair[1]])
+        pnl.RZ(2.0*(np.pi - inputs[qpair[0]])*(np.pi - inputs[qpair[1]]),
+               wires=qpair[1])
+        pnl.CZ(wires=[qpair[0], qpair[1]])

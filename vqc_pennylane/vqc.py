@@ -1,28 +1,33 @@
 import pennylane as pnl
 import numpy as np
-from pennylane.optimize import NesterovMomentumOptimizer
 
-import feature_maps as fm
-import variational_forms as vf
+from . import feature_maps as fm
+from . import variational_forms as vf
+from .terminal_colors import tcols
 
 
 class VQC:
     """
     Variational quantum circuit, implemented using the pennylane python
     package. This is a trainable quantum circuit. It is composed of a feature
-    maps and a variational form, which are implemented in their eponymous
+    map and a variational form, which are implemented in their eponymous
     files in the same directory.
     """
-    def __init__(self, nqubits, nfeatures):
+    def __init__(self, nqubits, nfeatures, fmap="zzfm", vform="two_local"):
         """
-        @nqubits :: Number of qubits the circuit should be made of.
+        @nqubits   :: Number of qubits the circuit should be made of.
+        @nfeatures :: Number of features in the training data set.
+        @fmap      :: String name of the feature map to use.
+        @vform     :: String name of the variational form to use.
         """
-        self._check_compatibility(nqubits, nfeatures)
+        self._nsubforms = self._check_compatibility(nqubits, nfeatures)
         self._nfeatures = nfeatures
         self._nqubits = nqubits
-        self.dev = pnl.device("default.qubit", wires=nqubits)
+        self._vform_base_weights = vf.vforms_weights(vform)
+        self._nweights = self._nsubforms*self._vform_base_weights
 
-        self.qcircuit = pnl.qnode(self.dev)(self.qcircuit)
+        self._device = pnl.device("default.qubit", wires=nqubits)
+        self._circuit = pnl.qnode(self._device)(self._qcircuit)
 
     def _qcircuit(self, inputs, weights):
         """
@@ -32,14 +37,17 @@ class VQC:
 
         returns :: Measurement of the first qubit of the quantum circuit.
         """
-        for feature_idx in range(self._nfeatures):
-            start_feature_idx = feature_idx
-            end_feature_idx = feature_idx + self._nqubits
-            fm.zzfm(self.nqubits, inputs[start_feature_idx:end_feature_idx])
-            vf.two_local()
+        for subform_nb in range(self._nsubforms):
+            start_feature = subform_nb*self._nqubits
+            start_weights = self._nweights*subform_nb
+            end_feature = subform_nb*(self._nqubits + 1)
+            end_weights = self._nweights*(subform_nb + 1)
 
-            feature_idx += self._nqubits
+            fm.zzfm(self._nqubits, inputs[start_feature:end_feature])
+            vf.two_local(self._nqubits, weights[start_weights:end_weights],
+                         repeats=4, entanglement="linear")
 
+        y = [[1], [0]] * np.conj([[1], [0]]).T
         return pnl.expval(pnl.Hermitian(y, wires=[0]))
 
     @property
@@ -51,8 +59,31 @@ class VQC:
         return self._nfeatures
 
     @property
-    def qcircuit(self):
-        return self._qcircuit
+    def circuit(self):
+        return self._circuit
+
+    @property
+    def subforms(self):
+        return self._subforms
+
+    @property
+    def nweights(self):
+        return self._nweights
+
+    @property
+    def vform_base_weights(self):
+        return self._vform_base_weights
+
+    def draw(self):
+        """
+        Draws the circuit using dummy parameters.
+        Parameterless implementation is not yet available in pennylane,
+        and it seems not feasible either by the way pennylane is constructed.
+        """
+        drawing = pnl.draw(self._circuit)
+        print(tcols.OKGREEN)
+        print(drawing([0]*int(self._nfeatures), [0]*int(self._nweights)))
+        print(tcols.ENDC)
 
     @staticmethod
     def _check_compatibility(nqubits, nfeatures):
@@ -62,6 +93,8 @@ class VQC:
         @nqubits   :: Number of qubits assigned to the vqc.
         @nfeatures :: Number of features to process by the vqc.
         """
-        if nqubits % nfeatures != 0:
+        if nfeatures % nqubits != 0:
             raise ValueError("The number of features is not divisible by "
                              "the number of qubits you assigned!")
+
+        return int(nfeatures/nqubits)

@@ -5,7 +5,6 @@ import os
 import numpy as np
 
 sys.path.append("..")
-
 from .terminal_colors import tcols
 from autoencoders import data as aedata
 from autoencoders import util as aeutil

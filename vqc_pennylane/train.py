@@ -8,6 +8,8 @@ from .terminal_colors import tcols
 from . import qdata as qd
 from . import util
 
+from pennylane.optimize import AdamOptimizer
+
 
 def main(args):
     qdata = qd.qdata(
@@ -23,10 +25,15 @@ def main(args):
     train_features = qdata.batchify(qdata.get_latent_space("train"),
                                     args["batch_size"])
     train_labels = qdata.batchify(qdata.ae_data.trtarget, args["batch_size"])
+    train_loader = [train_features, train_labels]
+
     valid_features = qdata.get_latent_space("valid")
     valid_labels = qdata.ae_data.vatarget
+    valid_loader = [valid_features, valid_labels]
 
     vqc = VQC(args["nqubits"], train_features.shape[2])
-
-    print(tcols.OKCYAN + "Training the VQC..." + tcols.ENDC)
     util.print_model_info(args["model_path"], qdata, vqc)
+
+    train_time_start = perf_counter()
+    vqc.train_vqc(train_loader, valid_loader, args["epochs"], 20, args["outdir"])
+    train_time_end = perf_counter()

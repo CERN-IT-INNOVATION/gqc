@@ -7,14 +7,14 @@ import numpy as np
 from itertools import combinations
 
 
-def vforms_weights(vform_choice):
+def vforms_weights(vform_choice, repeats, nqubits):
     """
     Returns the number of weights a certain circuit has with 1 repeat and
     without any trailing gates.
     @vform_choice :: String of the choice of variational form.
     """
     switcher = {
-        "two_local": lambda : 4,
+        "two_local": lambda : nqubits*(repeats+1) ,
     }
 
     nweights = switcher.get(vform_choice, lambda: None)()

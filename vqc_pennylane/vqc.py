@@ -13,7 +13,8 @@ class VQC:
     map and a variational form, which are implemented in their eponymous
     files in the same directory.
     """
-    def __init__(self, nqubits, nfeatures, fmap="zzfm", vform="two_local"):
+    def __init__(self, nqubits, nfeatures, fmap="zzfm", vform="two_local",
+        vform_repeats=4):
         """
         @nqubits   :: Number of qubits the circuit should be made of.
         @nfeatures :: Number of features in the training data set.
@@ -23,8 +24,8 @@ class VQC:
         self._nsubforms = self._check_compatibility(nqubits, nfeatures)
         self._nfeatures = nfeatures
         self._nqubits = nqubits
-        self._vform_base_weights = vf.vforms_weights(vform)
-        self._nweights = self._nsubforms*self._vform_base_weights
+        self._vform_repeats = vform_repeats
+        self._nweights = vf.vforms_weights(vform, vform_repeats, nqubits)
 
         self._device = pnl.device("default.qubit", wires=nqubits)
         self._circuit = pnl.qnode(self._device)(self._qcircuit)
@@ -37,15 +38,15 @@ class VQC:
 
         returns :: Measurement of the first qubit of the quantum circuit.
         """
-        for subform_nb in range(self._nsubforms):
+        for subform_nb in range(self._nsubforms-1):
             start_feature = subform_nb*self._nqubits
             start_weights = self._nweights*subform_nb
-            end_feature = subform_nb*(self._nqubits + 1)
+            end_feature = self._nqubits*(subform_nb + 1)
             end_weights = self._nweights*(subform_nb + 1)
 
             fm.zzfm(self._nqubits, inputs[start_feature:end_feature])
             vf.two_local(self._nqubits, weights[start_weights:end_weights],
-                         repeats=4, entanglement="linear")
+                         repeats=self._vform_repeats, entanglement="linear")
 
         y = [[1], [0]] * np.conj([[1], [0]]).T
         return pnl.expval(pnl.Hermitian(y, wires=[0]))
@@ -70,10 +71,6 @@ class VQC:
     def nweights(self):
         return self._nweights
 
-    @property
-    def vform_base_weights(self):
-        return self._vform_base_weights
-
     def draw(self):
         """
         Draws the circuit using dummy parameters.
@@ -82,7 +79,8 @@ class VQC:
         """
         drawing = pnl.draw(self._circuit)
         print(tcols.OKGREEN)
-        print(drawing([0]*int(self._nfeatures), [0]*int(self._nweights)))
+        print(drawing([0]*int(self._nfeatures),
+                      [0]*int(self._nweights*self._nsubforms)))
         print(tcols.ENDC)
 
     @staticmethod

@@ -15,7 +15,7 @@ def roc_plot(scores, qdata_loader, output_folder, model_name):
     @output_folder    :: Name of the folder where the plot will be saved.
     """
     print(tcols.OKCYAN + "\nPlotting and saving ROC figure..." + tcols.ENDC)
-    
+
     f1 = plt.figure(1, figsize=(10, 10))
     plt.rc("xtick", labelsize=20)  # fontsize of the tick labels
     plt.rc("ytick", labelsize=20)  # fontsize of the tick labels
@@ -33,9 +33,7 @@ def roc_plot(scores, qdata_loader, output_folder, model_name):
     )
     auc_mean, auc_std = np.mean(auc), np.std(auc)
     print(f"AUC's: {auc}")
-    print(tcols.OKGREEN +
-          f"AUC (mean) = {auc_mean} +/- {auc_std}" +
-          tcols.ENDC)
+    print(tcols.OKGREEN + f"AUC (mean) = {auc_mean} +/- {auc_std}" + tcols.ENDC)
     y_scores_flat = y_scores.flatten()
     fpr, tpr, _ = metrics.roc_curve(
         np.tile(qdata_loader.ae_data.tetarget, qdata_loader.kfolds),
@@ -44,8 +42,7 @@ def roc_plot(scores, qdata_loader, output_folder, model_name):
     plt.plot(
         fpr,
         tpr,
-        label=model_name
-        + fr": AUC = {auc_mean:.3f} $\pm$ {auc_std:.3f}",
+        label=model_name + rf": AUC = {auc_mean:.3f} $\pm$ {auc_std:.3f}",
     )
 
     plt.title(

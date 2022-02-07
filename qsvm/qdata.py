@@ -12,7 +12,7 @@ from autoencoders import util as aeutil
 
 
 class qdata:
-    '''
+    """
     Data loader class. qdata is used to load the train/validation/test datasets
     for the quantum ML model training given a pre-trained Auto-Encoder model
     that reduces the number of features of the initial dataset.
@@ -21,13 +21,13 @@ class qdata:
         data_folder (str): Path to the input data of the Auto-Encoder.
         norm_name (str): Specify the normalisation of the input data
                          e.g., minmax, maxabs etc.
-        nevents (float): Number of signal data samples in the input data file. 
+        nevents (float): Number of signal data samples in the input data file.
                          Conventionally, we encode this number in the file
                          name, e.g., nevents = 7.20e+05.
         model_path (str): Path to the save PyTorch Auto-Encoder model.
         train_events (int): Number of desired train events to be loaded by
                             qdata.
-        valid_events (int): Number of desired validation events to be loaded 
+        valid_events (int): Number of desired validation events to be loaded
                             by qdata.
         test_events (int): Number of desired test events to be loaded by
                             qdata.
@@ -37,8 +37,9 @@ class qdata:
                     k-folds datasets.
 
     Attributes:
-    
-    '''
+
+    """
+
     def __init__(
         self,
         data_folder,
@@ -49,7 +50,7 @@ class qdata:
         valid_events=-1,
         test_events=-1,
         kfolds=0,
-        seed=None # By default, dataset will be shuffled.
+        seed=None,  # By default, dataset will be shuffled.
     ):
 
         device = "cpu"
@@ -65,7 +66,7 @@ class qdata:
             train_events,
             valid_events,
             test_events,
-            seed
+            seed,
         )
         self.model = aeutil.choose_ae_model(hp["ae_type"], device, hp)
         self.model.load_model(model_path)
@@ -83,7 +84,7 @@ class qdata:
             0,
             kfolds * valid_events,
             kfolds * test_events,
-            seed
+            seed,
         )
 
     def get_latent_space(self, datat) -> np.ndarray:
@@ -128,12 +129,8 @@ class qdata:
             per fold.
         """
         data_sig, data_bkg = self.ae_data.split_sig_bkg(data, target)
-        data_sig = data_sig.reshape(
-            -1, int(events_per_kfold / 2), data_sig.shape[1]
-        )
-        data_bkg = data_bkg.reshape(
-            -1, int(events_per_kfold / 2), data_bkg.shape[1]
-        )
+        data_sig = data_sig.reshape(-1, int(events_per_kfold / 2), data_sig.shape[1])
+        data_bkg = data_bkg.reshape(-1, int(events_per_kfold / 2), data_bkg.shape[1])
 
         return np.concatenate((data_sig, data_bkg), axis=1)
 

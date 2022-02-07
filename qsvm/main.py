@@ -20,7 +20,7 @@ from .feature_map_circuits import u2Reuploading
 # script otherwise (IBM's fault not ours.)
 warnings.filterwarnings("ignore", category=DeprecationWarning)
 
-seed = 12345 # TODO is this really needed anymore?
+seed = 12345  # TODO is this really needed anymore?
 # Ensure same global behaviour.
 algorithm_globals.random_seed = seed
 
@@ -42,26 +42,26 @@ def main(args):
     test_features = qdata.get_latent_space("test")
     test_labels = qdata.ae_data.tetarget
     feature_map = u2Reuploading(nqubits=8, nfeatures=args["feature_dim"])
-    
+
     quantum_instance, backend = util.configure_quantum_instance(
         ibmq_api_config=args["ibmq_api_config"],
-        run_type = args["run_type"],
-        backend_name= args["backend_name"],
-        **args["config"]
+        run_type=args["run_type"],
+        backend_name=args["backend_name"],
+        **args["config"],
     )
-    kernel = QuantumKernel(feature_map=feature_map, 
-                           quantum_instance=quantum_instance)
-    print('Calculating the quantum kernel matrix elements... ', end="")
+    kernel = QuantumKernel(feature_map=feature_map, quantum_instance=quantum_instance)
+    print("Calculating the quantum kernel matrix elements... ", end="")
     train_time_init = perf_counter()
-    quantum_kernel_matrix = kernel.evaluate(x_vec = train_features)
+    quantum_kernel_matrix = kernel.evaluate(x_vec=train_features)
     train_time_fina = perf_counter()
-    print(tcols.OKGREEN +f'Done in: {train_time_fina-train_time_init:.2e} s'
-          + tcols.ENDC)
-    qsvm = SVC(kernel='precomputed', C=args["c_param"])
-    
+    print(
+        tcols.OKGREEN + f"Done in: {train_time_fina-train_time_init:.2e} s" + tcols.ENDC
+    )
+    qsvm = SVC(kernel="precomputed", C=args["c_param"])
+
     out_path = util.create_output_folder(args, qsvm)
     # Save the quantum kernel matrix for further analysis.
-    np.save(out_path + '/kernel_matrix_elements', quantum_kernel_matrix)
+    np.save(out_path + "/kernel_matrix_elements", quantum_kernel_matrix)
 
     print("Training the QSVM...", end="")
     util.print_model_info(args["model_path"], qdata, qsvm)
@@ -70,12 +70,14 @@ def main(args):
     qsvm.fit(quantum_kernel_matrix, train_labels)
     train_time_fina = perf_counter()
     print(f"Training completed in: {train_time_fina-train_time_init:.2e} s")
-    print(f'For classes: {qsvm.classes_}, the number of support vectors for' 
-          f' each class are: {qsvm.n_support_}')
+    print(
+        f"For classes: {qsvm.classes_}, the number of support vectors for"
+        f" each class are: {qsvm.n_support_}"
+    )
 
     train_acc = qsvm.score(quantum_kernel_matrix, train_labels)
     # Evaluate test kernel matrix
-    kernel_matrix_test = kernel.evaluate(x_vec=test_features,y_vec=train_features)
+    kernel_matrix_test = kernel.evaluate(x_vec=test_features, y_vec=train_features)
     test_acc = qsvm.score(kernel_matrix_test, test_labels)
     util.print_accuracies(test_acc, train_acc)
 
@@ -83,10 +85,5 @@ def main(args):
 
     qc_transpiled = util.get_quantum_kernel_circuit(kernel, out_path)
     if backend is not None:
-        util.save_circuit_physical_layout(
-            qc_transpiled, 
-            backend,
-            out_path
-        )
-        util.save_backend_properties(backend, 
-                                     out_path + "/backend_properties_dict")
+        util.save_circuit_physical_layout(qc_transpiled, backend, out_path)
+        util.save_backend_properties(backend, out_path + "/backend_properties_dict")

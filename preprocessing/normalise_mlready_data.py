@@ -23,9 +23,7 @@ from sklearn import metrics
 
 from terminal_colors import tcols
 
-parser = argparse.ArgumentParser(
-    formatter_class=argparse.ArgumentDefaultsHelpFormatter
-)
+parser = argparse.ArgumentParser(formatter_class=argparse.ArgumentDefaultsHelpFormatter)
 parser.add_argument(
     "--data_sig",
     type=str,
@@ -91,29 +89,19 @@ def choose_norm(norm_name, all_data, all_targ):
         split_and_save(all_data, all_targ, f"no_norm_{args.maxdata}")
     elif norm_name == "minmax":
         print("\nApplying minmax normalization...")
-        apply_norm(
-            MinMaxScaler(), f"minmax_{args.maxdata:.2e}", all_data, all_targ
-        )
+        apply_norm(MinMaxScaler(), f"minmax_{args.maxdata:.2e}", all_data, all_targ)
     elif norm_name == "maxabs":
         print("\nApplying maxabs normalization...")
-        apply_norm(
-            MaxAbsScaler(), f"maxabs_{args.maxdata:.2e}", all_data, all_targ
-        )
+        apply_norm(MaxAbsScaler(), f"maxabs_{args.maxdata:.2e}", all_data, all_targ)
     elif norm_name == "std":
         print("\nApplying standard normalization...")
-        apply_norm(
-            StandardScaler(), f"std_{args.maxdata:.2e}", all_data, all_targ
-        )
+        apply_norm(StandardScaler(), f"std_{args.maxdata:.2e}", all_data, all_targ)
     elif norm_name == "robust":
         print("\nApplying robust normalization...")
-        apply_norm(
-            RobustScaler(), f"robust_{args.maxdata:.2e}", all_data, all_targ
-        )
+        apply_norm(RobustScaler(), f"robust_{args.maxdata:.2e}", all_data, all_targ)
     elif norm_name == "power":
         print("\nApplying power normalization...")
-        apply_norm(
-            PowerTransformer(), f"power_{args.maxdata:.2e}", all_data, all_targ
-        )
+        apply_norm(PowerTransformer(), f"power_{args.maxdata:.2e}", all_data, all_targ)
     elif norm_name == "quantile":
         print("\nApplying quantile normalization...")
         apply_norm(

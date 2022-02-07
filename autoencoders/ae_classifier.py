@@ -88,10 +88,7 @@ class AE_classifier(AE_vanilla):
         class_loss = self.class_loss_function(classif.flatten(), y_data.float())
         recon_loss = self.recon_loss_function(recon, x_data.float())
 
-        return (
-            self.recon_loss_weight * recon_loss
-            + self.class_loss_weight * class_loss
-        )
+        return self.recon_loss_weight * recon_loss + self.class_loss_weight * class_loss
 
     @staticmethod
     def print_losses(epoch, epochs, train_loss, valid_losses):
@@ -155,8 +152,7 @@ class AE_classifier(AE_vanilla):
         class_loss = self.class_loss_function(classif.flatten(), y_data_valid)
 
         valid_loss = (
-            self.recon_loss_weight * recon_loss
-            + self.class_loss_weight * class_loss
+            self.recon_loss_weight * recon_loss + self.class_loss_weight * class_loss
         )
 
         self.save_best_loss_model(valid_loss, outdir)

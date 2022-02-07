@@ -8,6 +8,7 @@ from .feature_map_circuits import u2Reuploading
 
 from qiskit_machine_learning.kernels import QuantumKernel
 
+
 def main(args):
     qdata = qd.qdata(
         args["data_folder"],
@@ -24,33 +25,34 @@ def main(args):
     test_features = qdata.get_latent_space("test")
     test_labels = qdata.ae_data.tetarget
     test_folds = qdata.get_kfolded_data("test")
-    
-    qsvm = util.load_qsvm(args["qsvm_model"]+'model')
+
+    qsvm = util.load_qsvm(args["qsvm_model"] + "model")
     # TODO would be nice in to pass the feature map as an argument as well and
     # save it as a hyperparameter of the QSVM model in the .json file.
     feature_map = u2Reuploading(nqubits=8, nfeatures=args["feature_dim"])
-    
+
     quantum_instance, backend = util.configure_quantum_instance(
         ibmq_api_config=args["ibmq_api_config"],
-        run_type = args["run_type"],
-        backend_name= args["backend_name"],
-        **args["config"]
+        run_type=args["run_type"],
+        backend_name=args["backend_name"],
+        **args["config"],
     )
-    kernel = QuantumKernel(feature_map=feature_map, 
-                           quantum_instance=quantum_instance)
-    print('test_folds[0]:',test_folds[0].shape)
-    print('test_features:', test_features.shape)
-    #acc = qsvm.score(kernel.evaluate(x_vec=test_folds[0],y_vec=train_features),test_labels)
-    
+    kernel = QuantumKernel(feature_map=feature_map, quantum_instance=quantum_instance)
+    print("test_folds[0]:", test_folds[0].shape)
+    print("test_features:", test_features.shape)
+    # acc = qsvm.score(kernel.evaluate(x_vec=test_folds[0],y_vec=train_features),test_labels)
+
     print(f"x-check with test accuracy {acc}")
-    '''
+    """
     scores = compute_model_scores(qsvm, kernel, train_features,test_folds, 
                                   args["qsvm_model"])
     plot.roc_plot(scores, qdata, args["qsvm_model"], args["display_name"])
-    '''
+    """
 
-def compute_model_scores(model, kernel, x_train, data_folds, output_folder) \
-                         -> np.ndarray:
+
+def compute_model_scores(
+    model, kernel, x_train, data_folds, output_folder
+) -> np.ndarray:
     """
     Computing the model scores on all the test data folds to construct
     performance metrics of the model, e.g., ROC curve and AUC.
@@ -66,13 +68,19 @@ def compute_model_scores(model, kernel, x_train, data_folds, output_folder) \
     print("\nComputing ROC curves on kfolded test data...")
     scores_time_init = perf_counter()
     model_scores = np.array(
-        [model.decision_function(kernel.evaluate(x_vec=fold,y_vec=x_train)) 
-         for fold in data_folds]
+        [
+            model.decision_function(kernel.evaluate(x_vec=fold, y_vec=x_train))
+            for fold in data_folds
+        ]
     )
     scores_time_fina = perf_counter()
-    exec_time = scores_time_fina-scores_time_init
-    print(tcols.OKGREEN + f"Completed in: " + tcols.ENDC +
-         f"{exec_time:2.2e} sec. or {exec_time/60:2.2e} min.")
+    exec_time = scores_time_fina - scores_time_init
+    print(
+        tcols.OKGREEN
+        + f"Completed in: "
+        + tcols.ENDC
+        + f"{exec_time:2.2e} sec. or {exec_time/60:2.2e} min."
+    )
 
     path = output_folder + "y_score_list.npy"
 

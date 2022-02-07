@@ -236,9 +236,7 @@ def roc_plots(sig, bkg, model_path, output_folder):
     for feature in range(data.shape[1]):
         fpr, tpr, mean_auc, std_auc = compute_auc(data, target, feature)
         fig = plt.figure(figsize=(12, 10))
-        plt.plot(
-            fpr, tpr, label=f"AUC: {mean_auc:.3f} ± {std_auc:.3f}", color="navy"
-        )
+        plt.plot(fpr, tpr, label=f"AUC: {mean_auc:.3f} ± {std_auc:.3f}", color="navy")
         plt.plot([0, 1], [0, 1], ls="--", color="gray")
 
         plt.xlabel("False Positive Rate")

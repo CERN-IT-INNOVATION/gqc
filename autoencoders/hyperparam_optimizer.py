@@ -31,9 +31,7 @@ def main(args):
         print("{}: {}".format(key, value))
 
 
-def optuna_train(
-    train_loader, valid_loader, model, epochs, trial, woptim
-) -> float:
+def optuna_train(train_loader, valid_loader, model, epochs, trial, woptim) -> float:
     """
     Training the autoencoder in a way that is compatible with optuna.
     @train_loader :: Pytorch loader object containing training data.
@@ -46,9 +44,7 @@ def optuna_train(
         the weights in the loss are optimised, type of ae that is
         optimised, etc.
     """
-    print(
-        tcols.OKCYAN + "Training the AE model to be optimized..." + tcols.ENDC
-    )
+    print(tcols.OKCYAN + "Training the AE model to be optimized..." + tcols.ENDC)
     model.instantiate_adam_optimizer()
     model.network_summary()
     model.optimizer_summary()
@@ -105,9 +101,7 @@ def objective(trial, args) -> float:
     loss_weight = trial.suggest_uniform("loss_weight", 1, 1)
     weight_sink = trial.suggest_uniform("weight_sink", 1, 1)
     batch = trial.suggest_categorical("batch", args["batch"])
-    args.update(
-        {"lr": lr, "loss_weight": loss_weight, "weight_sink": weight_sink}
-    )
+    args.update({"lr": lr, "loss_weight": loss_weight, "weight_sink": weight_sink})
 
     # Load the data.
     ae_data = data.AE_data(args["data_folder"], args["norm"], args["nevents"])

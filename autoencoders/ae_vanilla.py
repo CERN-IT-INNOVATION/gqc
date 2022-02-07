@@ -48,12 +48,8 @@ class AE_vanilla(nn.Module):
         self.early_stopping_limit = 15
         self.epochs_no_improve = 0
 
-        self.encoder = self.construct_encoder(
-            self.hp["ae_layers"], self.enc_activ
-        )
-        self.decoder = self.construct_decoder(
-            self.hp["ae_layers"], self.dec_activ
-        )
+        self.encoder = self.construct_encoder(self.hp["ae_layers"], self.enc_activ)
+        self.decoder = self.construct_decoder(self.hp["ae_layers"], self.dec_activ)
 
     @staticmethod
     def construct_encoder(layers, enc_activ) -> nn.Sequential:
@@ -146,10 +142,7 @@ class AE_vanilla(nn.Module):
             f"Epoch : {epoch + 1}/{epochs}, "
             f"Train loss (average) = {train_loss.item():.8f}"
         )
-        print(
-            f"Epoch : {epoch + 1}/{epochs}, "
-            f"Valid loss = {valid_loss.item():.8f}"
-        )
+        print(f"Epoch : {epoch + 1}/{epochs}, " f"Valid loss = {valid_loss.item():.8f}")
 
     @staticmethod
     def print_summary(model):
@@ -197,11 +190,7 @@ class AE_vanilla(nn.Module):
         """
         if self.best_valid_loss > valid_loss:
             self.epochs_no_improve = 0
-            print(
-                tcols.OKGREEN
-                + f"New min: {self.best_valid_loss:.2e}"
-                + tcols.ENDC
-            )
+            print(tcols.OKGREEN + f"New min: {self.best_valid_loss:.2e}" + tcols.ENDC)
 
             self.best_valid_loss = valid_loss
             if outdir is not None:
@@ -320,9 +309,7 @@ class AE_vanilla(nn.Module):
             color="gray",
             label="Training Loss (average)",
         )
-        plt.plot(
-            epochs, self.all_valid_loss, color="navy", label="Validation Loss"
-        )
+        plt.plot(epochs, self.all_valid_loss, color="navy", label="Validation Loss")
         plt.xlabel("Epochs")
         plt.ylabel("Loss")
 
@@ -341,11 +328,7 @@ class AE_vanilla(nn.Module):
         plt.savefig(outdir + "loss_epochs.pdf")
         plt.close()
 
-        print(
-            tcols.OKGREEN
-            + f"Loss vs epochs plot saved to {outdir}."
-            + tcols.ENDC
-        )
+        print(tcols.OKGREEN + f"Loss vs epochs plot saved to {outdir}." + tcols.ENDC)
 
     def export_architecture(self, outdir):
         """

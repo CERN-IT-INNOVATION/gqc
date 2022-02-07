@@ -56,7 +56,7 @@ def create_output_folder(args, qsvm) -> str:
 def save_qsvm(model, path):
     """
     Saves the qsvm model to a certain path.
-    @model :: qsvm model object.
+    @model :: vqc model object.
     @path  :: String of full path to save the model in.
     """
     joblib.dump(model, path)
@@ -66,7 +66,7 @@ def save_qsvm(model, path):
 def load_qsvm(path):
     """
     Load model from pickle file, i.e., deserialisation.
-    @path  :: String of full path to save the model in.
+    @path  :: String of full path to load the model from.
 
     returns :: Joblib object that can be loaded by qiskit.
     """
@@ -106,7 +106,12 @@ def save_backend_properties(backend, path):
 
 
 def print_model_info(ae_path, qdata, qsvm):
-
+    """
+    Print information about the model.
+    @ae_path :: String of path to the autoencoder.
+    @qdata   :: The data object used to train the qsvm.
+    @qsvm    :: The qiskit qsvm object.
+    """
     print("\n-------------------------------------------")
     print(f"Autoencoder model: {ae_path}")
     print(f"Data path: {qdata.ae_data.data_folder}")

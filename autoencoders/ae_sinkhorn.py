@@ -27,14 +27,14 @@ class AE_sinkhorn(AE_vanilla):
             "noise_gen_input_layers": self.hp["ae_layers"][:2],
             "labels_dimension": 2,
             "adam_betas": (0.9, 0.999),
-            "loss_weight": 0.5,
+            "sinkh_weight": 0.5,
         }
 
         self.hp.update(new_hp)
         self.hp.update((k, hpars[k]) for k in self.hp.keys() & hpars.keys())
 
-        self.recon_loss_weight = 1 - self.hp["loss_weight"]
-        self.laten_loss_weight = self.hp["loss_weight"]
+        self.recon_loss_weight = 1 - self.hp["sinkh_weight"]
+        self.laten_loss_weight = self.hp["sinkh_weight"]
 
         self.laten_loss_function = geomloss.SamplesLoss(
             "sinkhorn", blur=0.05, scaling=0.95, diameter=0.01, debias=True

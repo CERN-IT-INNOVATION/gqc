@@ -61,18 +61,10 @@ def input_reco(input_sig, input_bkg, recon_sig, recon_bkg, model_path):
         plt.figure(figsize=(12, 10))
 
         input_vs_reco(
-            input_bkg[:, idx],
-            recon_bkg[:, idx],
-            idx,
-            "gray",
-            class_label="Background",
+            input_bkg[:, idx], recon_bkg[:, idx], idx, "gray", class_label="Background",
         )
         input_vs_reco(
-            input_sig[:, idx],
-            recon_sig[:, idx],
-            idx,
-            "navy",
-            class_label="Signal",
+            input_sig[:, idx], recon_sig[:, idx], idx, "navy", class_label="Signal",
         )
 
         plt.savefig(plots_folder + util.varname(idx) + ".pdf")

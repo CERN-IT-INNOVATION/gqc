@@ -12,33 +12,6 @@ from autoencoders import util as aeutil
 
 
 class qdata:
-    """
-    Data loader class. qdata is used to load the train/validation/test datasets
-    for the quantum ML model training given a pre-trained Auto-Encoder model
-    that reduces the number of features of the initial dataset.
-
-    Args:
-        data_folder (str): Path to the input data of the Auto-Encoder.
-        norm_name (str): Specify the normalisation of the input data
-                         e.g., minmax, maxabs etc.
-        nevents (float): Number of signal data samples in the input data file.
-                         Conventionally, we encode this number in the file
-                         name, e.g., nevents = 7.20e+05.
-        model_path (str): Path to the save PyTorch Auto-Encoder model.
-        train_events (int): Number of desired train events to be loaded by
-                            qdata.
-        valid_events (int): Number of desired validation events to be loaded
-                            by qdata.
-        test_events (int): Number of desired test events to be loaded by
-                            qdata.
-        kfolds (int): Number of folds (i.e. statistiaclly independent datasets)
-                      to use for validation/testing of the trained QML models.
-        seed (int): Seed for the shufling of the train/test/validation and
-                    k-folds datasets.
-
-    Attributes:
-    """
-
     def __init__(
         self,
         data_folder,
@@ -49,7 +22,6 @@ class qdata:
         valid_events=-1,
         test_events=-1,
         kfolds=0,
-        seed=None,  # By default, dataset will be shuffled.
     ):
 
         device = "cpu"
@@ -59,13 +31,7 @@ class qdata:
 
         print(tcols.OKCYAN + "\nLoading training data:" + tcols.ENDC)
         self.ae_data = aedata.AE_data(
-            data_folder,
-            norm_name,
-            nevents,
-            train_events,
-            valid_events,
-            test_events,
-            seed,
+            data_folder, norm_name, nevents, train_events, valid_events, test_events,
         )
         self.model = aeutil.choose_ae_model(hp["ae_type"], device, hp)
         self.model.load_model(model_path)
@@ -74,17 +40,17 @@ class qdata:
         self.nvalid = self.ae_data.vadata.shape[0]
         self.ntest = self.ae_data.tedata.shape[0]
 
-        print(tcols.OKCYAN + "Loading k-folded validation data:" + tcols.ENDC)
-        self.kfolds = kfolds
-        self.ae_kfold_data = aedata.AE_data(
-            data_folder,
-            norm_name,
-            nevents,
-            0,
-            kfolds * valid_events,
-            kfolds * test_events,
-            seed,
-        )
+        if kfolds > 0:
+            print(tcols.OKCYAN + "Loading k-folded valid data:" + tcols.ENDC)
+            self.kfolds = kfolds
+            self.ae_kfold_data = aedata.AE_data(
+                data_folder,
+                norm_name,
+                nevents,
+                0,
+                kfolds * valid_events,
+                kfolds * test_events,
+            )
 
     def get_latent_space(self, datat) -> np.ndarray:
         """
@@ -155,3 +121,31 @@ class qdata:
             )
 
         raise TypeError("Given data type does not exist!")
+
+    @staticmethod
+    def batchify(data, batch_size):
+        """
+        Reshape the training data into an array of arrays, the sub arrays
+        containing the amount of events that are contained in a batch.
+        @data :: Array of data to be split.
+        @batch_size :: Int of the batch size.
+        """
+        if len(data.shape) == 1:
+            return data.reshape(-1, batch_size)
+        elif len(data.shape) == 2:
+            return data.reshape(-1, batch_size, data.shape[1])
+        else:
+            raise RuntimeError(
+                "Batchify does not cover arrays with dimension larger than 2."
+            )
+
+    @staticmethod
+    def to_onehot(target):
+        """
+        Reshape the target that such that it follows onehot encoding.
+        @target :: Numpy array with target data.
+        """
+        onehot_target = np.zeros((target.size, int(target.max() + 1)))
+        onehot_target[np.arange(target.size), target.astype(int)] = 1
+
+        return onehot_target

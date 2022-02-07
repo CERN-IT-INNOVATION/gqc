@@ -105,10 +105,7 @@ def choose_norm(norm_name, all_data, all_targ):
     elif norm_name == "quantile":
         print("\nApplying quantile normalization...")
         apply_norm(
-            QuantileTransformer(),
-            f"quantile_{args.maxdata:.2e}",
-            all_data,
-            all_targ,
+            QuantileTransformer(), f"quantile_{args.maxdata:.2e}", all_data, all_targ,
         )
     else:
         print(tcols.ENDC)
@@ -154,11 +151,7 @@ def split_and_save(data, target, name):
     print(tcols.ENDC)
 
     x_train, x_valid, y_train, y_valid = train_test_split(
-        data,
-        target,
-        test_size=args.valid_percent,
-        shuffle=True,
-        stratify=target,
+        data, target, test_size=args.valid_percent, shuffle=True, stratify=target,
     )
     test_percent = float(x_valid.shape[0] / x_train.shape[0])
     x_train, x_test, y_train, y_test = train_test_split(

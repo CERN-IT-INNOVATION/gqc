@@ -24,32 +24,21 @@ class AE_data:
         self.nevents = nevents
         self.data_folder = data_folder
 
-        self.trdata = np.array([[]])
-        self.vadata = np.array([[]])
-        self.tedata = np.array([[]])
-
-        self.trtarget = np.array([])
-        self.vatarget = np.array([])
-        self.tetarget = np.array([])
-
-        if int(train_events) > 0:
-            self.trdata = self.get_numpy_data("train")
-            self.trtarget = self.get_numpy_target("train")
-            self.trdata, self.trtarget = self.get_data(
-                self.trdata, self.trtarget, train_events, seed
-            )
-        if int(valid_events) > 0:
-            self.vadata = self.get_numpy_data("valid")
-            self.vatarget = self.get_numpy_target("valid")
-            self.vadata, self.vatarget = self.get_data(
-                self.vadata, self.vatarget, valid_events, seed
-            )
-        if int(test_events) > 0:
-            self.tedata = self.get_numpy_data("test")
-            self.tetarget = self.get_numpy_target("test")
-            self.tedata, self.tetarget = self.get_data(
-                self.tedata, self.tetarget, test_events, seed
-            )
+        self.trdata = self.get_numpy_data("train")
+        self.trtarget = self.get_numpy_target("train")
+        self.trdata, self.trtarget = self.get_data(
+            self.trdata, self.trtarget, train_events, seed
+        )
+        self.vadata = self.get_numpy_data("valid")
+        self.vatarget = self.get_numpy_target("valid")
+        self.vadata, self.vatarget = self.get_data(
+            self.vadata, self.vatarget, valid_events, seed
+        )
+        self.tedata = self.get_numpy_data("test")
+        self.tetarget = self.get_numpy_target("test")
+        self.tedata, self.tetarget = self.get_data(
+            self.tedata, self.tetarget, test_events, seed
+        )
 
         self.nfeats = self.trdata.shape[1]
 

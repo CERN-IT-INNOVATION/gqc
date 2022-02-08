@@ -41,9 +41,7 @@ def roc_plot(scores, qdata_loader, output_folder, model_name):
     plt.plot(
         fpr,
         tpr,
-        label=model_name
-        + rf": AUC = {auc_mean:.3f} $\pm$ \
-        {auc_std:.3f}",
+        label=model_name + rf": AUC = {auc_mean:.3f} $\pm$ {auc_std:.3f}",
     )
 
     plt.title(

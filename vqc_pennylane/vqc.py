@@ -30,8 +30,8 @@ class VQC:
             "fmap": "zzfm",
             "vform": "two_local",
             "vform_repeats": 4,
-            "optimiser": None,
-            "lr": 0.001
+            "optimiser": "adam",
+            "lr": 0.001,
         }
         self._device = pnl.device(device, wires=self._hp["nqubits"])
         self._hp.update((k, hpars[k]) for k in self._hp.keys() & hpars.keys())
@@ -100,7 +100,6 @@ class VQC:
     def best_valid_loss(self):
         return self._best_valid_loss
 
-
     def draw(self):
         """
         Draws the circuit using dummy parameters.
@@ -157,7 +156,7 @@ class VQC:
         return 0
 
     def forward(self, x_data):
-        return [self._qcircuit(x, self._weights) for x in x_data]
+        return [self._circuit(x, self._weights) for x in x_data]
 
     def _save_best_loss_model(self, valid_loss, outdir):
         """
@@ -182,9 +181,7 @@ class VQC:
         Weights is taken as an argument here since the optimiser func needs it.
         We then use the class self variable inside the method.
         """
-        self._weights = weights
         predictions = self.forward(x_batch)
-
         return self._class_loss_function(predictions, y_batch)
 
     def _validate(self, valid_loader, outdir):
@@ -205,7 +202,6 @@ class VQC:
         weights, _, _ = self._optimiser.step(self._objective_function,
                                              self._weights, x_batch, y_batch)
         exit(1)
-
         self._weights = weights
         loss = self._objective_function(self._weights, x_batch, y_batch)
 
@@ -213,7 +209,7 @@ class VQC:
 
     def _train_all_batches(self, train_loader):
         """
-        Train on the full data set.
+        Train on the full data set. Add randomness.
         """
         batch_loss_sum = 0
         nb_of_batches = 0

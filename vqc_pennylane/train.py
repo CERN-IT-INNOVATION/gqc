@@ -23,6 +23,7 @@ def main(args):
         args["ae_model_path"],
         train_events=args["train_events"],
         valid_events=args["valid_events"],
+        seed=123
     )
     outdir = "./trained_vqcs/" + args["outdir"] + "/"
     if not os.path.exists(outdir):

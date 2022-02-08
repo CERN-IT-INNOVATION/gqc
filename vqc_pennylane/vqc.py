@@ -1,5 +1,5 @@
 import pennylane as pnl
-import numpy as np
+from pennylane import numpy as np
 import torch.nn as nn
 from pennylane.optimize import AdamOptimizer
 
@@ -16,7 +16,7 @@ class VQC:
     files in the same directory.
     """
     def __init__(self, nqubits, nfeatures, fmap="zzfm", vform="two_local",
-                 vform_repeats=4, optimizer=None, lr=0.001):
+                 vform_repeats=4, optimiser=None, lr=0.001):
         """
         @nqubits   :: Number of qubits the circuit should be made of.
         @nfeatures :: Number of features in the training data set.
@@ -30,8 +30,8 @@ class VQC:
         self._nweights = vf.vforms_weights(vform, vform_repeats, nqubits)
 
         np.random.seed(123)
-        self._weights = 0.01*np.random.randn(self._nweights, self._layers,
-                                             requires_grad=True)
+        self._weights = 0.01*np.random.randn(self._layers, self._nweights,
+                                             self._nqubits, requires_grad=True)
         self._optimiser = self._choose_optimiser(optimiser, lr)
         self._class_loss_function = nn.BCELoss(reduction="mean")
         self._epochs_no_improve = 0
@@ -50,7 +50,6 @@ class VQC:
         for layer_nb in range(self._layers):
             start_feature = layer_nb*self._nqubits
             end_feature = self._nqubits*(layer_nb + 1)
-
             fm.zzfm(self._nqubits, inputs[start_feature:end_feature])
             vf.two_local(self._nqubits, weights[layer_nb],
                          repeats=self._vform_repeats, entanglement="linear")

@@ -34,7 +34,7 @@ def two_local(nqubits, weights, repeats=1, entanglement="linear"):
     """
     for repeat in range(repeats):
         for qubit in range(nqubits):
-            pnl.RY(weights[repeat*nqubits + qubit], wires=qubit)
+            pnl.RY(weights[repeat][qubit], wires=qubit)
         if entanglement == "linear":
             two_local_linear(nqubits)
         elif entanglement == "full":
@@ -43,7 +43,7 @@ def two_local(nqubits, weights, repeats=1, entanglement="linear"):
             raise AttributeError("Unknown entanglement pattern!")
 
     for qubit in range(nqubits):
-        pnl.RY(weights[repeats*nqubits + qubit], wires=qubit)
+        pnl.RY(weights[repeat][qubit], wires=qubit)
 
 def two_local_linear(nqubits):
     """
@@ -59,4 +59,5 @@ def two_local_full(nqubits):
     @nqubits      :: The number of qubits to use.
     """
     for qpair in list(combinations(range(len(nqubits)), 2)):
+        print(f"Combs:{qpair[0]} and {qpair[1]}")
         pnl.CNOT(wires=[qpair[0], qpair[1]])

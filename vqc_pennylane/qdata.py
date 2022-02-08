@@ -67,25 +67,22 @@ class qdata:
 
         raise TypeError("Given data type does not exist!")
 
-    def get_kfold_latent_space(self, datat) -> np.ndarray:
-        """
-        Get the kfolded latent space for validation or testing data.
-        @datat :: String of the data type.
-
-        returns :: The kfolded output of the ae depending on the data.
-        """
-        if datat == "valid":
-            return self.model.predict(self.ae_kfold_data.vadata)[0]
-        if datat == "test":
-            return self.model.predict(self.ae_kfold_data.tedata)[0]
-
-        raise TypeError("Given data type does not exist!")
-
-    def fold(self, data, target, events_per_kfold) -> np.ndarray:
+    def fold(self, data, target, events_per_kfold) -> Tuple:
         """
         Fold the data, given a number of events you want per fold.
         All data that is not folded is then discarded.
-        @data   :: Numpy array of the data to be folded.
+
+        For kfold=1, the content of the first (and only) fold would be
+        the same as that of self.ae_data.tedata BUT the order of the events
+        is different.
+
+        For the case of kfold=n and kfold=m, we should not expect any of the
+        folds to be the same between each other. That is, the input @data
+        contains self.ntest samples which are then split (create the folds),
+        concatenated and shuffled again. Hence, we should not expect identical
+        folds between these two different cases, even for the same self.ntest.
+
+        @data   :: Numpy array of the data to be folded (already shuffled once).
         @target :: Numpy array of the target corresponding to the data.
         @events_per_kfold :: The number of events wanted per fold.
 
@@ -95,10 +92,26 @@ class qdata:
         data_sig, data_bkg = self.ae_data.split_sig_bkg(data, target)
         data_sig = data_sig.reshape(-1, int(events_per_kfold / 2), data_sig.shape[1])
         data_bkg = data_bkg.reshape(-1, int(events_per_kfold / 2), data_bkg.shape[1])
+        data = np.concatenate((data_sig, data_bkg), axis=1)
+        target = np.array(
+            [
+                np.concatenate(
+                    (
+                        np.ones(int(events_per_kfold / 2)),
+                        np.zeros(int(events_per_kfold / 2)),
+                    )
+                )
+                for kfold in range(self.kfolds)
+            ]
+        )
+        shuffling = np.random.RandomState(seed=self.seed).permutation(events_per_kfold)
 
-        return np.concatenate((data_sig, data_bkg), axis=1)
+        data = data[:, shuffling]
+        target = target[:, shuffling]
+        data = [self.model.predict(kfold)[0] for kfold in data]
+        return data, target
 
-    def get_kfolded_data(self, datat) -> np.ndarray:
+    def get_kfolded_data(self, datat) -> Tuple:
         """
         Get the kfolded data for either the validation or testing data.
         @datat :: String of the data type.
@@ -108,13 +121,13 @@ class qdata:
         """
         if datat == "valid":
             return self.fold(
-                self.get_kfold_latent_space(datat),
+                self.ae_kfold_data.vadata,
                 self.ae_kfold_data.vatarget,
                 self.nvalid,
             )
         if datat == "test":
             return self.fold(
-                self.get_kfold_latent_space(datat),
+                self.ae_kfold_data.tedata,
                 self.ae_kfold_data.tetarget,
                 self.ntest,
             )

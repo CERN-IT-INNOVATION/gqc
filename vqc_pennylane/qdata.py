@@ -17,9 +17,9 @@ class qdata:
         norm_name,
         nevents,
         model_path,
-        train_events=-1,
-        valid_events=-1,
-        test_events=-1,
+        train_events=0,
+        valid_events=0,
+        test_events=0,
         kfolds=0,
     ):
 

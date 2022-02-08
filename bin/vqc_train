@@ -20,6 +20,8 @@ parser.add_argument('--output_folder', required=True,
                     help='The name of the model to be saved.')
 parser.add_argument('--nqubits', type=int, required=True, default=4,
                     help="The number of qubits that the vqc circuit will use.")
+parser.add_argument('--optimiser', default=None,
+                    help='The optimiser used for training the model.')
 parser.add_argument('--epochs', type=int, default=100,
                     help="The number of epochs to train the vqc for.")
 parser.add_argument('--batch_size', type=int, default=50,
@@ -31,9 +33,10 @@ args = {
     "data_folder": args.data_folder,
     "norm": args.norm,
     "nevents": args.nevents,
-    "model_path": args.model_path,
+    "ae_model_path": args.model_path,
     "outdir": args.output_folder,
     "nqubits": args.nqubits,
+    "optimiser": args.optimiser,
     "epochs": args.epochs,
     "batch_size": args.batch_size,
     "train_events": 250,

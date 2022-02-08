@@ -40,6 +40,7 @@ class AE_data:
             self.tedata, self.tetarget, test_events, seed
         )
 
+
         self.nfeats = self.trdata.shape[1]
 
         self.success_message()
@@ -219,5 +220,4 @@ class AE_data:
         data = np.vstack((data_sig[:nevents, :], data_bkg[:nevents, :]))
         target = np.concatenate((np.ones(nevents), np.zeros(nevents)))
         shuffling = np.random.RandomState(seed=seed).permutation(len(target))
-
         return data[shuffling], target[shuffling]

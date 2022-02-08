@@ -1,15 +1,12 @@
 # Utility methods for the qsvm.
 
 import os
-import warnings
 import joblib
-from datetime import datetime
 from typing import Tuple, Dict
 from qiskit import IBMQ
 from qiskit import Aer
 from qiskit import QuantumCircuit
 from qiskit.utils import QuantumInstance
-from qiskit.providers.aer.noise import NoiseModel
 from qiskit.providers.exceptions import QiskitBackendNotFoundError
 from qiskit.circuit import ParameterVector
 from qiskit.visualization import plot_circuit_layout

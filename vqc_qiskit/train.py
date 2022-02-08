@@ -1,12 +1,10 @@
 # Main script of the vqc. Imports the data and runs the training of the
 # VQC. A plot of the loss function is made using
 from time import perf_counter
-import numpy as np
 
 from qiskit import Aer
 from qiskit.utils import QuantumInstance
 from qiskit.utils import algorithm_globals
-from qiskit.algorithms.optimizers import ADAM
 
 from .vqc import VQC
 from .terminal_colors import tcols

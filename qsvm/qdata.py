@@ -3,8 +3,6 @@
 import sys
 import os
 from typing import Tuple
-from joblib import PrintTime
-from matplotlib.pyplot import axis
 import numpy as np
 
 sys.path.append("..")

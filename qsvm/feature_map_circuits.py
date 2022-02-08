@@ -4,6 +4,7 @@
 from qiskit.circuit import QuantumCircuit, ParameterVector
 import numpy as np
 
+
 # TODO rename to dense ecoding
 def u2Reuploading(nqubits=8, nfeatures=16) -> QuantumCircuit:
     """

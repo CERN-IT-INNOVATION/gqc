@@ -23,8 +23,6 @@ def main(args):
         seed=args["seed"],
     )
     train_features = qdata.get_latent_space("train")
-    test_features = qdata.get_latent_space("test")
-    test_labels = qdata.ae_data.tetarget
     test_folds, test_folds_labels = qdata.get_kfolded_data("test")
 
     qsvm = util.load_qsvm(args["qsvm_model"] + "model")
@@ -74,10 +72,8 @@ def compute_model_scores(
     scores_time_fina = perf_counter()
     exec_time = scores_time_fina - scores_time_init
     print(
-        tcols.OKGREEN
-        + f"Completed in: "
-        + tcols.ENDC
-        + f"{exec_time:2.2e} sec. or {exec_time/60:2.2e} min."
+        tcols.OKGREEN + "Completed in: " + tcols.ENDC +
+        f"{exec_time:2.2e} sec. or {exec_time/60:2.2e} min."
     )
 
     path = output_folder + "y_score_list.npy"

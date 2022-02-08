@@ -77,8 +77,9 @@ class qdata:
         self.nvalid = self.ae_data.vadata.shape[0]
         self.ntest = self.ae_data.tedata.shape[0]
         self.seed = seed
-        self.test_fold_lalels = 'Not yet folded, setter only when get_kfold_data'\
-                                'is called'
+        self.test_fold_lalels = (
+            "Not yet folded, setter only when get_kfold_data" "is called"
+        )
         print(tcols.OKCYAN + "Loading k-folded validation data:" + tcols.ENDC)
         self.kfolds = kfolds
         self.ae_kfold_data = aedata.AE_data(
@@ -129,11 +130,11 @@ class qdata:
 
         For kfold=1, the content of the first (and only) fold would be
         the same as that of self.ae_data.tedata BUT the order of the events
-        is different. 
+        is different.
 
         For the case of kfold=n and kfold=m, we should not expect any of the
-        folds to be the same between each other. That is, the input @data 
-        contains self.ntest samples which are then split (create the folds), 
+        folds to be the same between each other. That is, the input @data
+        contains self.ntest samples which are then split (create the folds),
         concatenated and shuffled again. Hence, we should not expect identical
         folds between these two different cases, even for the same self.ntest.
 
@@ -147,11 +148,20 @@ class qdata:
         data_sig, data_bkg = self.ae_data.split_sig_bkg(data, target)
         data_sig = data_sig.reshape(-1, int(events_per_kfold / 2), data_sig.shape[1])
         data_bkg = data_bkg.reshape(-1, int(events_per_kfold / 2), data_bkg.shape[1])
-        data = np.concatenate((data_sig,data_bkg), axis=1)
-        target = np.array([np.concatenate((np.ones(int(events_per_kfold/2)), np.zeros(int(events_per_kfold/2))))
-                           for kfold in range(self.kfolds)])
+        data = np.concatenate((data_sig, data_bkg), axis=1)
+        target = np.array(
+            [
+                np.concatenate(
+                    (
+                        np.ones(int(events_per_kfold / 2)),
+                        np.zeros(int(events_per_kfold / 2)),
+                    )
+                )
+                for kfold in range(self.kfolds)
+            ]
+        )
         shuffling = np.random.RandomState(seed=self.seed).permutation(events_per_kfold)
-        
+
         data = data[:, shuffling]
         target = target[:, shuffling]
         data = [self.model.predict(kfold)[0] for kfold in data]

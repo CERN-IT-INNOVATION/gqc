@@ -32,8 +32,8 @@ def roc_plot(scores, qdata_loader, test_fold_labels, output_folder, model_name):
             for kfold, y_score in enumerate(y_scores)
         ]
     )
-    print('tetarget', qdata_loader.ae_data.tetarget)
-    print('test_fold labels:', test_fold_labels)
+    print("tetarget", qdata_loader.ae_data.tetarget)
+    print("test_fold labels:", test_fold_labels)
     auc_mean, auc_std = np.mean(auc), np.std(auc)
     print(f"AUC's: {auc}")
     print(tcols.OKGREEN + f"AUC (mean) = {auc_mean} +/- {auc_std}" + tcols.ENDC)

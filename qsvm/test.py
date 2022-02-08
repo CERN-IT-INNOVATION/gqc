@@ -39,10 +39,13 @@ def main(args):
         **args["config"],
     )
     kernel = QuantumKernel(feature_map=feature_map, quantum_instance=quantum_instance)
-    
-    scores = compute_model_scores(qsvm, kernel, train_features, test_folds, 
-                                  args["qsvm_model"])
-    plot.roc_plot(scores, qdata, test_folds_labels, args["qsvm_model"], args["display_name"])
+
+    scores = compute_model_scores(
+        qsvm, kernel, train_features, test_folds, args["qsvm_model"]
+    )
+    plot.roc_plot(
+        scores, qdata, test_folds_labels, args["qsvm_model"], args["display_name"]
+    )
 
 
 def compute_model_scores(

@@ -40,7 +40,6 @@ class AE_data:
             self.tedata, self.tetarget, test_events, seed
         )
 
-
         self.nfeats = self.trdata.shape[1]
 
         self.success_message()

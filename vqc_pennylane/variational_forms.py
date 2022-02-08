@@ -59,5 +59,4 @@ def two_local_full(nqubits):
     @nqubits      :: The number of qubits to use.
     """
     for qpair in list(combinations(range(len(nqubits)), 2)):
-        print(f"Combs:{qpair[0]} and {qpair[1]}")
         pnl.CNOT(wires=[qpair[0], qpair[1]])

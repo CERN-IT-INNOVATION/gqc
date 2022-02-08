@@ -22,3 +22,5 @@ def zzfm(nqubits, inputs):
         pnl.RZ(2.0*(np.pi - inputs[qpair[0]])*(np.pi - inputs[qpair[1]]),
                wires=qpair[1])
         pnl.CZ(wires=[qpair[0], qpair[1]])
+        print(f"Combs:{qpair[0]} and {qpair[1]}")
+

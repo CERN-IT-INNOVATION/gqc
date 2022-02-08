@@ -32,7 +32,7 @@ args = {
     "norm": args.norm,
     "nevents": args.nevents,
     "model_path": args.model_path,
-    "output_folder": args.output_folder,
+    "outdir": args.output_folder,
     "nqubits": args.nqubits,
     "epochs": args.epochs,
     "batch_size": args.batch_size,

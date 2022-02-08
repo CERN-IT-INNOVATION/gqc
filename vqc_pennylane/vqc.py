@@ -18,10 +18,13 @@ class VQC:
     def __init__(self, nqubits, nfeatures, fmap="zzfm", vform="two_local",
                  vform_repeats=4, optimiser=None, lr=0.001):
         """
-        @nqubits   :: Number of qubits the circuit should be made of.
-        @nfeatures :: Number of features in the training data set.
-        @fmap      :: String name of the feature map to use.
-        @vform     :: String name of the variational form to use.
+        @nqubits       :: Number of qubits the circuit should be made of.
+        @nfeatures     :: Number of features in the training data set.
+        @fmap          :: String name of the feature map to use.
+        @vform         :: String name of the variational form to use.
+        @vform_repeats :: Int how many times the variational from repeats.
+        @optimiser     :: String name of the optimiser.
+        @lr            :: Float learning rate for the optimiser.
         """
         self._layers = self._check_compatibility(nqubits, nfeatures)
         self._nfeatures = nfeatures
@@ -35,6 +38,9 @@ class VQC:
         self._optimiser = self._choose_optimiser(optimiser, lr)
         self._class_loss_function = nn.BCELoss(reduction="mean")
         self._epochs_no_improve = 0
+        self._best_valid_loss = 999
+        self.all_train_loss = []
+        self.all_valid_loss = []
 
         self._device = pnl.device("default.qubit", wires=nqubits)
         self._circuit = pnl.qnode(self._device)(self._qcircuit)
@@ -76,6 +82,11 @@ class VQC:
     @property
     def nweights(self):
         return self._nweights
+
+    @property
+    def best_valid_loss(self):
+        return self._best_valid_loss
+
 
     def draw(self):
         """
@@ -148,8 +159,7 @@ class VQC:
 
             self._best_valid_loss = valid_loss
             if outdir is not None:
-                torch.save(self.state_dict(), outdir + "best_model.pt")
-
+                np.save(outdir + "best_model.npy", self._weights)
         else:
             self.epochs_no_improve += 1
 
@@ -201,7 +211,6 @@ class VQC:
 
         return batch_loss_sum / nb_of_batches
 
-
     def train_vqc(self, train_loader, valid_loader, epochs, estopping_limit,
                   outdir):
         """
@@ -215,6 +224,88 @@ class VQC:
             if self.early_stopping(estopping_limit):
                 break
 
-            self.all_train_loss.append(train_loss.item())
-            self.all_valid_loss.append(valid_loss.item())
+            self.all_train_loss.append(train_loss)
+            self.all_valid_loss.append(valid_loss)
             self.print_losses(epoch, epochs, train_loss, valid_loss)
+
+    @staticmethod
+    def _print_losses(epoch, epochs, train_loss, valid_loss):
+        """
+        Prints the training and validation losses in a nice format.
+        @epoch      :: Int of the current epoch.
+        @epochs     :: Int of the total number of epochs.
+        @train_loss :: The computed training loss pytorch object.
+        @valid_loss :: The computed validation loss pytorch object.
+        """
+        print(
+            f"Epoch : {epoch + 1}/{epochs}, "
+            f"Train loss (average) = {train_loss.item():.8f}"
+        )
+        print(f"Epoch : {epoch + 1}/{epochs}, " f"Valid loss = {valid_loss.item():.8f}")
+
+    def loss_plot(self, outdir):
+        """
+        Plots the loss for each epoch for the training and validation data.
+        @outdir :: Directory where to save the loss plot.
+        """
+        epochs = list(range(len(self.all_train_loss)))
+        plt.plot(
+            epochs, self.all_train_loss, color="gray", label="Training Loss (average)",
+        )
+        plt.plot(epochs, self.all_valid_loss, color="navy", label="Validation Loss")
+        plt.xlabel("Epochs")
+        plt.ylabel("Loss")
+
+        plt.text(
+            np.min(epochs),
+            np.max(self.all_train_loss),
+            f"Min: {self.best_valid_loss:.2e}",
+            verticalalignment="top",
+            horizontalalignment="left",
+            color="blue",
+            fontsize=15,
+            bbox={"facecolor": "white", "alpha": 0.8, "pad": 5},
+        )
+
+        plt.legend()
+        plt.savefig(outdir + "loss_epochs.pdf")
+        plt.close()
+
+        print(tcols.OKGREEN + f"Loss vs epochs plot saved to {outdir}." + tcols.ENDC)
+
+    def _save_best_loss_model(self, valid_loss, outdir):
+        """
+        Prints a message and saves the optimised model with the best loss.
+        @valid_loss :: Float of the validation loss.
+        @outdir     :: Directory where the best model is saved.
+        """
+        if self.best_valid_loss > valid_loss:
+            self._epochs_no_improve = 0
+            print(tcols.OKGREEN + f"New min: {self.best_valid_loss:.2e}" +
+                  tcols.ENDC)
+
+            self._best_valid_loss = valid_loss
+            if outdir is not None:
+                np.save(outdir + "best_model.npy", self._weights)
+        else:
+            self.epochs_no_improve += 1
+
+    def load_model(self, model_path):
+        """
+        Loads the weights of a trained model saved in a numpy file.
+        @model_path :: Directory where a trained model was saved.
+        """
+        if not os.path.exists(model_path):
+            raise FileNotFoundError("∄ path.")
+        self._weights = np.load(model_path + "best_model.npy")
+
+    def predict(self, x_data) -> np.ndarray:
+        """
+        Compute the prediction of the vqc on a data array.
+        @x_data :: Input array to pass through the vqc.
+
+        returns :: The latent space of the ae and the reco data.
+        """
+        classification_output = self._forward(x_data.float())
+
+        return classification_output

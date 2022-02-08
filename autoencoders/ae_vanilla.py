@@ -304,7 +304,10 @@ class AE_vanilla(nn.Module):
         """
         epochs = list(range(len(self.all_train_loss)))
         plt.plot(
-            epochs, self.all_train_loss, color="gray", label="Training Loss (average)",
+            epochs,
+            self.all_train_loss,
+            color="gray",
+            label="Training Loss (average)",
         )
         plt.plot(epochs, self.all_valid_loss, color="navy", label="Validation Loss")
         plt.xlabel("Epochs")

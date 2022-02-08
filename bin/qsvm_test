@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-# Run script of the qsvm training. See the main file for more details 
+# Run script of the qsvm testing. See the test.py file for more details 
 # on how it works.
 
 import argparse
@@ -8,7 +8,7 @@ import sys
 import json
 sys.path.append("..")
 
-from qsvm.main import main
+from qsvm.test import main
 
 
 parser = argparse.ArgumentParser(formatter_class=argparse.
@@ -31,10 +31,8 @@ parser.add_argument('--run_type', type=str, required=True,
                     choices=['ideal', 'noisy', 'hardware'],
                     help='Choose way to run the QSVM: Ideal computation,'
                     'noisy simulation or on real quantum hardware.')
-parser.add_argument('--output_folder', required=True,
-                    help='The name of the model to be saved.')
-parser.add_argument('--c_param', type=float, default=1.,
-                    help='The C parameter of the SVM.')
+parser.add_argument('--qsvm_model', type=str, required=True,
+                    help="The folder path of the QSVM model.")
 parser.add_argument('--ntrain', type=int, default=600,
                     help='Number of training events for the QSVM.')
 parser.add_argument('--nvalid', type=int, default=0,
@@ -42,6 +40,10 @@ parser.add_argument('--nvalid', type=int, default=0,
                          'not used for the QSVM).')
 parser.add_argument('--ntest', type=int, default=720,
                     help='Number of test events for the QSVM.')
+parser.add_argument('--kfolds', type=int, default=5,
+                    help='Number of k-validation/test folds used.')   
+parser.add_argument('--display_name', type=str, required=True,
+                    help='Display name on the roc plot.')                                    
 
 args = parser.parse_args()
 
@@ -54,8 +56,10 @@ except:
 
 # Different configuration keyword arguments for the QuantumInstance depending 
 # on the run_type. They can be tweaked as desired before running.
-initial_layout = [22,25,24,23,21,18,15,12] # for Cairo
+initial_layout = [1,2,3,5,8,11,14,16] # for Cairo
 
+# TODO get these configs from a .json file with hyperparameters that is saved
+# after the training in qsvm/main.py
 seed = 12345
 config_noisy = {'optimization_level':3, 'initial_layout': initial_layout,
                 'seed_transpiler':seed, 'seed_simulator':seed, 'shots':5000}
@@ -73,16 +77,17 @@ args = {
     "norm": args.norm,
     "nevents": args.nevents,
     "model_path": args.model_path,
-    "c_param": args.c_param,
-    "output_folder": args.output_folder,
     "backend_name": args.backend_name,
     "ibmq_api_config": private_configuration["IBMQ"],
     "run_type": args.run_type,
+    "qsvm_model": args.qsvm_model,
     "config": config,
     "ntrain": args.ntrain,
     "nvalid": args.nvalid,
     "ntest": args.ntest,
-    "seed": seed # For the data shuffling.
+    "kfolds": args.kfolds,
+    "seed": seed, # For the data shuffling.
+    "display_name": args.display_name
 }
 
 main(args)

@@ -17,7 +17,7 @@ class AE_data:
         train_events=-1,
         valid_events=-1,
         test_events=-1,
-        seed=np.random.randint(1000),
+        seed=None,
     ):
 
         self.norm_name = norm_name
@@ -219,5 +219,4 @@ class AE_data:
         data = np.vstack((data_sig[:nevents, :], data_bkg[:nevents, :]))
         target = np.concatenate((np.ones(nevents), np.zeros(nevents)))
         shuffling = np.random.RandomState(seed=seed).permutation(len(target))
-
         return data[shuffling], target[shuffling]

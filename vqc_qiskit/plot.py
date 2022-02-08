@@ -35,21 +35,18 @@ def roc_plot(scores, qdata_loader, output_folder, model_name):
     print(tcols.OKGREEN + f"AUC (mean) = {auc_mean} +/- {auc_std}" + tcols.ENDC)
     y_scores_flat = y_scores.flatten()
     fpr, tpr, _ = metrics.roc_curve(
-        np.tile(qdata_loader.ae_data.tetarget, qdata_loader.kfolds), y_scores_flat,
+        np.tile(qdata_loader.ae_data.tetarget, qdata_loader.kfolds),
+        y_scores_flat,
     )
     plt.plot(
         fpr,
         tpr,
-        label=model_name
-        + fr": AUC = {auc_mean:.3f} $\pm$ \
-        {auc_std:.3f}",
+        label=model_name + rf": AUC = {auc_mean:.3f} $\pm$ {auc_std:.3f}",
     )
 
     plt.title(
-        r"$N^{train}$"
-        + f"={qdata_loader.ntrain},"
-        + r" $N^{test}$"
-        + f"={qdata_loader.ntest} ($x 5$)",
+        r"$N^{train}$" + f"={qdata_loader.ntrain}," + r" $N^{test}$" + 
+        f"={qdata_loader.ntest} ($x 5$)",
         loc="left",
     )
     plt.xlabel("Background Efficiency (FPR)")

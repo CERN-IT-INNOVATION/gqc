@@ -1,12 +1,10 @@
 # Main script of the vqc. Imports the data and runs the training of the
 # VQC. A plot of the loss function is made using
 from time import perf_counter
-import numpy as np
 
 from qiskit import Aer
 from qiskit.utils import QuantumInstance
 from qiskit.utils import algorithm_globals
-from qiskit.algorithms.optimizers import ADAM
 
 from .vqc import VQC
 from .terminal_colors import tcols
@@ -27,7 +25,7 @@ def main(args):
         args["model_path"],
         train_events=args["train_events"],
         valid_events=args["valid_events"],
-        test_events=0
+        test_events=0,
     )
 
     train_features = qdata.batchify(qdata.get_latent_space("train"), args["batch_size"])
@@ -55,8 +53,7 @@ def main(args):
 
     train_time_init = perf_counter()
     vqc = train(
-        vqc, train_features, train_labels, valid_features, valid_labels,
-        args["epochs"]
+        vqc, train_features, train_labels, valid_features, valid_labels, args["epochs"]
     )
     train_time_fina = perf_counter()
     print(f"Training completed in: {train_time_fina-train_time_init:.2e} s")

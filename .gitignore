@@ -11,6 +11,7 @@ __pycache__
 
 # Ouput
 trained_aes/
+models/
 trained_vqcs/
 trained_qsvms/
 
@@ -25,3 +26,5 @@ build/
 dist/
 pip-wheel-metadata/
 .eggs
+
+bin/private_config_vasilis.json

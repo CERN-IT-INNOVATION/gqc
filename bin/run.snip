@@ -4,6 +4,5 @@ python ae_train --aetype vanilla --data_folder ../../data/ae_input/ --norm minma
 # Plot the results of the training.
 python ae_plot --data_folder ../../data/ae_input/ --norm minmax --nevents 7.20e+05 --model_path ./trained_aes/first_run/best_model.pt
 
-# Run the qsvm on the ae latent space.
-python qsvm_launch --data_folder ../../data/ae_input/ --norm minmax --nevents 7.20e+05 --model_path ./trained_aes/first_run/best_model.pt --output_folder test
-
+# Run the qsvm on the ae latent space. Choose between ideal, noisy simulation and run on hardware for the qsvm training.
+./qsvm_launch --data_folder ../../data/ae_input/ --norm minmax --nevents 7.20e+05 --model_path ../ae_models/variational_final/best_model.pt --backend_name ibmq_guadalupe --run_type noisy --output_folder test --c_param 0.1 --ntrain 2 --nvalid 0 --ntest 2

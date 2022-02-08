@@ -335,4 +335,4 @@ dependencies:
     - tweedledum==1.1.1
     - websocket-client==1.2.1
     - yfinance==0.1.66
-prefix: /work/deodagiu/miniconda/envs/ae_qml
+prefix: /work/vabelis/miniconda3/envs/ae_qml

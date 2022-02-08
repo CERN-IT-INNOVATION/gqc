@@ -31,7 +31,12 @@ class qdata:
 
         print(tcols.OKCYAN + "\nLoading training data:" + tcols.ENDC)
         self.ae_data = aedata.AE_data(
-            data_folder, norm_name, nevents, train_events, valid_events, test_events,
+            data_folder,
+            norm_name,
+            nevents,
+            train_events,
+            valid_events,
+            test_events,
         )
         self.model = aeutil.choose_ae_model(hp["ae_type"], device, hp)
         self.model.load_model(model_path)

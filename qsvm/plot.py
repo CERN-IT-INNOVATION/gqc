@@ -6,7 +6,7 @@ from sklearn import metrics
 from .terminal_colors import tcols
 
 
-def roc_plot(scores, qdata_loader, output_folder, model_name):
+def roc_plot(scores, qdata_loader, test_fold_labels, output_folder, model_name):
     """
     Plot the ROC of a given qsvm model, given kfolded data.
     Also calculate the AUC of the respective ROC and display it.
@@ -14,6 +14,7 @@ def roc_plot(scores, qdata_loader, output_folder, model_name):
     @qdata_loader     :: Data class that contains the kfolded data.
     @output_folder    :: Name of the folder where the plot will be saved.
     """
+    print(tcols.OKCYAN + "\nPlotting and saving ROC figure..." + tcols.ENDC)
 
     f1 = plt.figure(1, figsize=(10, 10))
     plt.rc("xtick", labelsize=20)  # fontsize of the tick labels
@@ -26,30 +27,27 @@ def roc_plot(scores, qdata_loader, output_folder, model_name):
     y_scores = scores
     auc = np.array(
         [
-            metrics.roc_auc_score(qdata_loader.ae_data.tetarget, y_score)
-            for y_score in y_scores
+            metrics.roc_auc_score(test_fold_labels[kfold], y_score)
+            for kfold, y_score in enumerate(y_scores)
         ]
     )
+    print("tetarget", qdata_loader.ae_data.tetarget)
+    print("test_fold labels:", test_fold_labels)
     auc_mean, auc_std = np.mean(auc), np.std(auc)
     print(f"AUC's: {auc}")
     print(tcols.OKGREEN + f"AUC (mean) = {auc_mean} +/- {auc_std}" + tcols.ENDC)
     y_scores_flat = y_scores.flatten()
-    fpr, tpr, _ = metrics.roc_curve(
-        np.tile(qdata_loader.ae_data.tetarget, qdata_loader.kfolds), y_scores_flat,
-    )
+    test_fold_labels_flat = test_fold_labels.flatten()
+    fpr, tpr, _ = metrics.roc_curve(test_fold_labels_flat, y_scores_flat)
     plt.plot(
         fpr,
         tpr,
-        label=model_name
-        + fr": AUC = {auc_mean:.3f} $\pm$ \
-        {auc_std:.3f}",
+        label=model_name + rf": AUC = {auc_mean:.3f} $\pm$ {auc_std:.3f}",
     )
 
     plt.title(
-        r"$N^{train}$"
-        + f"={qdata_loader.ntrain},"
-        + r" $N^{test}$"
-        + f"={qdata_loader.ntest} ($x 5$)",
+        r"$N^{train}$" + f"={qdata_loader.ntrain}," + r" $N^{test}$" +
+        f"={qdata_loader.ntest} ($x 5$)",
         loc="left",
     )
     plt.xlabel("Background Efficiency (FPR)")
@@ -61,5 +59,5 @@ def roc_plot(scores, qdata_loader, output_folder, model_name):
     plt.ylim([0.0, 1.0])
     plt.tight_layout()
     plt.legend()
-    f1.savefig("qsvm_models/" + output_folder + "/roc_plot.pdf")
+    f1.savefig(output_folder + "roc_plot.pdf")
     plt.close()

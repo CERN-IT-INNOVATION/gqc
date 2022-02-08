@@ -45,7 +45,7 @@ def optuna_train(train_loader, valid_loader, model, epochs, trial, woptim) -> fl
         the weights in the loss are optimised, type of ae that is
         optimised, etc.
     """
-    print(tcols.OKCYAN + "Training AE model to be optimized..." + tcols.ENDC)
+    print(tcols.OKCYAN + "Training the AE model to be optimized..." + tcols.ENDC)
     model.instantiate_adam_optimizer()
     model.network_summary()
     model.optimizer_summary()
@@ -104,14 +104,7 @@ def objective(trial, args) -> float:
     sinkh_weight = trial.suggest_uniform("sinkh_weight", *args["sinkh_weight"])
 
     batch = trial.suggest_categorical("batch", args["batch"])
-    args.update(
-        {
-            "lr": lr,
-            "class_weight": class_weight,
-            "sinkh_weight": sinkh_weight,
-            "varia_weight": varia_weight,
-        }
-    )
+    args.update({"lr": lr, "loss_weight": loss_weight, "weight_sink": weight_sink})
 
     # Load the data.
     ae_data = data.AE_data(args["data_folder"], args["norm"], args["nevents"])

@@ -2,7 +2,6 @@
 import os
 import json
 import pennylane as pnl
-import torch.nn as nn
 
 from pennylane import numpy as np
 from pennylane.optimize import AdamOptimizer

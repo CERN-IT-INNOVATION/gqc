@@ -2,9 +2,11 @@
 import os
 import json
 import pennylane as pnl
-from pennylane import numpy as np
 import torch.nn as nn
+
+from pennylane import numpy as np
 from pennylane.optimize import AdamOptimizer
+import matplotlib.pyplot as plt
 
 from . import feature_maps as fm
 from . import variational_forms as vf
@@ -49,7 +51,7 @@ class VQC:
 
         self._optimiser = self._choose_optimiser(self._hp["optimiser"],
                                                  self._hp["lr"])
-        self._class_loss_function = nn.BCELoss(reduction="mean")
+        self._class_loss_function = self._binary_cross_entropy
         self._epochs_no_improve = 0
         self._best_valid_loss = 999
         self.all_train_loss = []
@@ -158,22 +160,17 @@ class VQC:
     def forward(self, x_data):
         return [self._circuit(x, self._weights) for x in x_data]
 
-    def _save_best_loss_model(self, valid_loss, outdir):
+    @staticmethod
+    def _binary_cross_entropy(y_pred, y):
         """
-        Prints a message and saves the optimised model with the best loss.
-        @valid_loss :: Float of the validation loss.
-        @outdir     :: Directory where the best model is saved.
+        Binary cross entropy loss calculation.
         """
-        if self.best_valid_loss > valid_loss:
-            self._epochs_no_improve = 0
-            print(tcols.OKGREEN + f"New min: {self.best_valid_loss:.2e}" +
-                  tcols.ENDC)
+        eps = np.finfo(np.float32).eps
+        y_pred = np.clip(y_pred, eps, 1-eps)
+        bce_one = y * np.log(y_pred + eps)
+        bce_two = (1 - y) * np.log(1 - y_pred + eps)
 
-            self._best_valid_loss = valid_loss
-            if outdir is not None:
-                np.save(outdir + "best_model.npy", self._weights)
-        else:
-            self.epochs_no_improve += 1
+        return -np.mean(bce_one + bce_two)
 
     def _objective_function(self, weights, x_batch, y_batch):
         """
@@ -201,10 +198,8 @@ class VQC:
         """
         x_batch = np.array(x_batch[:, :-1], requires_grad=False)
         y_batch = np.array(y_batch[:], requires_grad=False)
-        print(x_batch.shape, y_batch.shape)
         weights, _, _ = self._optimiser.step(self._objective_function,
                                              self._weights, x_batch, y_batch)
-        exit(1)
         self._weights = weights
         loss = self._objective_function(self._weights, x_batch, y_batch)
 
@@ -234,12 +229,12 @@ class VQC:
         for epoch in range(epochs):
             train_loss = self._train_all_batches(train_loader)
             valid_loss = self._validate(valid_loader, outdir)
-            if self.early_stopping(estopping_limit):
+            if self._early_stopping(estopping_limit):
                 break
 
             self.all_train_loss.append(train_loss)
             self.all_valid_loss.append(valid_loss)
-            self.print_losses(epoch, epochs, train_loss, valid_loss)
+            self._print_losses(epoch, epochs, train_loss, valid_loss)
 
     @staticmethod
     def _print_losses(epoch, epochs, train_loss, valid_loss):
@@ -272,7 +267,7 @@ class VQC:
         plt.text(
             np.min(epochs),
             np.max(self.all_train_loss),
-            f"Min: {self.best_valid_loss:.2e}",
+            f"Min: {self._best_valid_loss:.2e}",
             verticalalignment="top",
             horizontalalignment="left",
             color="blue",
@@ -292,12 +287,13 @@ class VQC:
         @valid_loss :: Float of the validation loss.
         @outdir     :: Directory where the best model is saved.
         """
-        if self.best_valid_loss > valid_loss:
+        if self._best_valid_loss > valid_loss:
             self._epochs_no_improve = 0
-            print(tcols.OKGREEN + f"New min: {self.best_valid_loss:.2e}" +
-                  tcols.ENDC)
-
             self._best_valid_loss = valid_loss
+
+            print(tcols.OKGREEN +
+                  f"New min: {self.best_valid_loss:.2e}" +
+                  tcols.ENDC)
             if outdir is not None:
                 np.save(outdir + "best_model.npy", self._weights)
         else:

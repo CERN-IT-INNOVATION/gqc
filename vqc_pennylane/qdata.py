@@ -100,7 +100,7 @@ class qdata:
 
         raise TypeError("Given data type does not exist!")
 
-    def fold(self, data, target, events_per_kfold) -> Tuple:
+    def fold(self, data, target, events_per_kfold):
         """
         Fold the data, given a number of events you want per fold.
         All data that is not folded is then discarded.
@@ -144,7 +144,7 @@ class qdata:
         data = [self.model.predict(kfold)[0] for kfold in data]
         return data, target
 
-    def get_kfolded_data(self, datat) -> Tuple:
+    def get_kfolded_data(self, datat):
         """
         Get the kfolded data for either the validation or testing data.
         @datat :: String of the data type.

@@ -1,3 +1,6 @@
+# VQC implemented in pennylane.
+import os
+import json
 import pennylane as pnl
 from pennylane import numpy as np
 import torch.nn as nn
@@ -15,34 +18,43 @@ class VQC:
     map and a variational form, which are implemented in their eponymous
     files in the same directory.
     """
-    def __init__(self, nqubits, nfeatures, fmap="zzfm", vform="two_local",
-                 vform_repeats=4, optimiser=None, lr=0.001):
+    def __init__(self, device, hpars):
         """
-        @nqubits       :: Number of qubits the circuit should be made of.
-        @nfeatures     :: Number of features in the training data set.
-        @fmap          :: String name of the feature map to use.
-        @vform         :: String name of the variational form to use.
-        @vform_repeats :: Int how many times the variational from repeats.
-        @optimiser     :: String name of the optimiser.
-        @lr            :: Float learning rate for the optimiser.
+        @device :: String containing what kind of device to run the
+                   quantum circuit on: simulation, or actual computer?
+        @hpars  :: Dictionary of the hyperparameters to configure the vqc.
         """
-        self._layers = self._check_compatibility(nqubits, nfeatures)
-        self._nfeatures = nfeatures
-        self._nqubits = nqubits
-        self._vform_repeats = vform_repeats
-        self._nweights = vf.vforms_weights(vform, vform_repeats, nqubits)
+        self._hp = {
+            "nqubits": 4,
+            "nfeatures": 16,
+            "fmap": "zzfm",
+            "vform": "two_local",
+            "vform_repeats": 4,
+            "optimiser": "adam",
+            "lr": 0.001,
+        }
+        self._device = pnl.device(device, wires=self._hp["nqubits"])
+        self._hp.update((k, hpars[k]) for k in self._hp.keys() & hpars.keys())
+
+        self._layers = \
+            self._check_compatibility(self._hp["nqubits"], self._hp["nfeatures"])
+        self._nweights = vf.vforms_weights(self._hp["vform"],
+                                           self._hp["vform_repeats"],
+                                           self._hp["nqubits"])
 
         np.random.seed(123)
         self._weights = 0.01*np.random.randn(self._layers, self._nweights,
-                                             self._nqubits, requires_grad=True)
-        self._optimiser = self._choose_optimiser(optimiser, lr)
+                                             self._hp["nqubits"],
+                                             requires_grad=True)
+
+        self._optimiser = self._choose_optimiser(self._hp["optimiser"],
+                                                 self._hp["lr"])
         self._class_loss_function = nn.BCELoss(reduction="mean")
         self._epochs_no_improve = 0
         self._best_valid_loss = 999
         self.all_train_loss = []
         self.all_valid_loss = []
 
-        self._device = pnl.device("default.qubit", wires=nqubits)
         self._circuit = pnl.qnode(self._device)(self._qcircuit)
 
     def _qcircuit(self, inputs, weights):
@@ -54,22 +66,23 @@ class VQC:
         returns :: Measurement of the first qubit of the quantum circuit.
         """
         for layer_nb in range(self._layers):
-            start_feature = layer_nb*self._nqubits
-            end_feature = self._nqubits*(layer_nb + 1)
-            fm.zzfm(self._nqubits, inputs[start_feature:end_feature])
-            vf.two_local(self._nqubits, weights[layer_nb],
-                         repeats=self._vform_repeats, entanglement="linear")
+            start_feature = layer_nb*self._hp["nqubits"]
+            end_feature = self._hp["nqubits"]*(layer_nb + 1)
+            fm.zzfm(self._hp["nqubits"], inputs[start_feature:end_feature])
+            vf.two_local(self._hp["nqubits"], weights[layer_nb],
+                         repeats=self._hp["vform_repeats"],
+                         entanglement="linear")
 
         y = [[1], [0]] * np.conj([[1], [0]]).T
         return pnl.expval(pnl.Hermitian(y, wires=[0]))
 
     @property
     def nqubits(self):
-        return self._nqubits
+        return self._hp["nqubits"]
 
     @property
     def nfeatures(self):
-        return self._nfeatures
+        return self._hp["nfeatures"]
 
     @property
     def circuit(self):
@@ -87,7 +100,6 @@ class VQC:
     def best_valid_loss(self):
         return self._best_valid_loss
 
-
     def draw(self):
         """
         Draws the circuit using dummy parameters.
@@ -96,7 +108,7 @@ class VQC:
         """
         drawing = pnl.draw(self._circuit)
         print(tcols.OKGREEN)
-        print(drawing([0]*int(self._nfeatures), self._weights))
+        print(drawing([0]*int(self._hp["nfeatures"]), self._weights))
         print(tcols.ENDC)
 
     @staticmethod
@@ -144,7 +156,7 @@ class VQC:
         return 0
 
     def forward(self, x_data):
-        return [self._qcircuit(x, self._weights) for x in x_data]
+        return [self._circuit(x, self._weights) for x in x_data]
 
     def _save_best_loss_model(self, valid_loss, outdir):
         """
@@ -163,16 +175,13 @@ class VQC:
         else:
             self.epochs_no_improve += 1
 
-    @staticmethod
-    def _objective_function(weights, x_batch, y_batch):
+    def _objective_function(self, weights, x_batch, y_batch):
         """
         Objective function to be passed through the optimiser.
         Weights is taken as an argument here since the optimiser func needs it.
         We then use the class self variable inside the method.
         """
-        self._weights = weights
         predictions = self.forward(x_batch)
-
         return self._class_loss_function(predictions, y_batch)
 
     def _validate(self, valid_loader, outdir):
@@ -192,6 +201,7 @@ class VQC:
         """
         weights, _, _ = self._optimiser.step(self._objective_function,
                                              self._weights, x_batch, y_batch)
+        exit(1)
         self._weights = weights
         loss = self._objective_function(self._weights, x_batch, y_batch)
 
@@ -199,7 +209,7 @@ class VQC:
 
     def _train_all_batches(self, train_loader):
         """
-        Train on the full data set.
+        Train on the full data set. Add randomness.
         """
         batch_loss_sum = 0
         nb_of_batches = 0
@@ -289,6 +299,16 @@ class VQC:
                 np.save(outdir + "best_model.npy", self._weights)
         else:
             self.epochs_no_improve += 1
+
+    def export_hyperparameters(self, outdir):
+        """
+        Saves the hyperparameters of the model to a json file.
+        @outdir :: Directory where to save the json file.
+        """
+        file_path = os.path.join(outdir, "hyperparameters.json")
+        params_file = open(file_path, "w")
+        json.dump(self._hp, params_file)
+        params_file.close()
 
     def load_model(self, model_path):
         """

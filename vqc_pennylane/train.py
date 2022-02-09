@@ -45,6 +45,6 @@ def main(args):
     train_time_start = perf_counter()
     vqc.train_vqc(train_loader, valid_loader, args["epochs"], 20, outdir)
     train_time_end = perf_counter()
-    print(f"Training completed in: {train_time_fina-train_time_init:.2e} s")
+    print(f"Training completed in: {train_time_end-train_time_start:.2e} s")
 
-    vqc.plot(outdir)
+    vqc.loss_plot(outdir)

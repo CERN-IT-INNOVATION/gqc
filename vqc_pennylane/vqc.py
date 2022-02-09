@@ -199,6 +199,9 @@ class VQC:
         """
         Train on one batch.
         """
+        x_batch = np.array(x_batch[:, :-1], requires_grad=False)
+        y_batch = np.array(y_batch[:], requires_grad=False)
+        print(x_batch.shape, y_batch.shape)
         weights, _, _ = self._optimiser.step(self._objective_function,
                                              self._weights, x_batch, y_batch)
         exit(1)

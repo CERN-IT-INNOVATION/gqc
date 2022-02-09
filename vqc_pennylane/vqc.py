@@ -4,6 +4,7 @@ import json
 import pennylane as pnl
 
 from pennylane import numpy as np
+import autograd.numpy as anp
 from pennylane.optimize import AdamOptimizer
 import matplotlib.pyplot as plt
 
@@ -160,16 +161,20 @@ class VQC:
         return [self._circuit(x, self._weights) for x in x_data]
 
     @staticmethod
-    def _binary_cross_entropy(y_pred, y):
+    def _binary_cross_entropy(y_preds, y_batch):
         """
         Binary cross entropy loss calculation.
         """
-        eps = np.finfo(np.float32).eps
-        y_pred = np.clip(y_pred, eps, 1-eps)
-        bce_one = y * np.log(y_pred + eps)
-        bce_two = (1 - y) * np.log(1 - y_pred + eps)
+        eps = anp.finfo(np.float32).eps
+        y_preds = anp.clip(y_preds, eps, 1-eps)
+        y_batch = anp.array(y_batch)
+        bce_one = [y * anp.log(pred + eps) for pred, y in zip(y_preds, y_batch)]
+        bce_two = [(1 - y) *
+                   anp.log(1 - pred + eps) for pred, y in zip(y_preds, y_batch)]
 
-        return -np.mean(bce_one + bce_two)
+        bce = anp.array(bce_one + bce_two)
+
+        return -anp.mean(bce)
 
     def _objective_function(self, weights, x_batch, y_batch):
         """
@@ -177,6 +182,7 @@ class VQC:
         Weights is taken as an argument here since the optimiser func needs it.
         We then use the class self variable inside the method.
         """
+        self._weights = weights
         predictions = self.forward(x_batch)
         return self._class_loss_function(predictions, y_batch)
 
@@ -185,7 +191,6 @@ class VQC:
         Calculate the loss on a validation data set.
         """
         x_valid, y_valid = valid_loader
-
         loss = self._objective_function(self._weights, x_valid, y_valid)
         self._save_best_loss_model(loss, outdir)
 
@@ -296,7 +301,7 @@ class VQC:
             if outdir is not None:
                 np.save(outdir + "best_model.npy", self._weights)
         else:
-            self.epochs_no_improve += 1
+            self._epochs_no_improve += 1
 
     def export_hyperparameters(self, outdir):
         """

@@ -38,8 +38,6 @@ class VQCHybrid(AE_classifier):
             "fmap": "zzfm",
             "vform": "two_local",
             "vform_repeats": 4,
-            "optimiser": "adam",
-            "lr": 0.001,
         }
         self.hp.update(new_hp)
         self.hp.update((k, hpars[k]) for k in self.hp.keys() & hpars.keys()) 
@@ -53,10 +51,9 @@ class VQCHybrid(AE_classifier):
         self._vqc_nweights = vf.vforms_weights(self.hp["vform"],
                                            self.hp["vform_repeats"],
                                            self.hp["nqubits"])      
-        self._weight_shape = {"weights": (self._layers, self._vqc_nweights, self.hp["vform_repeats"])}
+        self._weight_shape = {"weights": (self._layers, self._vqc_nweights)}
         
         self._circuit = pnl.qnode(self._qdevice, interface='torch')(self.__construct_classifier)
-        print("Quantum weights shape: ", self._weight_shape)
         self.classifier = pnl.qnn.TorchLayer(self._circuit, self._weight_shape)
 
     def __construct_classifier(self, inputs, weights):

@@ -38,15 +38,15 @@ class VQC:
         self._device = pnl.device(device, wires=self._hp["nqubits"])
         self._hp.update((k, hpars[k]) for k in self._hp.keys() & hpars.keys())
 
-        self._layers = \
-            self._check_compatibility(self._hp["nqubits"], self._hp["nfeatures"])
+        self._layers = self._check_compatibility(self._hp["nqubits"],
+                                                 self._hp["nfeatures"])
         self._nweights = vf.vforms_weights(self._hp["vform"],
                                            self._hp["vform_repeats"],
                                            self._hp["nqubits"])
 
         np.random.seed(123)
-        self._weights = 0.01*np.random.randn(self._layers, self._nweights,
-                                             self._hp["nqubits"],
+        self._weights = 0.01*np.random.randn(self._layers,
+                                             self._nweights,
                                              requires_grad=True)
 
         self._optimiser = self._choose_optimiser(self._hp["optimiser"],

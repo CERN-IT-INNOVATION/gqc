@@ -39,8 +39,8 @@ args = {
     "optimiser": args.optimiser,
     "epochs": args.epochs,
     "batch_size": args.batch_size,
-    "train_events": 250,
-    "valid_events": 250,
+    "train_events": 5000,
+    "valid_events": 2000,
 }
 
 main(args)

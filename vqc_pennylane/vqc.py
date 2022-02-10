@@ -223,7 +223,7 @@ class VQC:
 
         return batch_loss_sum / nb_of_batches
 
-    def train_vqc(self, train_loader, valid_loader, epochs, estopping_limit,
+    def train_model(self, train_loader, valid_loader, epochs, estopping_limit,
                   outdir):
         """
         Train an instantiated vqc algorithm.

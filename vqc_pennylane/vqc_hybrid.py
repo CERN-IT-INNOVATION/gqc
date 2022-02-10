@@ -1,13 +1,13 @@
-# Hybrid VQC. It is the main skeleton for having a VQC classifier attached to
-# latent space of an Autoencoder and for a hybrid encoder (classical NN) + VQC
-# classifier. The latter is can be constructed from the former by "chopping" 
-# off the decoder branch of the Autoencoder.
+# Hybrid VQC.
 
 import numpy as np
 import torch
 import torch.nn as nn
+import pennylane as pnl
 
-from .ae_vanilla import AE_vanilla
+from autoencoders.ae_classifier import AE_classifier
+from . import feature_maps as fm
+from . import variational_forms as vf
 from .terminal_colors import tcols
 
 seed = 100
@@ -18,165 +18,99 @@ torch.autograd.set_detect_anomaly(False)
 torch.autograd.profiler.profile(enabled=False)
 
 
-class AE_classifier(AE_vanilla):
-    def __init__(self, device="cpu", hparams={}):
-
-        super().__init__(device, hparams)
+class VQCHybrid(AE_classifier):
+    """
+    Main skeleton for having a VQC classifier attached to
+    latent space of an Autoencoder and for a hybrid encoder (classical NN) + VQC
+    classifier. The latter is can be constructed from the former by "chopping" 
+    off the decoder branch of the Autoencoder.
+        @qdevice :: String containing what kind of device to run the
+                    quantum circuit on: simulation, or actual computer?
+        @device  :: 
+        @hpars   :: Dictionary of the hyperparameters to configure the vqc.
+    """
+    def __init__(self, qdevice, device, hpars):
+        super().__init__(device, hpars)
+        del self.hp["class_layers"]
         new_hp = {
-            "ae_type": "classifier",
-            "class_layers": [128, 64, 32, 16, 8, 1],
-            "adam_betas": (0.9, 0.999),
-            "class_weight": 0.5,
+            "nqubits": 4,
+            "nfeatures": 16,
+            "fmap": "zzfm",
+            "vform": "two_local",
+            "vform_repeats": 4,
+            "optimiser": "adam",
+            "lr": 0.001,
         }
         self.hp.update(new_hp)
-        self.hp.update((k, hparams[k]) for k in self.hp.keys() & hparams.keys())
+        self.hp.update((k, hpars[k]) for k in self.hp.keys() & hpars.keys()) 
+        
+        self._qdevice = pnl.device(qdevice, wires=self.hp["nqubits"])
+        self._layers = \
+            self._check_compatibility(self.hp["nqubits"], self.hp["nfeatures"])
 
-        self.class_loss_function = nn.BCELoss(reduction="mean")
+        self.epochs_no_improve = 0
+        
+        self._vqc_nweights = vf.vforms_weights(self.hp["vform"],
+                                           self.hp["vform_repeats"],
+                                           self.hp["nqubits"])      
+        self._weight_shape = {"weights": (self._layers, self._vqc_nweights, self.hp["vform_repeats"])}
+        
+        self._circuit = pnl.qnode(self._qdevice, interface='torch')(self.__construct_classifier)
+        print("Quantum weights shape: ", self._weight_shape)
+        self.classifier = pnl.qnn.TorchLayer(self._circuit, self._weight_shape)
 
-        self.recon_loss_weight = 1 - self.hp["class_weight"]
-        self.class_loss_weight = self.hp["class_weight"]
-        self.all_recon_loss = []
-        self.all_class_loss = []
+    def __construct_classifier(self, inputs, weights):
+        """
+        The quantum circuit builder, it overides the method of AE_classifier.
+        The VQC will be used as the classifier branch of the hybrid network.
+        
+        @inputs  :: The inputs taken by the feature maps.
+        @weights :: The weights of the variational forms used.
 
-        self.class_layers = [self.hp["ae_layers"][-1]] + self.hp["class_layers"]
-        self.classifier = self.construct_classifier(self.class_layers)
+        returns :: Measurement of the first qubit of the quantum circuit.
+        """
+        for layer_nb in range(self._layers):
+            start_feature = layer_nb*self.hp["nqubits"]
+            end_feature = self.hp["nqubits"]*(layer_nb + 1)
+            fm.zzfm(self.hp["nqubits"], inputs[start_feature:end_feature])
+            vf.two_local(self.hp["nqubits"], weights[layer_nb],
+                         repeats=self.hp["vform_repeats"],
+                         entanglement="linear")
 
+        y = [[1], [0]] * np.conj([[1], [0]]).T
+        return pnl.expval(pnl.Hermitian(y, wires=[0]))
+
+    @property
+    def nqubits(self):
+        return self._hp["nqubits"]
+
+    @property
+    def nfeatures(self):
+        return self._hp["nfeatures"]
+
+    @property
+    def circuit(self):
+        return self._circuit
+
+    @property
+    def nweights(self):
+        return self._vqc_nweights
+    
     @staticmethod
-    def construct_classifier(layers) -> nn.Sequential:
+    def _check_compatibility(nqubits, nfeatures):
         """
-        Construct the classifier neural network.
-        @layers   :: Array of number of nodes for each layer.
-
-        returns  :: Pytorch sequence of layers making the classifier NN.
+        Checks if the number of features in the dataset is divisible by
+        the number of qubits.
+        @nqubits   :: Number of qubits assigned to the vqc.
+        @nfeatures :: Number of features to process by the vqc.
         """
-        dnn_layers = []
+        if nfeatures % nqubits != 0:
+            raise ValueError("The number of features is not divisible by "
+                             "the number of qubits you assigned!")
 
-        for idx in range(len(layers)):
-            dnn_layers.append(nn.Linear(layers[idx], layers[idx + 1]))
-            if idx == len(layers) - 2:
-                dnn_layers.append(nn.Sigmoid())
-                break
-            dnn_layers.append(nn.ReLU(True))
+        return int(nfeatures/nqubits)
 
-        return nn.Sequential(*dnn_layers)
-
-    def forward(self, x):
-        """
-        Forward pass through the ae and the classifier.
-        """
-        latent = self.encoder(x)
-        class_output = self.classifier(latent)
-        reconstructed = self.decoder(latent)
-        return latent, class_output, reconstructed
-
-    def compute_loss(self, x_data, y_data) -> float:
-        """
-        Compute the loss of a forward pass through the ae and
-        classifier. Combine the two losses and return the one loss.
-        @x_data  :: Numpy array of the original input data.
-        @y_data  :: Numpy array of the original target data.
-
-        returns :: Float of the computed combined loss function value.
-        """
-        if type(x_data) is np.ndarray:
-            x_data = torch.from_numpy(x_data).to(self.device)
-        if type(y_data) is np.ndarray:
-            y_data = torch.from_numpy(y_data).to(self.device)
-
-        latent, classif, recon = self.forward(x_data.float())
-
-        class_loss = self.class_loss_function(classif.flatten(), y_data.float())
-        recon_loss = self.recon_loss_function(recon, x_data.float())
-
-        return self.recon_loss_weight * recon_loss + self.class_loss_weight * class_loss
-
-    @staticmethod
-    def print_losses(epoch, epochs, train_loss, valid_losses):
-        """
-        Prints the training and validation losses in a nice format.
-        @epoch      :: Int of the current epoch.
-        @epochs     :: Int of the total number of epochs.
-        @train_loss :: The computed training loss pytorch object.
-        @valid_loss :: The computed validation loss pytorch object.
-        """
-        print(
-            f"Epoch : {epoch + 1}/{epochs}, "
-            f"Train loss (average) = {train_loss.item():.8f}"
-        )
-        print(
-            f"Epoch : {epoch + 1}/{epochs}, "
-            f"Valid loss = {valid_losses[0].item():.8f}"
-        )
-        print(
-            f"Epoch : {epoch + 1}/{epochs}, "
-            f"Valid recon loss (no weight) = {valid_losses[1].item():.8f}"
-        )
-        print(
-            f"Epoch : {epoch + 1}/{epochs}, "
-            f"Valid class loss (no weight) = {valid_losses[2].item():.8f}"
-        )
-
-    def network_summary(self):
-        """
-        Prints summary of entire AE + classifier network.
-        """
-        print(tcols.OKGREEN + "Encoder summary:" + tcols.ENDC)
-        self.print_summary(self.encoder)
-        print("\n")
-        print(tcols.OKGREEN + "Classifier summary:" + tcols.ENDC)
-        self.print_summary(self.classifier)
-        print("\n")
-        print(tcols.OKGREEN + "Decoder summary:" + tcols.ENDC)
-        self.print_summary(self.decoder)
-        print("\n\n")
-
-    @torch.no_grad()
-    def valid(self, valid_loader, outdir) -> list:
-        """
-        Evaluate the validation combined loss for the model and save the model
-        if a new minimum in this combined and weighted loss is found.
-        @valid_loader :: Pytorch data loader with the validation data.
-        @outdir       :: Output folder where to save the model.
-
-        returns :: Pytorch loss object of the total validation loss,
-            latent loss on the validation data, and recon loss on it.
-        """
-        x_data_valid, y_data_valid = iter(valid_loader).next()
-        x_data_valid = x_data_valid.to(self.device)
-        y_data_valid = y_data_valid.to(self.device)
-        self.eval()
-
-        latent, classif, recon = self.forward(x_data_valid.float())
-
-        recon_loss = self.recon_loss_function(x_data_valid.float(), recon)
-        class_loss = self.class_loss_function(classif.flatten(), y_data_valid)
-
-        valid_loss = (
-            self.recon_loss_weight * recon_loss + self.class_loss_weight * class_loss
-        )
-
-        self.save_best_loss_model(valid_loss, outdir)
-
-        return valid_loss, recon_loss, class_loss
-
-    def train_all_batches(self, train_loader) -> float:
-        """
-        Train the autoencoder on all the batches.
-        @train_loader :: Pytorch loader object with the training data.
-
-        returns :: The normalised training loss over all the batches.
-        """
-        batch_loss_sum = 0
-        nb_of_batches = 0
-        for batch in train_loader:
-            x_batch, y_batch = batch
-            batch_loss = self.train_batch(x_batch, y_batch)
-            batch_loss_sum += batch_loss
-            nb_of_batches += 1
-
-        return batch_loss_sum / nb_of_batches
-
-    def train_autoencoder(self, train_loader, valid_loader, epochs, outdir):
+    def train_model(self, train_loader, valid_loader, epochs, estopping_limit, outdir):
         """
         Train the classifier autoencoder.
         @train_loader :: Pytorch data loader with the training data.
@@ -196,7 +130,7 @@ class AE_classifier(AE_vanilla):
 
             train_loss = self.train_all_batches(train_loader)
             valid_losses = self.valid(valid_loader, outdir)
-            if self.early_stopping():
+            if self._early_stopping(estopping_limit):
                 break
 
             self.all_train_loss.append(train_loss.item())
@@ -206,20 +140,15 @@ class AE_classifier(AE_vanilla):
 
             self.print_losses(epoch, epochs, train_loss, valid_losses)
 
-    @torch.no_grad()
-    def predict(self, x_data) -> np.ndarray:
+    
+    def _early_stopping(self, early_stopping_limit) -> bool:
         """
-        Compute the prediction of the autoencoder.
-        @x_data :: Input array to pass through the autoencoder.
+        Stops the training if there has been no improvement in the loss
+        function during the past, e.g. 10, number of epochs.
 
-        returns :: Lists with the latent space of the ae, the
-            reconstructed data, and the classifier output.
+        returns :: True for when the early stopping limit was exceeded
+            and false otherwise.
         """
-        x_data = torch.from_numpy(x_data).to(self.device)
-        self.eval()
-        latent, classif, recon = self.forward(x_data.float())
-
-        latent = latent.cpu().numpy()
-        classif = classif.cpu().numpy()
-        recon = recon.cpu().numpy()
-        return latent, recon, classif
+        if self.epochs_no_improve >= early_stopping_limit:
+            return 1
+        return 0

@@ -12,8 +12,6 @@ from .terminal_colors import tcols
 from . import qdata as qd
 from . import util
 
-from pennylane.optimize import AdamOptimizer
-
 
 def main(args):
     qdata = qd.qdata(

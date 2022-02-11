@@ -39,10 +39,10 @@ class AE_classifier(AE_vanilla):
         self.all_class_loss = []
 
         self.class_layers = [self.hp["ae_layers"][-1]] + self.hp["class_layers"]
-        self.classifier = self.construct_classifier(self.class_layers)
+        self.classifier = self.__construct_classifier(self.class_layers)
 
     @staticmethod
-    def construct_classifier(layers) -> nn.Sequential:
+    def __construct_classifier(layers) -> nn.Sequential:
         """
         Construct the classifier neural network.
         @layers   :: Array of number of nodes for each layer.

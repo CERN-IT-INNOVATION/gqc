@@ -310,3 +310,7 @@ def configure_quantum_instance(
             tcols.FAIL + "Specified programme run type does not" "exist!" + tcols.ENDC
         )
     return quantum_instance, backend
+
+def get_run_type():
+    #switcher stuff
+    pass

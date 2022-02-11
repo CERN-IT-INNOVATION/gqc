@@ -10,6 +10,7 @@ from qiskit.utils import QuantumInstance
 from qiskit.providers.exceptions import QiskitBackendNotFoundError
 from qiskit.circuit import ParameterVector
 from qiskit.visualization import plot_circuit_layout
+from qiskit.providers.aer.noise import NoiseModel
 from qiskit.providers.aer.backends import AerSimulator
 import re
 
@@ -202,6 +203,25 @@ def connect_quantum_computer(ibmq_api_config, backend_name):
     print(tcols.OKGREEN + " Loaded IBMQ backend: " + backend_name + "." + tcols.ENDC)
     return quantum_computer_backend
 
+def get_backend_configuration(backend) -> Tuple:
+    '''
+    Gather backend configuration and properties from the calibration data. 
+    The output is used to build a noise model using the qiskit aer_simulator.
+    
+    Args:
+    @backend :: IBMQBackend object representing a a real quantum computer.
+    Returns:
+            @noise_model from the 1-gate, 2-gate (CX) errors, thermal relaxation,
+            etc.
+            @coupling_map: connectivity of the physical qubits.
+            @basis_gates: gates that are physically implemented on the hardware.
+            the transpiler decomposes the generic/abstract circuit to these
+            physical basis gates, taking into acount also the coupling_map.
+    '''
+    noise_model = NoiseModel.from_backend(backend)
+    coupling_map = backend.configuration().coupling_map
+    basis_gates = noise_model.basis_gates
+    return noise_model, coupling_map, basis_gates
 
 def ideal_simulation(**kwargs) -> QuantumInstance:
     """

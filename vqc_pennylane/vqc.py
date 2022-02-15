@@ -173,10 +173,12 @@ class VQC:
         eps = anp.finfo(np.float32).eps
         y_preds = anp.clip(y_preds, eps, 1 - eps)
         y_batch = anp.array(y_batch)
-        bce_one = [y * anp.log(pred + eps) for pred, y in zip(y_preds, y_batch)]
-        bce_two = [
+        bce_one = anp.array([
+            y * anp.log(pred + eps) for pred, y in zip(y_preds, y_batch)
+        ])
+        bce_two = anp.array([
             (1 - y) * anp.log(1 - pred + eps) for pred, y in zip(y_preds, y_batch)
-        ]
+        ])
 
         bce = anp.array(bce_one + bce_two)
 

@@ -6,6 +6,7 @@ import numpy as np
 
 from itertools import combinations
 
+
 def zzfm(nqubits, inputs):
     """
     ZZfeatureMap pennylane implementation. The building of this circuit is
@@ -15,10 +16,12 @@ def zzfm(nqubits, inputs):
     """
     for x in range(len(inputs)):
         pnl.Hadamard(x)
-        pnl.RZ(2.0*inputs[x], wires=x)
+        pnl.RZ(2.0 * inputs[x], wires=x)
 
     for qpair in list(combinations(range(len(inputs)), 2)):
         pnl.CZ(wires=[qpair[0], qpair[1]])
-        pnl.RZ(2.0*(np.pi - inputs[qpair[0]])*(np.pi - inputs[qpair[1]]),
-               wires=qpair[1])
+        pnl.RZ(
+            2.0 * (np.pi - inputs[qpair[0]]) * (np.pi - inputs[qpair[1]]),
+            wires=qpair[1],
+        )
         pnl.CZ(wires=[qpair[0], qpair[1]])

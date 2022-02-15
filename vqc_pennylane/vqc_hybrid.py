@@ -22,13 +22,14 @@ class VQCHybrid(AE_classifier):
     """
     Main skeleton for having a VQC classifier attached to
     latent space of an Autoencoder and for a hybrid encoder (classical NN) + VQC
-    classifier. The latter is can be constructed from the former by "chopping" 
+    classifier. The latter is can be constructed from the former by "chopping"
     off the decoder branch of the Autoencoder.
         @qdevice :: String containing what kind of device to run the
                     quantum circuit on: simulation, or actual computer?
-        @device  :: 
+        @device  ::
         @hpars   :: Dictionary of the hyperparameters to configure the vqc.
     """
+
     def __init__(self, qdevice, device, hpars):
         super().__init__(device, hpars)
         del self.hp["class_layers"]
@@ -40,39 +41,45 @@ class VQCHybrid(AE_classifier):
             "vform_repeats": 4,
         }
         self.hp.update(new_hp)
-        self.hp.update((k, hpars[k]) for k in self.hp.keys() & hpars.keys()) 
-        
+        self.hp.update((k, hpars[k]) for k in self.hp.keys() & hpars.keys())
+
         self._qdevice = pnl.device(qdevice, wires=self.hp["nqubits"])
-        self._layers = \
-            self._check_compatibility(self.hp["nqubits"], self.hp["nfeatures"])
+        self._layers = self._check_compatibility(
+            self.hp["nqubits"], self.hp["nfeatures"]
+        )
 
         self.epochs_no_improve = 0
-        
-        self._vqc_nweights = vf.vforms_weights(self.hp["vform"],
-                                           self.hp["vform_repeats"],
-                                           self.hp["nqubits"])      
+
+        self._vqc_nweights = vf.vforms_weights(
+            self.hp["vform"], self.hp["vform_repeats"], self.hp["nqubits"]
+        )
         self._weight_shape = {"weights": (self._layers, self._vqc_nweights)}
-        
-        self._circuit = pnl.qnode(self._qdevice, interface='torch')(self.__construct_classifier)
+
+        self._circuit = pnl.qnode(self._qdevice, interface="torch")(
+            self.__construct_classifier
+        )
         self.classifier = pnl.qnn.TorchLayer(self._circuit, self._weight_shape)
 
     def __construct_classifier(self, inputs, weights):
         """
         The quantum circuit builder, it overides the method of AE_classifier.
         The VQC will be used as the classifier branch of the hybrid network.
-        
+
         @inputs  :: The inputs taken by the feature maps.
         @weights :: The weights of the variational forms used.
 
         returns :: Measurement of the first qubit of the quantum circuit.
         """
         for layer_nb in range(self._layers):
-            start_feature = layer_nb*self.hp["nqubits"]
-            end_feature = self.hp["nqubits"]*(layer_nb + 1)
+            start_feature = layer_nb * self.hp["nqubits"]
+            end_feature = self.hp["nqubits"] * (layer_nb + 1)
             fm.zzfm(self.hp["nqubits"], inputs[start_feature:end_feature])
-            vf.two_local(self.hp["nqubits"], weights[layer_nb],
-                         repeats=self.hp["vform_repeats"],
-                         entanglement="linear")
+            vf.two_local(
+                self.hp["nqubits"],
+                weights[layer_nb],
+                repeats=self.hp["vform_repeats"],
+                entanglement="linear",
+            )
 
         y = [[1], [0]] * np.conj([[1], [0]]).T
         return pnl.expval(pnl.Hermitian(y, wires=[0]))
@@ -92,7 +99,7 @@ class VQCHybrid(AE_classifier):
     @property
     def nweights(self):
         return self._vqc_nweights
-    
+
     @staticmethod
     def _check_compatibility(nqubits, nfeatures):
         """
@@ -102,10 +109,12 @@ class VQCHybrid(AE_classifier):
         @nfeatures :: Number of features to process by the vqc.
         """
         if nfeatures % nqubits != 0:
-            raise ValueError("The number of features is not divisible by "
-                             "the number of qubits you assigned!")
+            raise ValueError(
+                "The number of features is not divisible by "
+                "the number of qubits you assigned!"
+            )
 
-        return int(nfeatures/nqubits)
+        return int(nfeatures / nqubits)
 
     def train_model(self, train_loader, valid_loader, epochs, estopping_limit, outdir):
         """
@@ -137,7 +146,6 @@ class VQCHybrid(AE_classifier):
 
             self.print_losses(epoch, epochs, train_loss, valid_losses)
 
-    
     def _early_stopping(self, early_stopping_limit) -> bool:
         """
         Stops the training if there has been no improvement in the loss

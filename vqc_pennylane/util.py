@@ -15,6 +15,7 @@ def create_output_folder(output_folder):
     if not os.path.exists(output_folder):
         os.makedirs(output_folder)
 
+
 def print_model_info(ae_path, qdata, vqc):
     """
     Print information about the model.

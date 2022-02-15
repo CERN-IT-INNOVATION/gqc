@@ -14,7 +14,7 @@ def vforms_weights(vform_choice, repeats, nqubits):
     @vform_choice :: String of the choice of variational form.
     """
     switcher = {
-        "two_local": lambda : nqubits*(repeats+1) ,
+        "two_local": lambda: nqubits * (repeats + 1),
     }
 
     nweights = switcher.get(vform_choice, lambda: None)()
@@ -22,6 +22,7 @@ def vforms_weights(vform_choice, repeats, nqubits):
         raise TypeError("Specified variational form is not implemented!")
 
     return nweights
+
 
 def two_local(nqubits, weights, repeats=1, entanglement="linear"):
     """
@@ -34,7 +35,7 @@ def two_local(nqubits, weights, repeats=1, entanglement="linear"):
     """
     for repeat in range(repeats):
         for qubit in range(nqubits):
-            pnl.RY(weights[repeat*nqubits + qubit], wires=qubit)
+            pnl.RY(weights[repeat * nqubits + qubit], wires=qubit)
         if entanglement == "linear":
             two_local_linear(nqubits)
         elif entanglement == "full":
@@ -43,15 +44,17 @@ def two_local(nqubits, weights, repeats=1, entanglement="linear"):
             raise AttributeError("Unknown entanglement pattern!")
 
     for qubit in range(nqubits):
-        pnl.RY(weights[(repeat + 1)*nqubits + qubit], wires=qubit)
+        pnl.RY(weights[(repeat + 1) * nqubits + qubit], wires=qubit)
+
 
 def two_local_linear(nqubits):
     """
     Part of the twolocal circuit, with linear entanglement.
     @nqubits      :: The number of qubits to use.
     """
-    for qubit in range(nqubits-1):
-        pnl.CNOT(wires=[qubit, qubit+1])
+    for qubit in range(nqubits - 1):
+        pnl.CNOT(wires=[qubit, qubit + 1])
+
 
 def two_local_full(nqubits):
     """

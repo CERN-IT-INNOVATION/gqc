@@ -20,6 +20,7 @@ class VQC:
     map and a variational form, which are implemented in their eponymous
     files in the same directory.
     """
+
     def __init__(self, device, hpars):
         """
         @device :: String containing what kind of device to run the
@@ -38,19 +39,19 @@ class VQC:
         self._device = pnl.device(device, wires=self._hp["nqubits"])
         self._hp.update((k, hpars[k]) for k in self._hp.keys() & hpars.keys())
 
-        self._layers = self._check_compatibility(self._hp["nqubits"],
-                                                 self._hp["nfeatures"])
-        self._nweights = vf.vforms_weights(self._hp["vform"],
-                                           self._hp["vform_repeats"],
-                                           self._hp["nqubits"])
+        self._layers = self._check_compatibility(
+            self._hp["nqubits"], self._hp["nfeatures"]
+        )
+        self._nweights = vf.vforms_weights(
+            self._hp["vform"], self._hp["vform_repeats"], self._hp["nqubits"]
+        )
 
         np.random.seed(123)
-        self._weights = 0.01*np.random.randn(self._layers,
-                                             self._nweights,
-                                             requires_grad=True)
+        self._weights = 0.01 * np.random.randn(
+            self._layers, self._nweights, requires_grad=True
+        )
 
-        self._optimiser = self._choose_optimiser(self._hp["optimiser"],
-                                                 self._hp["lr"])
+        self._optimiser = self._choose_optimiser(self._hp["optimiser"], self._hp["lr"])
         self._class_loss_function = self._binary_cross_entropy
         self._epochs_no_improve = 0
         self._best_valid_loss = 999
@@ -68,12 +69,15 @@ class VQC:
         returns :: Measurement of the first qubit of the quantum circuit.
         """
         for layer_nb in range(self._layers):
-            start_feature = layer_nb*self._hp["nqubits"]
-            end_feature = self._hp["nqubits"]*(layer_nb + 1)
+            start_feature = layer_nb * self._hp["nqubits"]
+            end_feature = self._hp["nqubits"] * (layer_nb + 1)
             fm.zzfm(self._hp["nqubits"], inputs[start_feature:end_feature])
-            vf.two_local(self._hp["nqubits"], weights[layer_nb],
-                         repeats=self._hp["vform_repeats"],
-                         entanglement="linear")
+            vf.two_local(
+                self._hp["nqubits"],
+                weights[layer_nb],
+                repeats=self._hp["vform_repeats"],
+                entanglement="linear",
+            )
 
         y = [[1], [0]] * np.conj([[1], [0]]).T
         return pnl.expval(pnl.Hermitian(y, wires=[0]))
@@ -110,7 +114,7 @@ class VQC:
         """
         drawing = pnl.draw(self._circuit)
         print(tcols.OKGREEN)
-        print(drawing([0]*int(self._hp["nfeatures"]), self._weights))
+        print(drawing([0] * int(self._hp["nfeatures"]), self._weights))
         print(tcols.ENDC)
 
     @staticmethod
@@ -122,10 +126,12 @@ class VQC:
         @nfeatures :: Number of features to process by the vqc.
         """
         if nfeatures % nqubits != 0:
-            raise ValueError("The number of features is not divisible by "
-                             "the number of qubits you assigned!")
+            raise ValueError(
+                "The number of features is not divisible by "
+                "the number of qubits you assigned!"
+            )
 
-        return int(nfeatures/nqubits)
+        return int(nfeatures / nqubits)
 
     @staticmethod
     def _choose_optimiser(choice, lr):
@@ -134,11 +140,10 @@ class VQC:
         @choice :: String of the optimiser name you want to use to train vqc.
         @lr     :: Learning rate for the optimiser.
         """
-        if choice is None: return None
+        if choice is None:
+            return None
 
-        switcher = {
-            "adam" : lambda : AdamOptimizer(stepsize=lr)
-        }
+        switcher = {"adam": lambda: AdamOptimizer(stepsize=lr)}
         optimiser = switcher.get(choice, lambda: None)()
         if optimiser is None:
             raise TypeError("Specified optimiser is not an option atm!")
@@ -166,11 +171,12 @@ class VQC:
         Binary cross entropy loss calculation.
         """
         eps = anp.finfo(np.float32).eps
-        y_preds = anp.clip(y_preds, eps, 1-eps)
+        y_preds = anp.clip(y_preds, eps, 1 - eps)
         y_batch = anp.array(y_batch)
         bce_one = [y * anp.log(pred + eps) for pred, y in zip(y_preds, y_batch)]
-        bce_two = [(1 - y) *
-                   anp.log(1 - pred + eps) for pred, y in zip(y_preds, y_batch)]
+        bce_two = [
+            (1 - y) * anp.log(1 - pred + eps) for pred, y in zip(y_preds, y_batch)
+        ]
 
         bce = anp.array(bce_one + bce_two)
 
@@ -202,8 +208,9 @@ class VQC:
         """
         x_batch = np.array(x_batch[:, :-1], requires_grad=False)
         y_batch = np.array(y_batch[:], requires_grad=False)
-        weights, _, _ = self._optimiser.step(self._objective_function,
-                                             self._weights, x_batch, y_batch)
+        weights, _, _ = self._optimiser.step(
+            self._objective_function, self._weights, x_batch, y_batch
+        )
         self._weights = weights
         loss = self._objective_function(self._weights, x_batch, y_batch)
 
@@ -223,8 +230,7 @@ class VQC:
 
         return batch_loss_sum / nb_of_batches
 
-    def train_model(self, train_loader, valid_loader, epochs, estopping_limit,
-                  outdir):
+    def train_model(self, train_loader, valid_loader, epochs, estopping_limit, outdir):
         """
         Train an instantiated vqc algorithm.
         """
@@ -262,7 +268,10 @@ class VQC:
         """
         epochs = list(range(len(self.all_train_loss)))
         plt.plot(
-            epochs, self.all_train_loss, color="gray", label="Training Loss (average)",
+            epochs,
+            self.all_train_loss,
+            color="gray",
+            label="Training Loss (average)",
         )
         plt.plot(epochs, self.all_valid_loss, color="navy", label="Validation Loss")
         plt.xlabel("Epochs")
@@ -295,9 +304,7 @@ class VQC:
             self._epochs_no_improve = 0
             self._best_valid_loss = valid_loss
 
-            print(tcols.OKGREEN +
-                  f"New min: {self.best_valid_loss:.2e}" +
-                  tcols.ENDC)
+            print(tcols.OKGREEN + f"New min: {self.best_valid_loss:.2e}" + tcols.ENDC)
             if outdir is not None:
                 np.save(outdir + "best_model.npy", self._weights)
         else:

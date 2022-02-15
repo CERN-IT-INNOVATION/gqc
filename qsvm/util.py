@@ -311,6 +311,7 @@ def configure_quantum_instance(
         )
     return quantum_instance, backend
 
+
 def get_run_type():
-    #switcher stuff
+    # switcher stuff
     pass

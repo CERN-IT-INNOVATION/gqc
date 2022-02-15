@@ -46,8 +46,10 @@ def roc_plot(scores, qdata_loader, test_fold_labels, output_folder, model_name):
     )
 
     plt.title(
-        r"$N^{train}$" + f"={qdata_loader.ntrain}," + r" $N^{test}$" +
-        f"={qdata_loader.ntest} ($x 5$)",
+        r"$N^{train}$"
+        + f"={qdata_loader.ntrain},"
+        + r" $N^{test}$"
+        + f"={qdata_loader.ntest} ($x 5$)",
         loc="left",
     )
     plt.xlabel("Background Efficiency (FPR)")

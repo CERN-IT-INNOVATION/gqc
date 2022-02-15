@@ -35,6 +35,7 @@ class qdata:
         seed (int): Seed for the shufling of the train/test/validation and
                     k-folds datasets.
     """
+
     def __init__(
         self,
         data_folder,
@@ -61,7 +62,7 @@ class qdata:
             train_events,
             valid_events,
             test_events,
-            seed
+            seed,
         )
         self.model = aeutil.choose_ae_model(hp["ae_type"], device, hp)
         self.model.load_model(model_path)

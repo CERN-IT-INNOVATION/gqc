@@ -42,11 +42,12 @@ class VQCHybrid(AE_classifier):
             "vform_repeats": 4,
         }
         self.hp.update(new_hp)
-        self.hp.update((k, hpars[k]) for k in self.hp.keys() & hpars.keys()) 
-        
+        self.hp.update((k, hpars[k]) for k in self.hp.keys() & hpars.keys())
+
         self._qdevice = qdevice
-        self._layers = \
-            self._check_compatibility(self.hp["nqubits"], self.hp["nfeatures"])
+        self._layers = self._check_compatibility(
+            self.hp["nqubits"], self.hp["nfeatures"]
+        )
 
         self.epochs_no_improve = 0
 

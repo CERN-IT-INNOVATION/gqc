@@ -12,6 +12,7 @@ from . import feature_maps as fm
 from . import variational_forms as vf
 from .terminal_colors import tcols
 
+
 class VQC:
     """
     Variational quantum circuit, implemented using the pennylane python
@@ -19,7 +20,8 @@ class VQC:
     map and a variational form, which are implemented in their eponymous
     files in the same directory.
     """
-    def __init__(self, qdevice: pnl.device , hpars: dict):
+
+    def __init__(self, qdevice: pnl.device, hpars: dict):
         """
         Args:
             qdevice: String containing what kind of device to run the
@@ -35,14 +37,15 @@ class VQC:
             "optimiser": "adam",
             "lr": 0.001,
         }
-        
+
         self._hp.update((k, hpars[k]) for k in self._hp.keys() & hpars.keys())
         self._qdevice = qdevice
-        self._layers = self._check_compatibility(self._hp["nqubits"],
-                                                 self._hp["nfeatures"])
-        self._nweights = vf.vforms_weights(self._hp["vform"],
-                                           self._hp["vform_repeats"],
-                                           self._hp["nqubits"])
+        self._layers = self._check_compatibility(
+            self._hp["nqubits"], self._hp["nfeatures"]
+        )
+        self._nweights = vf.vforms_weights(
+            self._hp["vform"], self._hp["vform_repeats"], self._hp["nqubits"]
+        )
 
         np.random.seed(123)
         self._weights = 0.01 * np.random.randn(
@@ -56,8 +59,9 @@ class VQC:
         self.all_train_loss = []
         self.all_valid_loss = []
 
-        self._circuit = pnl.qnode(self._qdevice, 
-                                  diff_method=hpars["diff_method"])(self._qcircuit)
+        self._circuit = pnl.qnode(self._qdevice, diff_method=hpars["diff_method"])(
+            self._qcircuit
+        )
 
     def _qcircuit(self, inputs, weights):
         """
@@ -172,12 +176,12 @@ class VQC:
         eps = anp.finfo(np.float32).eps
         y_preds = anp.clip(y_preds, eps, 1 - eps)
         y_batch = anp.array(y_batch)
-        bce_one = anp.array([
-            y * anp.log(pred + eps) for pred, y in zip(y_preds, y_batch)
-        ])
-        bce_two = anp.array([
-            (1 - y) * anp.log(1 - pred + eps) for pred, y in zip(y_preds, y_batch)
-        ])
+        bce_one = anp.array(
+            [y * anp.log(pred + eps) for pred, y in zip(y_preds, y_batch)]
+        )
+        bce_two = anp.array(
+            [(1 - y) * anp.log(1 - pred + eps) for pred, y in zip(y_preds, y_batch)]
+        )
 
         bce = anp.array(bce_one + bce_two)
 
@@ -340,4 +344,3 @@ class VQC:
         classification_output = self._forward(x_data.float())
 
         return classification_output
-

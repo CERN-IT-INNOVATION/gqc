@@ -64,15 +64,20 @@ def get_data_and_model(qdata_loader, args) -> Tuple:
     Returns:
         The instantiated vqc object and the training and validation data to train it on.
     """
-    qdevice = util.get_qdevice(args["run_type"], wires=args["nqubits"], 
-                               backend_name=args["backend_name"], config=args["config"])
+    qdevice = util.get_qdevice(
+        args["run_type"],
+        wires=args["nqubits"],
+        backend_name=args["backend_name"],
+        config=args["config"],
+    )
     if args["hybrid_training"]:
-        vqc_hybrid = VQCHybrid(qdevice, device='cpu', hpars=args)
+        vqc_hybrid = VQCHybrid(qdevice, device="cpu", hpars=args)
         return vqc_hybrid, *get_hybrid_training_data(qdata_loader, args)
-    
+
     vqc = VQC(qdevice, args)
     util.print_model_info(args["ae_model_path"], qdata_loader, vqc)
     return vqc, *get_nonhybrid_training_data(qdata_loader, args)
+
 
 def get_nonhybrid_training_data(qdata_loader, args) -> Tuple:
     """Loads the data from pre-trained autoencoder latent space when we have non

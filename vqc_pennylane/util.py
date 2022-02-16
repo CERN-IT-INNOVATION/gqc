@@ -40,10 +40,13 @@ def print_model_info(ae_path, qdata, vqc):
     print(tcols.OKCYAN + "The VQC circuit about to be trained." + tcols.ENDC)
     vqc.draw()
 
-def get_qdevice(run_type: str, wires: int, backend_name: str, config: dict) -> pnl.device:
+
+def get_qdevice(
+    run_type: str, wires: int, backend_name: str, config: dict
+) -> pnl.device:
     """
     Configure a pennylane quantum device object used to construct qnodes.
-    
+
     Args:
         run_type: Specifies the mode to run the (hybrid) VQC training: Ideal,
                   noisy simulation or on real quantum hardware. Possible values:
@@ -59,7 +62,7 @@ def get_qdevice(run_type: str, wires: int, backend_name: str, config: dict) -> p
     """
     switcher = {
         "ideal": lambda: ideal_simulation(wires, config),
-       # "noisy": lambda: noisy_simulation(wires, config),
+        # "noisy": lambda: noisy_simulation(wires, config),
         "hardware": lambda: hardware_run(wires, backend_name, config),
     }
 
@@ -70,10 +73,11 @@ def get_qdevice(run_type: str, wires: int, backend_name: str, config: dict) -> p
         )
     return qdev
 
+
 def ideal_simulation(wires: int, config: dict) -> pnl.device:
     """
     Loads a pennylane device for ideal simulation.
-    
+
     Args:
         wires: Number of qubits.
         config: keyword arguments for the pennylane device.
@@ -84,15 +88,18 @@ def ideal_simulation(wires: int, config: dict) -> pnl.device:
     print(tcols.BOLD + "\nInitialising ideal (statevector) simulation." + tcols.ENDC)
     return pnl.device(wires=wires, **config)
 
-def hardware_run(wires:int , backend_name: str, config: dict) -> pennylane_qiskit.AerDevice:
+
+def hardware_run(
+    wires: int, backend_name: str, config: dict
+) -> pennylane_qiskit.AerDevice:
     """
     Configure a IBMQ backend for a run on real quantum computers, using the pennylane
     interface.
-    
+
     Args:
         wires: Number of qubits.
         backend_name: Name of the quantum computer (IBMQ backend). Format: ibm(q)_<city_name>.
-        config: Keyword arguments for the pennylane device and qiskit backend. It 
+        config: Keyword arguments for the pennylane device and qiskit backend. It
                 contains arguments for the qiskit transpile and run methods.
     Returns:
         Pennylane device for noisy simulation on qiskit.Aer backend.
@@ -100,8 +107,8 @@ def hardware_run(wires:int , backend_name: str, config: dict) -> pennylane_qiski
     print(tcols.BOLD + "\nInitialising run on a quantum computer." + tcols.ENDC)
     print_device_config(config)
     qdev_hardware = pnl.device(
-        "qiskit.ibmq", 
-        wires=wires, 
+        "qiskit.ibmq",
+        wires=wires,
         backend=backend_name,
         ibmqx_token=config["ibmq_api"]["token"],
         hub=config["ibmq_api"]["hub"],
@@ -111,8 +118,9 @@ def hardware_run(wires:int , backend_name: str, config: dict) -> pennylane_qiski
     )
     return qdev_hardware
 
+
 def print_device_config(config: dict):
     """
     Print the configuration parameters of the used device.
     """
-    print( tcols.OKCYAN + "Device configuration parameters:\n" + tcols.ENDC, config)
+    print(tcols.OKCYAN + "Device configuration parameters:\n" + tcols.ENDC, config)

@@ -8,7 +8,6 @@ from time import perf_counter
 from typing import Tuple
 
 from .vqc import VQC
-from .terminal_colors import tcols
 from . import qdata as qd
 from . import util
 from .vqc_hybrid import VQCHybrid
@@ -36,19 +35,19 @@ def main(args):
     model.train_model(train_loader, valid_loader, args["epochs"], 20, outdir)
     train_time_end = perf_counter()
     print(f"Training completed in: {train_time_end-train_time_start:.2e} s")
-
     model.loss_plot(outdir)
-
 
 def get_data_and_model(qdata_loader, args) -> Tuple:
     """
-    Method that choses the training type.
+    Method that choses the appropriate data, training type and model.
     """
+    qdevice = util.get_qdevice(args["run_type"], wires=args["nqubits"], 
+                               backend_name=args["backend_name"], config=args["config"])
     if args["hybrid_training"]:
-        vqc_hybrid = VQCHybrid(qdevice='default.qubit', device='cpu', hpars=args)
+        vqc_hybrid = VQCHybrid(qdevice, device='cpu', hpars=args)
         return vqc_hybrid, *get_hybrid_training_data(qdata_loader, args)
     else: 
-        vqc = VQC("default.qubit", args)
+        vqc = VQC(qdevice, args)
         util.print_model_info(args["ae_model_path"], qdata_loader, vqc)
         return vqc, *get_nonhybrid_training_data(qdata_loader, args)
 
@@ -71,7 +70,8 @@ def get_hybrid_training_data(qdata_loader, args) -> Tuple:
     """
     Loading the raw input data for hybrid training.
     """
-    train_loader = qdata_loader.ae_data.get_loader("train", "cpu", args["batch_size"], True)
+    train_loader = qdata_loader.ae_data.get_loader("train", "cpu", args["batch_size"],
+                                                   True)
     valid_loader = qdata_loader.ae_data.get_loader("valid", "cpu", shuffle=True)
     return train_loader, valid_loader
-
+    

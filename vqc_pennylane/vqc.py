@@ -12,7 +12,6 @@ from . import feature_maps as fm
 from . import variational_forms as vf
 from .terminal_colors import tcols
 
-
 class VQC:
     """
     Variational quantum circuit, implemented using the pennylane python
@@ -20,11 +19,12 @@ class VQC:
     map and a variational form, which are implemented in their eponymous
     files in the same directory.
     """
-    def __init__(self, device, hpars):
+    def __init__(self, qdevice: pnl.device , hpars: dict):
         """
-        @device :: String containing what kind of device to run the
-                   quantum circuit on: simulation, or actual computer?
-        @hpars  :: Dictionary of the hyperparameters to configure the vqc.
+        Args:
+            qdevice: String containing what kind of device to run the
+                      quantum circuit on: simulation, or actual computer?
+            hpars: Dictionary of the hyperparameters to configure the vqc.
         """
         self._hp = {
             "nqubits": 4,
@@ -35,9 +35,9 @@ class VQC:
             "optimiser": "adam",
             "lr": 0.001,
         }
-        self._device = pnl.device(device, wires=self._hp["nqubits"])
+        
         self._hp.update((k, hpars[k]) for k in self._hp.keys() & hpars.keys())
-
+        self._qdevice = qdevice
         self._layers = self._check_compatibility(self._hp["nqubits"],
                                                  self._hp["nfeatures"])
         self._nweights = vf.vforms_weights(self._hp["vform"],
@@ -57,7 +57,8 @@ class VQC:
         self.all_train_loss = []
         self.all_valid_loss = []
 
-        self._circuit = pnl.qnode(self._device)(self._qcircuit)
+        self._circuit = pnl.qnode(self._qdevice, 
+                                  diff_method=hpars["diff_method"])(self._qcircuit)
 
     def _qcircuit(self, inputs, weights):
         """
@@ -332,3 +333,4 @@ class VQC:
         classification_output = self._forward(x_data.float())
 
         return classification_output
+

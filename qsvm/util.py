@@ -188,7 +188,7 @@ def connect_quantum_computer(ibmq_api_config, backend_name):
         IBMQBackend qiskit object.
     """
     print("Enabling IBMQ account using provided token...", end="")
-    IBMQ.enable_account(ibmq_api_config["ibmq_api_token"])
+    IBMQ.enable_account(ibmq_api_config["token"])
     provider = IBMQ.get_provider(
         hub=ibmq_api_config["hub"],
         group=ibmq_api_config["group"],
@@ -300,7 +300,7 @@ def configure_quantum_instance(
                                     instance object.
          @backend_name (string)  :: Name of the quantum computer to run or base
                                     the noisy simulation on. For ideal runs it
-                                    can be set ton "none".
+                                    can be set to "none".
          @**kwargs     (dict)    :: Dictionary of keyword arguments for the
                                     QuantumInstance.
     Returns:

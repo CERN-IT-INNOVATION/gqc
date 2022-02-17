@@ -218,7 +218,7 @@ class VQC:
 
         return loss
 
-    def _train_all_batches(self, train_loader):
+    def _train_all_batches(self, train_loader, batch_seed):
         """
         Train on the full data set. Add randomness.
         """
@@ -226,6 +226,10 @@ class VQC:
         nb_of_batches = 0
         x_train, y_train = train_loader
         for x_batch, y_batch in zip(x_train, y_train):
+            np.random.seed(batch_seed)
+            perm = np.random.permutation(len(y_batch))
+            x_batch = x_batch[perm]
+            y_batch = y_batch[perm]
             batch_loss = self._train_batch(x_batch, y_batch)
             batch_loss_sum += batch_loss
             nb_of_batches += 1
@@ -237,9 +241,12 @@ class VQC:
         Train an instantiated vqc algorithm.
         """
         print(tcols.OKCYAN + "Training the vqc..." + tcols.ENDC)
+        rng = np.random.default_rng(12345)
+        batch_seeds = rng.integers(low=0, high=100,
+                                   size=(train_loader[1].shape[0], epochs))
 
         for epoch in range(epochs):
-            train_loss = self._train_all_batches(train_loader)
+            train_loss = self._train_all_batches(train_loader, batch_seeds[epoch])
             valid_loss = self._validate(valid_loader, outdir)
             if self._early_stopping(estopping_limit):
                 break

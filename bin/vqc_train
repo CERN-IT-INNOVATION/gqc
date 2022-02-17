@@ -2,6 +2,7 @@
 
 import argparse
 import sys
+import json
 
 sys.path.append("..")
 
@@ -30,7 +31,52 @@ parser.add_argument('--hybrid_training', action='store_true',
                     help='Choose to train a hybrid VQC or a non hybrid VQC model.')
 parser.add_argument("--class_weight", type=float, default=0.5,
                     help="The weight of the classifier BCE loss.")
+parser.add_argument('--ntrain', type=int, default=250,
+                    help='Number of training events for the QSVM.')
+parser.add_argument('--nvalid', type=int, default=250,
+                    help='Number of validation events for the QSVM (typically)'
+                         'not used for the QSVM).')
+parser.add_argument('--backend_name', type=str,
+                    help='The IBMQ backend used for either an ideal simulation or'
+                         'or a real quantum hardware run.')
+parser.add_argument('--run_type', type=str, required=True,
+                    choices=['ideal', 'noisy', 'hardware'],
+                    help='Choose way to run the (hybrid) VQC training: Ideal computation,'
+                         'noisy simulation or on real quantum hardware.')
+parser.add_argument('--diff_method', type=str, default='best',
+                    choices=['best', 'parameter-shift', 'backprop'],
+                    help='Choose differentiation method for the quantum circuit.')
+parser.add_argument('--vform_repeats', type=int, default=4,
+                    help='Name of variational form (trainable part of the circuit)'
+                         'repetitions.')
 args = parser.parse_args()
+
+initial_layout = [22,25,24,23,21,18,15,12] # for Cairo
+seed = 12345 
+# Load private configuration file for ibmq_api_token and provider details.
+try:
+    with open('private_config_vasilis.json') as pconfig:
+        private_configuration = json.load(pconfig)
+except:
+    print("Error in reading private config: Process aborted")
+
+config_ideal = {"name": "default.qubit.autograd", "shots": None,} 
+config_noisy = {
+    "backend_config": {"shots": 5000, 
+                       "optimization_level": 3, "transpiler_seed": seed, 
+                       "initial_layout": initial_layout, "seed_simulator": seed,},
+    "ibmq_api": private_configuration["IBMQ"],
+}
+config_hardware = {
+    "backend_config": {"shots": 5000, 
+                       "optimization_level": 3, "transpiler_seed": seed, 
+                       "initial_layout": initial_layout,
+    },
+    "ibmq_api": private_configuration["IBMQ"],
+}
+switcher = {'ideal' : lambda: config_ideal, 'noisy' : lambda: config_noisy, 
+            'hardware' : lambda: config_hardware}
+config = switcher.get(args.run_type, lambda: None)()
 
 args = {
     "data_folder": args.data_folder,
@@ -39,17 +85,22 @@ args = {
     "ae_model_path": args.model_path,
     "outdir": args.output_folder,
     "nqubits": args.nqubits,
+    "vform_repeats": args.vform_repeats,
     "optimiser": args.optimiser,
     "epochs": args.epochs,
     "batch_size": args.batch_size,
-    "train_events": 250,
-    "valid_events": 250,
+    "train_events": args.ntrain,
+    "valid_events": args.nvalid,
     "hybrid_training": args.hybrid_training,
-    "seed": 123,
+    "seed": seed,
     "enc_activ": 'nn.Tanh()',
     "dec_activ": 'nn.Tanh()',
     "class_weight": args.class_weight,
     "adam_betas": (0.9, 0.999),
+    "run_type": args.run_type,
+    "backend_name": args.backend_name,
+    "diff_method": args.diff_method,
+    "config": config,
 }
 
 main(args)

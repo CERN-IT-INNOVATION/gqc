@@ -9,6 +9,7 @@ from autoencoders.ae_classifier import AE_classifier
 from . import feature_maps as fm
 from . import variational_forms as vf
 from .terminal_colors import tcols
+from . import util
 
 seed = 100
 torch.manual_seed(seed)
@@ -43,7 +44,7 @@ class VQCHybrid(AE_classifier):
         self.hp.update(new_hp)
         self.hp.update((k, hpars[k]) for k in self.hp.keys() & hpars.keys())
 
-        self._qdevice = pnl.device(qdevice, wires=self.hp["nqubits"])
+        self._qdevice = qdevice
         self._layers = self._check_compatibility(
             self.hp["nqubits"], self.hp["nfeatures"]
         )

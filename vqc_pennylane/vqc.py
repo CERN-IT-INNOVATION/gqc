@@ -21,11 +21,12 @@ class VQC:
     files in the same directory.
     """
 
-    def __init__(self, device, hpars):
+    def __init__(self, qdevice: pnl.device, hpars: dict):
         """
-        @device :: String containing what kind of device to run the
-                   quantum circuit on: simulation, or actual computer?
-        @hpars  :: Dictionary of the hyperparameters to configure the vqc.
+        Args:
+            qdevice: String containing what kind of device to run the
+                      quantum circuit on: simulation, or actual computer?
+            hpars: Dictionary of the hyperparameters to configure the vqc.
         """
         self._hp = {
             "nqubits": 4,
@@ -36,9 +37,9 @@ class VQC:
             "optimiser": "adam",
             "lr": 0.001,
         }
-        self._device = pnl.device(device, wires=self._hp["nqubits"])
-        self._hp.update((k, hpars[k]) for k in self._hp.keys() & hpars.keys())
 
+        self._hp.update((k, hpars[k]) for k in self._hp.keys() & hpars.keys())
+        self._qdevice = qdevice
         self._layers = self._check_compatibility(
             self._hp["nqubits"], self._hp["nfeatures"]
         )
@@ -58,7 +59,9 @@ class VQC:
         self.all_train_loss = []
         self.all_valid_loss = []
 
-        self._circuit = pnl.qnode(self._device)(self._qcircuit)
+        self._circuit = pnl.qnode(self._qdevice, diff_method=hpars["diff_method"])(
+            self._qcircuit
+        )
 
     def _qcircuit(self, inputs, weights):
         """
@@ -173,12 +176,12 @@ class VQC:
         eps = anp.finfo(np.float32).eps
         y_preds = anp.clip(y_preds, eps, 1 - eps)
         y_batch = anp.array(y_batch)
-        bce_one = anp.array([
-            y * anp.log(pred + eps) for pred, y in zip(y_preds, y_batch)
-        ])
-        bce_two = anp.array([
-            (1 - y) * anp.log(1 - pred + eps) for pred, y in zip(y_preds, y_batch)
-        ])
+        bce_one = anp.array(
+            [y * anp.log(pred + eps) for pred, y in zip(y_preds, y_batch)]
+        )
+        bce_two = anp.array(
+            [(1 - y) * anp.log(1 - pred + eps) for pred, y in zip(y_preds, y_batch)]
+        )
 
         bce = anp.array(bce_one + bce_two)
 

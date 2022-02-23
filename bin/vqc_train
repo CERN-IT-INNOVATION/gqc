@@ -27,8 +27,8 @@ parser.add_argument('--epochs', type=int, default=100,
                     help="The number of epochs to train the vqc for.")
 parser.add_argument('--batch_size', type=int, default=50,
                     help="The batch size to train the vqc with.")
-parser.add_argument('--hybrid_training', action='store_true',
-                    help='Choose to train a hybrid VQC or a non hybrid VQC model.')
+parser.add_argument('--hybrid_vqc', action='store_true',
+                    help='Choose the type of vqc model you are working with.')
 parser.add_argument("--class_weight", type=float, default=0.5,
                     help="The weight of the classifier BCE loss.")
 parser.add_argument('--ntrain', type=int, default=250,
@@ -91,7 +91,7 @@ args = {
     "batch_size": args.batch_size,
     "train_events": args.ntrain,
     "valid_events": args.nvalid,
-    "hybrid_training": args.hybrid_training,
+    "hybrid_vqc": args.hybrid_vqc,
     "seed": seed,
     "enc_activ": 'nn.Tanh()',
     "dec_activ": 'nn.Tanh()',

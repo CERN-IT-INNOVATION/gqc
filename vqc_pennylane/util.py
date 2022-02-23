@@ -118,6 +118,21 @@ def hardware_run(
     )
     return qdev_hardware
 
+def import_hyperparams(hyperparams_file) -> dict:
+    """
+    Import hyperparameters of an ae from json file.
+    @model_path :: String of the path to a trained pytorch model folder
+                   to import hyperparameters from the json file inside
+                   that folder.
+
+    returns :: Imported dictionary of hyperparams from .json file inside
+        the trained model folder.
+    """
+    hyperparams_file = open(hyperparams_file)
+    hyperparams = json.load(hyperparams_file)
+    hyperparams_file.close()
+
+    return hyperparams
 
 def print_device_config(config: dict):
     """

@@ -26,10 +26,12 @@ def main(args):
     outdir = "./trained_vqcs/" + args["outdir"] + "/"
     if not os.path.exists(outdir):
         os.makedirs(outdir)
-    model, train_loader, valid_loader = get_data_and_model(qdata, args)
 
+    model = get_model(args)
     model.export_hyperparameters(outdir)
+    util.print_model_info(args["ae_model_path"], qdata, model)
 
+    train_loader, valid_loader = get_data(qdata, args)
     time_the_training(
         model.train_model, train_loader, valid_loader, args["epochs"], 20, outdir
     )
@@ -49,20 +51,17 @@ def time_the_training(train, *args):
     print(f"Training completed in: {train_time_end-train_time_start:.2e} s")
 
 
-def get_data_and_model(qdata_loader, args) -> Tuple:
+def get_model(args) -> Tuple:
     """Choose the type of VQC to train. The normal vqc takes the latent space
     data produced by a chosen auto-encoder. The hybrid vqc takes the same
-    data that an auto-encoder would take. The correct data is assigned in
-    this method. Additionally, these two types of vqc also take different
-    initialising hyperparameters; this method takes care of that as well.
+    data that an auto-encoder would take.
 
     Args:
-        qdata_loader (array): Data loader class from qdata.py.
         *args: Dictionary of hyperparameters to give to the vqc, (they can also be a
             subset of this dictionary).
 
     Returns:
-        The instantiated vqc object and the training and validation data to train it on.
+        The instantiated vqc object.
     """
     qdevice = util.get_qdevice(
         args["run_type"],
@@ -72,53 +71,51 @@ def get_data_and_model(qdata_loader, args) -> Tuple:
     )
     if args["hybrid_training"]:
         vqc_hybrid = VQCHybrid(qdevice, device="cpu", hpars=args)
-        return vqc_hybrid, *get_hybrid_training_data(qdata_loader, args)
+        return vqc_hybrid
 
     vqc = VQC(qdevice, args)
-    util.print_model_info(args["ae_model_path"], qdata_loader, vqc)
-    return vqc, *get_nonhybrid_training_data(qdata_loader, args)
+    return vqc
 
-
-def get_nonhybrid_training_data(qdata_loader, args) -> Tuple:
-    """Loads the data from pre-trained autoencoder latent space when we have non
-    hybrid VQC training.
+def get_data(qdata, args):
+    """Load the appropriate data depending on the type of vqc that is used.
 
     Args:
-        qdata_loader: Data loader class from qdata.py.
+        qdata (object): Class object with the loaded data.
         *args: Dictionary of hyperparameters to give to the vqc, (they can also be a
             subset of this dictionary).
 
     Returns:
-        Training and validation data, in the latent space, for training the non-hybrid
-        vqc on.
+        The validation and test data tailored to the type of vqc that one
+        is testing with this script.
     """
-    train_features = qdata_loader.batchify(
-        qdata_loader.get_latent_space("train"), args["batch_size"]
+    if args["hybrid_vqc"]:
+        return *get_hybrid_test_data(qdata, args)
+
+    return *get_nonhybrid_test_data(qdata, args)
+
+def get_nonhybrid_training_data(qdata, args) -> Tuple:
+    """Loads the data from pre-trained autoencoder latent space when we have non
+    hybrid VQC training.
+    """
+    train_features = qdata.batchify(
+        qdata.get_latent_space("train"), args["batch_size"]
     )
-    train_labels = qdata_loader.batchify(
-        qdata_loader.ae_data.trtarget, args["batch_size"]
+    train_labels = qdata.batchify(
+        qdata.ae_data.trtarget, args["batch_size"]
     )
     train_loader = [train_features, train_labels]
 
-    valid_features = qdata_loader.get_latent_space("valid")
-    valid_labels = qdata_loader.ae_data.vatarget
+    valid_features = qdata.get_latent_space("valid")
+    valid_labels = qdata.ae_data.vatarget
     valid_loader = [valid_features, valid_labels]
+
     return train_loader, valid_loader
 
 
-def get_hybrid_training_data(qdata_loader, args) -> Tuple:
-    """Loads the raw input data for hybrid training.
-
-    Args:
-        qdata_loader: Data loader class from qdata.py.
-        *args: Dictionary of hyperparameters to give to the vqc, (they can also be a
-            subset of this dictionary).
-
-    Returns:
-        Training and validation pytorch loaders, loaded on the cpu.
-    """
-    train_loader = qdata_loader.ae_data.get_loader(
+def get_hybrid_training_data(qdata, args) -> Tuple:
+    """Loads the raw input data for hybrid training."""
+    train_loader = qdata.ae_data.get_loader(
         "train", "cpu", args["batch_size"], True
     )
-    valid_loader = qdata_loader.ae_data.get_loader("valid", "cpu", shuffle=True)
+    valid_loader = qdata.ae_data.get_loader("valid", "cpu", shuffle=True)
     return train_loader, valid_loader

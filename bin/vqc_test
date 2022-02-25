@@ -15,27 +15,16 @@ parser.add_argument("--norm", type=str, default='minmax',
                     help="The name of the normalisation that you'll to use.")
 parser.add_argument("--nevents", type=str, default='7.20e+05',
                     help="The number of events of the norm file.")
-parser.add_argument('--model_path', type=str,
+parser.add_argument('--ae_model_path', type=str,
                     help="The path to the Auto-Encoder model.")
+parser.add_argument('--vqc_path', type=str,
+                    help="The path to the vqc model.")
 parser.add_argument('--output_folder', required=True,
                     help='The name of the model to be saved.')
-parser.add_argument('--nqubits', type=int, default=4,
-                    help="The number of qubits that the vqc circuit will use.")
-parser.add_argument('--optimiser', default=None,
-                    help='The optimiser used for training the model.')
-parser.add_argument('--epochs', type=int, default=100,
-                    help="The number of epochs to train the vqc for.")
-parser.add_argument('--batch_size', type=int, default=50,
-                    help="The batch size to train the vqc with.")
-parser.add_argument('--hybrid_vqc', action='store_true',
-                    help='Choose the type of vqc model you are working with.')
-parser.add_argument("--class_weight", type=float, default=0.5,
-                    help="The weight of the classifier BCE loss.")
-parser.add_argument('--ntrain', type=int, default=250,
-                    help='Number of training events for the QSVM.')
+parser.add_argument('--ntest', type=int, default=250,
+                    help='Number of test events for the VQC.')
 parser.add_argument('--nvalid', type=int, default=250,
-                    help='Number of validation events for the QSVM (typically)'
-                         'not used for the QSVM).')
+                    help='Number of validation events for the VQC.')
 parser.add_argument('--backend_name', type=str,
                     help='The IBMQ backend used for either an ideal simulation or'
                          'or a real quantum hardware run.')
@@ -43,12 +32,6 @@ parser.add_argument('--run_type', type=str, required=True,
                     choices=['ideal', 'noisy', 'hardware'],
                     help='Choose way to run the (hybrid) VQC training: Ideal '
                          'computation, noisy simulation or on real quantum hardware.')
-parser.add_argument('--diff_method', type=str, default='best',
-                    choices=['best', 'parameter-shift', 'backprop'],
-                    help='Choose differentiation method for the quantum circuit.')
-parser.add_argument('--vform_repeats', type=int, default=4,
-                    help='Name of variational form (trainable part of the circuit)'
-                         'repetitions.')
 args = parser.parse_args()
 
 initial_layout = [22,25,24,23,21,18,15,12] # for Cairo
@@ -82,11 +65,9 @@ args = {
     "data_folder": args.data_folder,
     "norm": args.norm,
     "nevents": args.nevents,
-    "ae_model_path": args.model_path,
+    "ae_model_path": args.ae_model_path,
+    "vqc_path": args.vqc_path,
     "outdir": args.output_folder,
-    "nqubits": args.nqubits,
-    "vform_repeats": args.vform_repeats,
-    "optimiser": args.optimiser,
     "epochs": args.epochs,
     "batch_size": args.batch_size,
     "train_events": args.ntrain,

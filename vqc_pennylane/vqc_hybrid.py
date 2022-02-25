@@ -35,6 +35,7 @@ class VQCHybrid(AE_classifier):
         super().__init__(device, hpars)
         del self.hp["class_layers"]
         new_hp = {
+            "hybrid": True,
             "nqubits": 4,
             "nfeatures": 16,
             "fmap": "zzfm",

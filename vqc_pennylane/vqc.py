@@ -14,21 +14,20 @@ from .terminal_colors import tcols
 
 
 class VQC:
-    """
-    Variational quantum circuit, implemented using the pennylane python
-    package. This is a trainable quantum circuit. It is composed of a feature
-    map and a variational form, which are implemented in their eponymous
-    files in the same directory.
-    """
-
     def __init__(self, qdevice: pnl.device, hpars: dict):
         """
+        Variational quantum circuit, implemented using the pennylane python
+        package. This is a trainable quantum circuit. It is composed of a feature
+        map and a variational form, which are implemented in their eponymous
+        files in the same directory.
+
         Args:
             qdevice: String containing what kind of device to run the
                       quantum circuit on: simulation, or actual computer?
             hpars: Dictionary of the hyperparameters to configure the vqc.
         """
         self._hp = {
+            "hybrid": False,
             "nqubits": 4,
             "nfeatures": 16,
             "fmap": "zzfm",
@@ -40,9 +39,7 @@ class VQC:
 
         self._hp.update((k, hpars[k]) for k in self._hp.keys() & hpars.keys())
         self._qdevice = qdevice
-        self._layers = self._check_compatibility(
-            self._hp["nqubits"], self._hp["nfeatures"]
-        )
+        self._layers = self._check_compat(self._hp["nqubits"], self._hp["nfeatures"])
         self._nweights = vf.vforms_weights(
             self._hp["vform"], self._hp["vform_repeats"], self._hp["nqubits"]
         )
@@ -109,6 +106,10 @@ class VQC:
     def best_valid_loss(self):
         return self._best_valid_loss
 
+    @property
+    def total_weights(self):
+        return self._nweights*self._layers
+
     def draw(self):
         """
         Draws the circuit using dummy parameters.
@@ -121,7 +122,7 @@ class VQC:
         print(tcols.ENDC)
 
     @staticmethod
-    def _check_compatibility(nqubits, nfeatures):
+    def _check_compat(nqubits, nfeatures):
         """
         Checks if the number of features in the dataset is divisible by
         the number of qubits.
@@ -187,13 +188,14 @@ class VQC:
 
         return -anp.mean(bce)
 
-    def _objective_function(self, weights, x_batch, y_batch):
+    def compute_loss(self, x_batch, y_batch, weights=None):
         """
         Objective function to be passed through the optimiser.
         Weights is taken as an argument here since the optimiser func needs it.
         We then use the class self variable inside the method.
         """
-        self._weights = weights
+        if not weights is None:
+            self._weights = weights
         predictions = self.forward(x_batch)
         return self._class_loss_function(predictions, y_batch)
 
@@ -202,7 +204,7 @@ class VQC:
         Calculate the loss on a validation data set.
         """
         x_valid, y_valid = valid_loader
-        loss = self._objective_function(self._weights, x_valid, y_valid)
+        loss = self.compute_loss(x_valid, y_valid, self._weights)
         self._save_best_loss_model(loss, outdir)
 
         return loss
@@ -214,10 +216,10 @@ class VQC:
         x_batch = np.array(x_batch[:, :-1], requires_grad=False)
         y_batch = np.array(y_batch[:], requires_grad=False)
         weights, _, _ = self._optimiser.step(
-            self._objective_function, self._weights, x_batch, y_batch
+            self.compute_loss, x_batch, y_batch, self._weights
         )
         self._weights = weights
-        loss = self._objective_function(self._weights, x_batch, y_batch)
+        loss = self.compute_loss(x_batch, y_batch, self._weights)
 
         return loss
 
@@ -239,10 +241,19 @@ class VQC:
 
         return batch_loss_sum / nb_of_batches
 
+    def _print_total_weights(self):
+        """Prints the total weights of the vqc model, to mimic the behaviour that is
+        available out of the box for the pytorch counterpart of this hybrid vqc.
+        """
+        print("----------------------------------------")
+        print(tcols.OKGREEN + "Total number of weights: " + tcols.ENDC +
+              f"{self.total_weights}")
+        print("----------------------------------------")
+
     def train_model(self, train_loader, valid_loader, epochs, estopping_limit, outdir):
+        """Train an instantiated vqc algorithm.
         """
-        Train an instantiated vqc algorithm.
-        """
+        self._print_total_weights()
         print(tcols.OKCYAN + "Training the vqc..." + tcols.ENDC)
         rng = np.random.default_rng(12345)
         batch_seeds = rng.integers(low=0, high=100,
@@ -279,32 +290,38 @@ class VQC:
         @outdir :: Directory where to save the loss plot.
         """
         epochs = list(range(len(self.all_train_loss)))
-        plt.plot(
-            epochs,
-            self.all_train_loss,
-            color="gray",
-            label="Training Loss (average)",
-        )
-        plt.plot(epochs, self.all_valid_loss, color="navy", label="Validation Loss")
+        plt.plot(epochs, self.all_train_loss, color="gray", label="Train Loss (avg)")
+        plt.plot(epochs, self.all_valid_loss, color="navy", label="Valid Loss")
+        self._loss_plot_header(epochs, "blue", "white")
+
         plt.xlabel("Epochs")
         plt.ylabel("Loss")
 
+        plt.savefig(outdir + "loss_epochs.pdf")
+        plt.close()
+
+        print(tcols.OKGREEN + f"Loss plot was saved to {outdir}! \U+1F370" + tcols.ENDC)
+
+    def _loss_plot_header(self, epochs, writing_color, box_color):
+        """The header of the loss plot, displaying the best obtained loss during the
+        training of the vqc and the legend.
+
+        Args:
+            epochs (int): Number of epochs the vqc was training for.
+            writing_color (str): Color of the writing in the header of the figure.
+            box_color (str): Color of the box in which this header is put.
+        """
         plt.text(
             np.min(epochs),
             np.max(self.all_train_loss),
             f"Min: {self._best_valid_loss:.2e}",
             verticalalignment="top",
             horizontalalignment="left",
-            color="blue",
+            color=writing_color,
             fontsize=15,
-            bbox={"facecolor": "white", "alpha": 0.8, "pad": 5},
+            bbox={"facecolor": box_color, "alpha": 0.8, "pad": 5},
         )
-
         plt.legend()
-        plt.savefig(outdir + "loss_epochs.pdf")
-        plt.close()
-
-        print(tcols.OKGREEN + f"Loss vs epochs plot saved to {outdir}." + tcols.ENDC)
 
     def _save_best_loss_model(self, valid_loss, outdir):
         """

@@ -54,7 +54,7 @@ class qdata:
         hp_file = os.path.join(model_folder, "hyperparameters.json")
         hp = aeutil.import_hyperparams(hp_file)
 
-        print(tcols.OKCYAN + "\nLoading training data:" + tcols.ENDC)
+        print(tcols.OKCYAN + "\nLoading data:" + tcols.ENDC)
         self.ae_data = aedata.AE_data(
             data_folder,
             norm_name,

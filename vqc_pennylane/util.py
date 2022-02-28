@@ -5,6 +5,7 @@ from typing import List
 from matplotlib import backend_bases
 import pennylane as pnl
 import pennylane_qiskit
+import json
 
 from .terminal_colors import tcols
 

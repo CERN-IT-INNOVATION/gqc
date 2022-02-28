@@ -213,14 +213,13 @@ class VQC:
         """
         Train on one batch.
         """
-        x_batch = np.array(x_batch[:, :-1], requires_grad=False)
+        x_batch = np.array(x_batch[:, :], requires_grad=False)
         y_batch = np.array(y_batch[:], requires_grad=False)
-        weights, _, _ = self._optimiser.step(
+        _, _, weights = self._optimiser.step(
             self.compute_loss, x_batch, y_batch, self._weights
         )
         self._weights = weights
         loss = self.compute_loss(x_batch, y_batch, self._weights)
-
         return loss
 
     def _train_all_batches(self, train_loader, batch_seed):
@@ -300,7 +299,7 @@ class VQC:
         plt.savefig(outdir + "loss_epochs.pdf")
         plt.close()
 
-        print(tcols.OKGREEN + f"Loss plot was saved to {outdir}! \U+1F370" + tcols.ENDC)
+        print(tcols.OKGREEN + f"Loss plot was saved to {outdir}!\\U+1F370" + tcols.ENDC)
 
     def _loss_plot_header(self, epochs, writing_color, box_color):
         """The header of the loss plot, displaying the best obtained loss during the
@@ -365,6 +364,6 @@ class VQC:
 
         returns :: The latent space of the ae and the reco data.
         """
-        classification_output = self._forward(x_data.float())
+        classification_output = self.forward(x_data.float())
 
         return classification_output

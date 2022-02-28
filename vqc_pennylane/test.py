@@ -34,7 +34,7 @@ def main(args):
     model.load_model(args["vqc_path"])
     util.print_model_info(args["ae_model_path"], qdata, model)
 
-    valid_loader, test_loader = get_data(qdata, args)
+    valid_loader, test_loader = get_data(qdata, args, vqc_hyperparams["hybrid"])
     valid_pred = model.predict(valid_loader[0])
     test_pred = model.predict(test_loader[0])
 
@@ -159,14 +159,14 @@ def get_model(vqc_hyperparams, args):
         config=args["config"],
     )
 
-    if args["hybrid_vqc"]:
+    if vqc_hyperparams["hybrid"]:
         vqc_hybrid = VQCHybrid(qdevice, device="cpu", hpars=vqc_hyperparams)
         return vqc_hybrid
 
     vqc = VQC(qdevice, vqc_hyperparams)
     return vqc
 
-def get_data(qdata, args) -> Tuple:
+def get_data(qdata, args, hybrid: bool):
     """Load the appropriate data depending on the type of vqc that is used.
 
     Args:
@@ -179,7 +179,7 @@ def get_data(qdata, args) -> Tuple:
         The validation and test data tailored to the type of vqc that one
         is testing with this script.
     """
-    if args["hybrid_vqc"]:
+    if hybrid:
         return get_hybrid_test_data(qdata, args)
 
     return get_nonhybrid_test_data(qdata, args)

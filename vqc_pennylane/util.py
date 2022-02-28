@@ -1,13 +1,13 @@
 # Utility methods for (Hybrid) VQC training.
 
 import os
-from turtle import back
-from matplotlib import backend_bases
 import pennylane as pnl
 import pennylane_qiskit
+import json
 
 from .terminal_colors import tcols
-from qsvm.util import connect_quantum_computer, get_backend_configuration
+from qsvm.util import connect_quantum_computer
+from qsvm.util import get_backend_configuration
 
 
 def create_output_folder(output_folder):

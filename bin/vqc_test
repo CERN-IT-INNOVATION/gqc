@@ -6,7 +6,7 @@ import json
 
 sys.path.append("..")
 
-from vqc_pennylane.train import main
+from vqc_pennylane.test import main
 parser = argparse.ArgumentParser(formatter_class=argparse.
                                  ArgumentDefaultsHelpFormatter)
 parser.add_argument("--data_folder", type=str, default='../../data/ae_input/',
@@ -19,8 +19,6 @@ parser.add_argument('--ae_model_path', type=str,
                     help="The path to the Auto-Encoder model.")
 parser.add_argument('--vqc_path', type=str,
                     help="The path to the vqc model.")
-parser.add_argument('--output_folder', required=True,
-                    help='The name of the model to be saved.')
 parser.add_argument('--ntest', type=int, default=250,
                     help='Number of test events for the VQC.')
 parser.add_argument('--nvalid', type=int, default=250,
@@ -67,20 +65,11 @@ args = {
     "nevents": args.nevents,
     "ae_model_path": args.ae_model_path,
     "vqc_path": args.vqc_path,
-    "outdir": args.output_folder,
-    "epochs": args.epochs,
-    "batch_size": args.batch_size,
-    "train_events": args.ntrain,
+    "test_events": args.ntest,
     "valid_events": args.nvalid,
-    "hybrid_vqc": args.hybrid_vqc,
     "seed": seed,
-    "enc_activ": 'nn.Tanh()',
-    "dec_activ": 'nn.Tanh()',
-    "class_weight": args.class_weight,
-    "adam_betas": (0.9, 0.999),
     "run_type": args.run_type,
     "backend_name": args.backend_name,
-    "diff_method": args.diff_method,
     "config": config,
 }
 

@@ -300,7 +300,7 @@ class VQC:
         plt.savefig(outdir + "loss_epochs.pdf")
         plt.close()
 
-        print(tcols.OKGREEN + f"Loss plot was saved to {outdir}! \U+1F370" + tcols.ENDC)
+        print(tcols.OKGREEN + f"Loss plot was saved to {outdir}!\\U+1F370" + tcols.ENDC)
 
     def _loss_plot_header(self, epochs, writing_color, box_color):
         """The header of the loss plot, displaying the best obtained loss during the

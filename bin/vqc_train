@@ -7,6 +7,7 @@ import json
 sys.path.append("..")
 
 from vqc_pennylane.train import main
+from vqc_pennylane import util
 parser = argparse.ArgumentParser(formatter_class=argparse.
                                  ArgumentDefaultsHelpFormatter)
 parser.add_argument("--data_folder", type=str, default='../../data/ae_input/',
@@ -21,61 +22,43 @@ parser.add_argument('--output_folder', required=True,
                     help='The name of the model to be saved.')
 parser.add_argument('--nqubits', type=int, default=4,
                     help="The number of qubits that the vqc circuit will use.")
+parser.add_argument('--vform_repeats', type=int, default=4,
+                    help='Nb. of repetitions of the variational form.')
 parser.add_argument('--optimiser', default=None,
                     help='The optimiser used for training the model.')
 parser.add_argument('--epochs', type=int, default=100,
                     help="The number of epochs to train the vqc for.")
 parser.add_argument('--batch_size', type=int, default=50,
                     help="The batch size to train the vqc with.")
-parser.add_argument('--hybrid_vqc', action='store_true',
+parser.add_argument('--hybrid', action='store_true',
                     help='Choose the type of vqc model you are working with.')
 parser.add_argument("--class_weight", type=float, default=0.5,
                     help="The weight of the classifier BCE loss.")
 parser.add_argument('--ntrain', type=int, default=250,
-                    help='Number of training events for the QSVM.')
+                    help='Number of training events.')
 parser.add_argument('--nvalid', type=int, default=250,
-                    help='Number of validation events for the QSVM (typically)'
-                         'not used for the QSVM).')
-parser.add_argument('--backend_name', type=str,
-                    help='The IBMQ backend used for either an ideal simulation or'
-                         'or a real quantum hardware run.')
+                    help='Number of validation events.')
 parser.add_argument('--run_type', type=str, required=True,
                     choices=['ideal', 'noisy', 'hardware'],
-                    help='Choose way to run the (hybrid) VQC training: Ideal '
-                         'computation, noisy simulation or on real quantum hardware.')
+                    help='Choose on what to run: ideal sim, noisy sim, or hardware.')
+parser.add_argument('--backend_name', type=str, default=None,
+                    help='The IBMQ backend used for a real quantum hardware run.')
 parser.add_argument('--diff_method', type=str, default='best',
                     choices=['best', 'parameter-shift', 'backprop'],
                     help='Choose differentiation method for the quantum circuit.')
-parser.add_argument('--vform_repeats', type=int, default=4,
-                    help='Name of variational form (trainable part of the circuit)'
-                         'repetitions.')
+parser.add_argument('--private_config', type=str, default=None,
+                    help='The private configuration for the quantum computer.')
 args = parser.parse_args()
 
-initial_layout = [22,25,24,23,21,18,15,12] # for Cairo
-seed = 12345 
-# Load private configuration file for ibmq_api_token and provider details.
-try:
-    with open('private_config_vasilis.json') as pconfig:
-        private_configuration = json.load(pconfig)
-except:
-    print("Error in reading private config: Process aborted")
+seed = 12345
 
-config_ideal = {"name": "default.qubit.autograd", "shots": None,} 
-config_noisy = {
-    "backend_config": {"shots": 5000, 
-                       "optimization_level": 3, "transpiler_seed": seed, 
-                       "initial_layout": initial_layout, "seed_simulator": seed,},
-    "ibmq_api": private_configuration["IBMQ"],
-}
-config_hardware = {
-    "backend_config": {"shots": 5000, 
-                       "optimization_level": 3, "transpiler_seed": seed, 
-                       "initial_layout": initial_layout,
-    },
-    "ibmq_api": private_configuration["IBMQ"],
-}
-switcher = {'ideal' : lambda: config_ideal, 'noisy' : lambda: config_noisy, 
-            'hardware' : lambda: config_hardware}
+# For the Cairo quantum computer, you need to specify an initial layout.
+init_layout = [22, 25, 24, 23, 21, 18, 15, 12]
+pconfig = util.get_private_config("vasilis_private_configuration.json")
+switcher = {
+    'hardware': lambda: util.config_ideal("default.qubit.autograd")}
+    'ideal':    lambda: util.config_noisy(5000, 3, seed, init_layout, seed, pconfig),
+    'noisy':    lambda: util.config_hardware(5000, 3, seed, init_layout, pconfig),
 config = switcher.get(args.run_type, lambda: None)()
 
 args = {

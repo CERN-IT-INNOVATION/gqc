@@ -37,7 +37,6 @@ def main(args):
     )
     model.loss_plot(outdir)
 
-
 def time_the_training(train, *args):
     """Times the training of the VQC.
 
@@ -69,7 +68,7 @@ def get_model(args) -> Tuple:
         backend_name=args["backend_name"],
         config=args["config"],
     )
-    if args["hybrid_training"]:
+    if args["hybrid"]:
         vqc_hybrid = VQCHybrid(qdevice, device="cpu", hpars=args)
         return vqc_hybrid
 
@@ -88,10 +87,10 @@ def get_data(qdata, args):
         The validation and test data tailored to the type of vqc that one
         is testing with this script.
     """
-    if args["hybrid_vqc"]:
-        return *get_hybrid_test_data(qdata, args)
+    if args["hybrid"]:
+        return get_hybrid_training_data(qdata, args)
 
-    return *get_nonhybrid_test_data(qdata, args)
+    return get_nonhybrid_training_data(qdata, args)
 
 def get_nonhybrid_training_data(qdata, args) -> Tuple:
     """Loads the data from pre-trained autoencoder latent space when we have non

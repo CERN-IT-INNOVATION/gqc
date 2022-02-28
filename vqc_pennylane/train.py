@@ -69,7 +69,7 @@ def get_model(args) -> Tuple:
         backend_name=args["backend_name"],
         config=args["config"],
     )
-    if args["hybrid_training"]:
+    if args["hybrid_vqc"]:
         vqc_hybrid = VQCHybrid(qdevice, device="cpu", hpars=args)
         return vqc_hybrid
 
@@ -89,9 +89,9 @@ def get_data(qdata, args):
         is testing with this script.
     """
     if args["hybrid_vqc"]:
-        return *get_hybrid_test_data(qdata, args)
+        return get_hybrid_training_data(qdata, args)
 
-    return *get_nonhybrid_test_data(qdata, args)
+    return get_nonhybrid_training_data(qdata, args)
 
 def get_nonhybrid_training_data(qdata, args) -> Tuple:
     """Loads the data from pre-trained autoencoder latent space when we have non

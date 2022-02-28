@@ -3,6 +3,10 @@
 import os
 from time import perf_counter
 from typing import Tuple
+import matplotlib.pyplot as plt
+from sklearn import metrics
+from sklearn.utils import shuffle
+from pennylane import numpy as np
 
 from .vqc import VQC
 from . import qdata as qd
@@ -26,7 +30,7 @@ def main(args):
 
     hyperparams_file = os.path.join(args["vqc_path"], "hyperparameters.json")
     vqc_hyperparams = util.import_hyperparams(hyperparams_file)
-    model = get_model(qdata, vqc_hyperparams, args)
+    model = get_model(vqc_hyperparams, args)
     model.load_model(args["vqc_path"])
     util.print_model_info(args["ae_model_path"], qdata, model)
 
@@ -104,7 +108,7 @@ def roc_plots(data, target, model_path, output_folder):
 
     print(f"Latent roc plots were saved to {plots_folder}.")
 
-def compute_auc(data, target, feature):
+def compute_auc(data, target, feature) -> Tuple:
     """Split a data set into 5, compute the AUC for each, and then calculate the mean
     and stardard deviation of these.
 
@@ -133,7 +137,7 @@ def compute_auc(data, target, feature):
 
     return fpr, tpr, mean_auc, std_auc
 
-def get_model(vqc_hyperparams, args) -> Tuple:
+def get_model(vqc_hyperparams, args):
     """Choose the type of VQC to train. The normal vqc takes the latent space
     data produced by a chosen auto-encoder. The hybrid vqc takes the same
     data that an auto-encoder would take, since it has an encoder or a full
@@ -150,19 +154,19 @@ def get_model(vqc_hyperparams, args) -> Tuple:
     """
     qdevice = util.get_qdevice(
         args["run_type"],
-        wires=args["nqubits"],
+        wires=vqc_hyperparams["nqubits"],
         backend_name=args["backend_name"],
         config=args["config"],
     )
 
-    if args["hybrid_training"]:
+    if args["hybrid_vqc"]:
         vqc_hybrid = VQCHybrid(qdevice, device="cpu", hpars=vqc_hyperparams)
         return vqc_hybrid
 
     vqc = VQC(qdevice, vqc_hyperparams)
     return vqc
 
-def get_data(qdata, args):
+def get_data(qdata, args) -> Tuple:
     """Load the appropriate data depending on the type of vqc that is used.
 
     Args:
@@ -176,9 +180,9 @@ def get_data(qdata, args):
         is testing with this script.
     """
     if args["hybrid_vqc"]:
-        return *get_hybrid_test_data(qdata, args)
+        return get_hybrid_test_data(qdata, args)
 
-    return *get_nonhybrid_test_data(qdata, args)
+    return get_nonhybrid_test_data(qdata, args)
 
 def get_nonhybrid_test_data(qdata, args) -> Tuple:
     """Loads the data from pre-trained autoencoder latent space when we have non

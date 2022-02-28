@@ -51,6 +51,7 @@ def get_private_config(pconfig_path: str) -> dict:
         The private configuration dictionary loaded from the file found at the
         pconfig_path.
     """
+    private_config = None
     try:
         with open(pconfig_path) as pconfig:
             private_config = json.load(pconfig)
@@ -59,7 +60,7 @@ def get_private_config(pconfig_path: str) -> dict:
 
     return private_config
 
-def config_ideal(name: str, shots=None: int) -> dict:
+def config_ideal(name: str, shots:int=None) -> dict:
     """The configuration loading of the ideal simulation.
 
     Args:
@@ -74,8 +75,8 @@ def config_ideal(name: str, shots=None: int) -> dict:
     return config_ideal
 
 def config_noisy(shots: int, optimization_level: int, transpiler_seed: int,
-                 initial_layout: List[int], seed_simulator: int, private_config: dict)
--> dict:
+                 initial_layout: List[int], seed_simulator: int, private_config: dict
+) -> dict:
     """The configuration loading for the noisy simulation.
 
     Args:
@@ -97,8 +98,8 @@ def config_noisy(shots: int, optimization_level: int, transpiler_seed: int,
                        "transpiler_seed": transpiler_seed,
                        "initial_layout": initial_layout,
                        "seed_simulator": seed_simulator
-                       }
-    "ibmq_api": private_config["IBMQ"],
+                       },
+    "ibmq_api": private_config["IBMQ"]
     }
 
     return config_noisy
@@ -122,7 +123,7 @@ def config_hardware(shots: int, optimization_level: int, transpiler_seed: int,
                        "transpiler_seed": seed,
                        "initial_layout": initial_layout,
                       },
-    "ibmq_api": private_config["IBMQ"],
+    "ibmq_api": private_config["IBMQ"]
     }
 
     return config_hardware

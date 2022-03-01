@@ -2,13 +2,14 @@
 
 import os
 from typing import List
-from matplotlib import backend_bases
 import pennylane as pnl
 import pennylane_qiskit
 import json
+from typing import Tuple
 
 from .terminal_colors import tcols
-
+from .vqc import VQC
+from .vqc_hybrid import VQCHybrid
 
 def create_output_folder(output_folder):
     """
@@ -120,7 +121,7 @@ def config_hardware(shots: int, optimization_level: int, transpiler_seed: int,
     config_hardware = {
     "backend_config": {"shots": shots,
                        "optimization_level": optimization_level,
-                       "transpiler_seed": seed,
+                       "transpiler_seed": transpiler_seed,
                        "initial_layout": initial_layout,
                       },
     "ibmq_api": private_config["IBMQ"]
@@ -240,7 +241,7 @@ def get_model(vqc_hyperparams, args) -> Tuple:
     Returns:
         An instance of the vqc object with the given specifications (hyperparams).
     """
-    qdevice = util.get_qdevice(
+    qdevice = get_qdevice(
         args["run_type"],
         wires=vqc_hyperparams["nqubits"],
         backend_name=args["backend_name"],

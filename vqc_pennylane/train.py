@@ -31,7 +31,7 @@ def main(args):
     model.export_hyperparameters(outdir)
     util.print_model_info(args["ae_model_path"], qdata, model)
 
-    train_loader, valid_loader = util.get_data(qdata, args, args["hybrid"])
+    train_loader, valid_loader, _ = util.get_data(qdata, args)
     time_the_training(
         model.train_model, train_loader, valid_loader, args["epochs"], 20, outdir
     )

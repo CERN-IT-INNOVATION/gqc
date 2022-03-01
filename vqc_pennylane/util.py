@@ -226,36 +226,33 @@ def print_device_config(config: dict):
     """
     print(tcols.OKCYAN + "Device configuration parameters:\n" + tcols.ENDC, config)
 
-def get_model(vqc_hyperparams, args) -> Tuple:
+def get_model(args) -> Tuple:
     """Choose the type of VQC to train. The normal vqc takes the latent space
     data produced by a chosen auto-encoder. The hybrid vqc takes the same
     data that an auto-encoder would take, since it has an encoder or a full
     auto-encoder attached to it.
 
     Args:
-        vqc_hyperparams (dict): Dictionary of the vqc hyperparameters dictating
-            the circuit structure and the training.
-        *args: Dictionary of hyperparameters related more loosely to the vqc, such as
-            which device to run on.
+        *args: Dictionary of hyperparameters for the vqc.
 
     Returns:
         An instance of the vqc object with the given specifications (hyperparams).
     """
     qdevice = get_qdevice(
         args["run_type"],
-        wires=vqc_hyperparams["nqubits"],
+        wires=args["nqubits"],
         backend_name=args["backend_name"],
         config=args["config"],
     )
 
-    if vqc_hyperparams["hybrid"]:
-        vqc_hybrid = VQCHybrid(qdevice, device="cpu", hpars=vqc_hyperparams)
+    if args["hybrid"]:
+        vqc_hybrid = VQCHybrid(qdevice, device="cpu", hpars=args)
         return vqc_hybrid
 
-    vqc = VQC(qdevice, vqc_hyperparams, args["diff_method"])
+    vqc = VQC(qdevice, args, args["diff_method"])
     return vqc
 
-def get_data(qdata, args, hybrid: bool):
+def get_data(qdata, args):
     """Load the appropriate data depending on the type of vqc that is used.
 
     Args:
@@ -268,15 +265,19 @@ def get_data(qdata, args, hybrid: bool):
         The validation and test data tailored to the type of vqc that one
         is testing with this script.
     """
-    if hybrid:
-        return get_hybrid_test_data(qdata, args)
+    if args["hybrid"]:
+        return get_hybrid_data(qdata, args)
 
-    return get_nonhybrid_test_data(qdata, args)
+    return get_nonhybrid_data(qdata, args)
 
-def get_nonhybrid_test_data(qdata, args) -> Tuple:
+def get_nonhybrid_data(qdata, args) -> Tuple:
     """Loads the data from pre-trained autoencoder latent space when we have non
     hybrid VQC testing.
     """
+    train_features = qdata.batchify(qdata.get_latent_space("train"), args["batch_size"])
+    train_labels = qdata.batchify(qdata.ae_data.trtarget, args["batch_size"])
+    train_loader = [train_features, train_labels]
+
     valid_features = qdata.get_latent_space("valid")
     valid_labels = qdata.ae_data.vatarget
     valid_loader = [valid_features, valid_labels]
@@ -285,11 +286,12 @@ def get_nonhybrid_test_data(qdata, args) -> Tuple:
     test_labels = qdata.ae_data.tetarget
     test_loader = [test_features, test_labels]
 
-    return valid_loader, test_loader
+    return train_loader, valid_loader, test_loader
 
-def get_hybrid_test_data(qdata, args) -> Tuple:
+def get_hybrid_data(qdata, args) -> Tuple:
     """Loads the raw input data for hybrid testing."""
+    train_loader = qdata.ae_data.get_loader("train", "cpu", args["batch_size"], True)
     valid_loader = qdata.ae_data.get_loader("valid", "cpu", shuffle=True)
-    test_loader = qdata.ae_data.get_loader("test", "cpu", args["batch_size"], True)
+    test_loader = qdata.ae_data.get_loader("test", "cpu", shuffle=True)
 
-    return valid_loader, test_loader
+    return train_loader, valid_loader, test_loader

@@ -30,11 +30,12 @@ def main(args):
 
     hyperparams_file = os.path.join(args["vqc_path"], "hyperparameters.json")
     vqc_hyperparams = util.import_hyperparams(hyperparams_file)
-    model = util.get_model(vqc_hyperparams, args)
+    args.update(vqc_hyperparams)
+    model = util.get_model(args)
     model.load_model(args["vqc_path"])
     util.print_model_info(args["ae_model_path"], qdata, model)
 
-    valid_loader, test_loader = util.get_data(qdata, args, vqc_hyperparams["hybrid"])
+    _, valid_loader, test_loader = util.get_data(qdata, args)
 
     print("\n----------------------------------")
     print("VALID LOSS:")

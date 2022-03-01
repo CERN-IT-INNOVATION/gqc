@@ -14,7 +14,7 @@ from .terminal_colors import tcols
 
 
 class VQC:
-    def __init__(self, qdevice: pnl.device, hpars: dict, diff_meth: str):
+    def __init__(self, qdevice: pnl.device, hpars: dict):
         """
         Variational quantum circuit, implemented using the pennylane python
         package. This is a trainable quantum circuit. It is composed of a feature
@@ -49,6 +49,7 @@ class VQC:
             self._layers, self._nweights, requires_grad=True
         )
 
+        self._diff_method = self.select_diff_method(hpars)
         self._optimiser = self._choose_optimiser(self._hp["optimiser"], self._hp["lr"])
         self._class_loss_function = self._binary_cross_entropy
         self._epochs_no_improve = 0
@@ -56,7 +57,9 @@ class VQC:
         self.all_train_loss = []
         self.all_valid_loss = []
 
-        self._circuit = pnl.qnode(self._qdevice, diff_method=diff_meth)(self._qcircuit)
+        self._circuit = pnl.qnode(self._qdevice, diff_method=self._diff_method)(
+            self._qcircuit
+        )
 
     def _qcircuit(self, inputs, weights):
         """
@@ -134,6 +137,22 @@ class VQC:
             )
 
         return int(nfeatures / nqubits)
+
+    @staticmethod
+    def select_diff_method(hpars: dict) -> str:
+        """Checks if a differentiation method for the quantum circuit is specified
+        by the user. If not, 'best' is selected as the differentiation method.
+
+        Args:
+            args: Arguments given to the vqc by the user, specifiying various hps.
+
+        Returns:
+            String that specifies which differentiation method to use.
+        """
+        if "diff_method" in hpars:
+            return hpars["diff_method"]
+
+        return "best"
 
     @staticmethod
     def _choose_optimiser(choice, lr):

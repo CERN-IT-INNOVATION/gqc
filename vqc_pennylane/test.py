@@ -96,7 +96,7 @@ def roc_plots(preds, target, model_path, output_folder):
     plots_folder = make_plots_output_folder(model_path, output_folder)
     set_plotting_misc()
 
-    fpr, tpr, mean_auc, std_auc = compute_auc(preds, target, feature)
+    fpr, tpr, mean_auc, std_auc = compute_auc(preds, target)
     fig = plt.figure(figsize=(12, 10))
     roc_plot_misc()
 

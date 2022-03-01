@@ -249,7 +249,7 @@ def get_model(args) -> Tuple:
         vqc_hybrid = VQCHybrid(qdevice, device="cpu", hpars=args)
         return vqc_hybrid
 
-    vqc = VQC(qdevice, args, args["diff_method"])
+    vqc = VQC(qdevice, args)
     return vqc
 
 def get_data(qdata, args):
@@ -274,9 +274,12 @@ def get_nonhybrid_data(qdata, args) -> Tuple:
     """Loads the data from pre-trained autoencoder latent space when we have non
     hybrid VQC testing.
     """
-    train_features = qdata.batchify(qdata.get_latent_space("train"), args["batch_size"])
-    train_labels = qdata.batchify(qdata.ae_data.trtarget, args["batch_size"])
-    train_loader = [train_features, train_labels]
+    train_loader = None
+    if "batch_size" in args:
+        train_features = qdata.batchify(qdata.get_latent_space("train"),
+                                        args["batch_size"])
+        train_labels = qdata.batchify(qdata.ae_data.trtarget, args["batch_size"])
+        train_loader = [train_features, train_labels]
 
     valid_features = qdata.get_latent_space("valid")
     valid_labels = qdata.ae_data.vatarget

@@ -5,12 +5,9 @@
 # with the name of a user's choosing..
 import os
 from time import perf_counter
-from typing import Tuple
 
-from .vqc import VQC
 from . import qdata as qd
 from . import util
-from .vqc_hybrid import VQCHybrid
 
 
 def main(args):

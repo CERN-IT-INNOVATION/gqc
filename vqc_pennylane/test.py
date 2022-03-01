@@ -103,7 +103,7 @@ def roc_plots(preds, target, model_path, output_folder):
     plt.plot(fpr, tpr, label=f"AUC: {mean_auc:.3f} ± {std_auc:.3f}", color="navy")
     plt.legend()
 
-    fig.savefig(plots_folder + f"Feature {feature}.pdf")
+    fig.savefig(plots_folder + "roc_curve.pdf")
     plt.close()
 
     print(f"Latent roc plots were saved to {plots_folder}.")
@@ -126,7 +126,7 @@ def compute_auc(preds: np.array, target: np.array):
     for prd, trg in zip(pred_chunks, target_chunks):
         fpr, tpr, thresholds = metrics.roc_curve(trg, prd)
         auc = metrics.roc_auc_score(trg, prd)
-        aucs.append(auc)
+        np.append(aucs, auc)
 
     mean_auc = aucs.mean()
     std_auc = aucs.std()

@@ -5,11 +5,8 @@ from time import perf_counter
 from typing import Tuple
 import matplotlib.pyplot as plt
 from sklearn import metrics
-<<<<<<< HEAD
-=======
 from sklearn.utils import shuffle
 from pennylane import numpy as np
->>>>>>> 531d4949a9071fb9141af442df09691f202a2b76
 
 from . import qdata as qd
 from . import util

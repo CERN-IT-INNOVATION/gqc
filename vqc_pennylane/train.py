@@ -27,7 +27,7 @@ def main(args):
     if not os.path.exists(outdir):
         os.makedirs(outdir)
 
-    model = get_model(args)
+    model = util.get_model(args)
     model.export_hyperparameters(outdir)
     util.print_model_info(args["ae_model_path"], qdata, model)
 

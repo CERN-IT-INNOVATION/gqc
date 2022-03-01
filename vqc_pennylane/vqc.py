@@ -14,7 +14,7 @@ from .terminal_colors import tcols
 
 
 class VQC:
-    def __init__(self, qdevice: pnl.device, hpars: dict):
+    def __init__(self, qdevice: pnl.device, hpars: dict, diff_meth: str):
         """
         Variational quantum circuit, implemented using the pennylane python
         package. This is a trainable quantum circuit. It is composed of a feature
@@ -56,9 +56,7 @@ class VQC:
         self.all_train_loss = []
         self.all_valid_loss = []
 
-        self._circuit = pnl.qnode(self._qdevice, diff_method=hpars["diff_method"])(
-            self._qcircuit
-        )
+        self._circuit = pnl.qnode(self._qdevice, diff_method=diff_meth)(self._qcircuit)
 
     def _qcircuit(self, inputs, weights):
         """
@@ -364,6 +362,7 @@ class VQC:
 
         returns :: The latent space of the ae and the reco data.
         """
-        classification_output = self.forward(x_data.float())
+        x_data = np.array(x_data[:, :], requires_grad=False)
+        classification_output = self.forward(x_data)
 
         return classification_output

@@ -31,9 +31,6 @@ parser.add_argument('--run_type', type=str, required=True,
                     choices=['ideal', 'noisy', 'hardware'],
                     help='Choose way to run the (hybrid) VQC training: Ideal '
                          'computation, noisy simulation or on real quantum hardware.')
-parser.add_argument('--diff_method', type=str, default='best',
-                    choices=['best', 'parameter-shift', 'backprop'],
-                    help='Choose differentiation method for the quantum circuit.')
 
 args = parser.parse_args()
 

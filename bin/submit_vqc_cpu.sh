@@ -3,7 +3,7 @@
 #SBATCH --partition=long
 #SBATCH --ntasks=1
 #SBATCH --cpus-per-task=8
-#SBATCH --mem=3000M
+#SBATCH --mem=4000M
 #SBATCH --time=7-00:00:00
 #SBATCH -o ./logs/vqc_cpu_%j.out
 
@@ -11,10 +11,10 @@ usage() { echo "Usage: $0 [-n <normalization_name>] [-s <number_of_events>]"\
                "[-p <model_path>] [-f <output_folder>] [-q <nb_of_qubits>]"\
                "[-v <vform_repeats>] [-o <optimizer>] [-e <epochs>] [-b <batch_size>]"\
                "[-h <hybrid> {0 or 1}] [-c <class_weight>] [-a <ntrain>] [-l <nvalid>]"\
-               "[-r <run_type>] [-k <backend_name>] [-d <diff_method>]" 1>&2; exit 1; }
-# TODO change model_path to data path to accommodate for Hybrid: It's either the AE that
-# does the data reduction or directly the input data.
-while getopts ":n:s:p:f:q:v:o:e:b:h:c:a:l:r:k:d:" x; do
+               "[-g <learning_rate> ] [-r <run_type>] [-k <backend_name>]"\
+               "[-d <diff_method>]" 1>&2; exit 1; }
+
+while getopts ":n:s:p:f:q:v:o:e:b:h:c:a:l:g:r:k:d:" x; do
     case "${x}" in
     n)
         n=${OPTARG}
@@ -55,6 +55,9 @@ while getopts ":n:s:p:f:q:v:o:e:b:h:c:a:l:r:k:d:" x; do
     l) 
         l=${OPTARG}
         ;;
+    g)
+        g=${OPTARG}
+        ;;
     r)
         r=${OPTARG}
         ;;
@@ -71,10 +74,10 @@ while getopts ":n:s:p:f:q:v:o:e:b:h:c:a:l:r:k:d:" x; do
 done
 shift $((OPTIND-1))
 
-if [ -z "${n}" ] || [ -z "${s}" ] || [ -z "${p}" ]  || [ -z "${f}" ] || [ -z "${q}" ] || \
-   [ -z "${v}" ] || [ -z "${o}" ] || [ -z "${e}" ] || [ -z "${b}" ] || [ -z "${h}" ]\
+if [ -z "${n}" ] || [ -z "${s}" ] || [ -z "${p}" ] || [ -z "${f}" ] || [ -z "${q}" ] || \
+   [ -z "${v}" ] || [ -z "${o}" ] || [ -z "${e}" ] || [ -z "${b}" ] || [ -z "${h}" ] || \
    [ -z "${c}" ] || [ -z "${a}" ] || [ -z "${l}" ] || [ -z "${r}" ] || [ -z "${k}" ] || \
-   [ -z "${d}" ] ; then
+   [ -z "${g}" ] || [ -z "${d}" ] ; then
     usage
 fi
 
@@ -90,7 +93,7 @@ source /work/vabelis/miniconda3/bin/activate ae_qml_pnl
 export PYTHONUNBUFFERED=TRUE
 ./vqc_train --data_folder /work/vabelis/data/ae_input --norm ${n} --nevents ${s} \
             --model_path ${p} --output_folder ${f} --nqubits ${q} --vform_repeats ${v} \
-            --optimiser ${o} --epochs ${e} --batch_size ${b} ${h} \
+            --optimiser ${o} --epochs ${e} --learning_rate ${g} --batch_size ${b} ${h} \
             --class_weight ${c} --ntrain ${a} --nvalid ${l} --run_type ${r} \
             --backend_name ${k} --diff_method ${d}
 export PYTHONUNBUFFERED=FALSE

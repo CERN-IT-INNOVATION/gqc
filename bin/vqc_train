@@ -29,6 +29,8 @@ parser.add_argument('--epochs', type=int, default=100,
                     help="The number of epochs to train the vqc for.")
 parser.add_argument('--batch_size', type=int, default=50,
                     help="The batch size to train the vqc with.")
+parser.add_argument('--learning_rate', type=float, default=0.002,
+                    help="The learning rate to train the vqc with.")
 parser.add_argument('--hybrid', action='store_true',
                     help='Choose the type of vqc model you are working with.')
 parser.add_argument("--class_weight", type=float, default=0.5,
@@ -72,6 +74,7 @@ args = {
     "optimiser": args.optimiser,
     "epochs": args.epochs,
     "batch_size": args.batch_size,
+    "lr": args.learning_rate,
     "train_events": args.ntrain,
     "valid_events": args.nvalid,
     "hybrid": args.hybrid,

@@ -1,15 +1,12 @@
 # Hybrid VQC.
-
-import numpy as np
 import torch
-import torch.nn as nn
 import pennylane as pnl
+import numpy as np
 
 from autoencoders.ae_classifier import AE_classifier
 from . import feature_maps as fm
 from . import variational_forms as vf
 from .terminal_colors import tcols
-from . import util
 
 seed = 100
 torch.manual_seed(seed)
@@ -159,3 +156,19 @@ class VQCHybrid(AE_classifier):
         if self.epochs_no_improve >= early_stopping_limit:
             return 1
         return 0
+
+    def __initialise_weights(self) -> np.ndarray:
+        """Method to initialise random weights only for drawing the circuit."""
+        weights = 0.01 * np.random.randn(self._layers, self._vqc_nweights)
+        return weights
+
+    def draw(self):
+        """
+        Draws the circuit using dummy parameters.
+        Parameterless implementation is not yet available in pennylane,
+        and it seems not feasible either by the way pennylane is constructed.
+        """
+        drawing = pnl.draw(self._circuit)
+        print(tcols.OKGREEN)
+        print(drawing([0] * int(self.hp["nfeatures"]), self.__initialise_weights()))
+        print(tcols.ENDC)

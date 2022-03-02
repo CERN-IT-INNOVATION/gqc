@@ -57,7 +57,6 @@ args = {
     "seed": seed,
     "run_type": args.run_type,
     "backend_name": args.backend_name,
-    "diff_method": args.diff_method,
     "config": config,
 }
 

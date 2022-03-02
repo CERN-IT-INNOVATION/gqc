@@ -15,7 +15,7 @@ def create_output_folder(output_folder):
     """
     Creates output folder for the qsvm.
     @output_folder :: Name of the output folder for this particular
-                      version of the qsvm.
+                      version of the (hybrid) VQC.
     """
     if not os.path.exists(output_folder):
         os.makedirs(output_folder)
@@ -295,6 +295,8 @@ def get_hybrid_data(qdata, args) -> Tuple:
     """Loads the raw input data for hybrid testing."""
     train_loader = qdata.ae_data.get_loader("train", "cpu", args["batch_size"], True)
     valid_loader = qdata.ae_data.get_loader("valid", "cpu", shuffle=True)
-    test_loader = qdata.ae_data.get_loader("test", "cpu", shuffle=True)
+    test_loader = None
+    if "ntest" in args:
+        test_loader = qdata.ae_data.get_loader("test", "cpu", shuffle=True)
 
     return train_loader, valid_loader, test_loader

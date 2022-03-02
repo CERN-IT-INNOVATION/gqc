@@ -3,14 +3,19 @@
 #SBATCH --partition=long
 #SBATCH --ntasks=1
 #SBATCH --cpus-per-task=8
-#SBATCH --mem=5000M
+#SBATCH --mem=3000M
 #SBATCH --time=7-00:00:00
 #SBATCH -o ./logs/vqc_cpu_%j.out
 
-usage() { echo "Usage: $0 [-n <normalization_name>] [-s <number_of_events>] [-p <model_path>] [-l <loss_name>] [-q <nb_of_qubits>] [-e <epochs>] [-b <batch_size>] [-f <output_folder>]" 1>&2; exit 1; }
-
-while getopts ":n:s:p:l:q:e:b:f:o:" o; do
-    case "${o}" in
+usage() { echo "Usage: $0 [-n <normalization_name>] [-s <number_of_events>]"\
+               "[-p <model_path>] [-f <output_folder>] [-q <nb_of_qubits>]"\
+               "[-v <vform_repeats>] [-o <optimizer>] [-e <epochs>] [-b <batch_size>]"\
+               "[-h <hybrid> {0 or 1}] [-c <class_weight>] [-a <ntrain>] [-l <nvalid>]"\
+               "[-r <run_type>] [-k <backend_name>] [-d <diff_method>]" 1>&2; exit 1; }
+# TODO change model_path to data path to accommodate for Hybrid: It's either the AE that
+# does the data reduction or directly the input data.
+while getopts ":n:s:p:f:q:v:o:e:b:h:c:a:l:r:k:d:" x; do
+    case "${x}" in
     n)
         n=${OPTARG}
         ;;
@@ -20,8 +25,17 @@ while getopts ":n:s:p:l:q:e:b:f:o:" o; do
     p)
         p=${OPTARG}
         ;;
+    f)
+        f=${OPTARG}
+        ;;
     q)
         q=${OPTARG}
+        ;;
+    v)
+        v=${OPTARG}
+        ;;
+    o)
+        o=${OPTARG}
         ;;
     e)
         e=${OPTARG}
@@ -29,11 +43,26 @@ while getopts ":n:s:p:l:q:e:b:f:o:" o; do
     b)
         b=${OPTARG}
         ;;
-    f)
-        f=${OPTARG}
+    h)
+        h=${OPTARG}
         ;;
-    o)
-        o=${OPTARG}
+    c)
+        c=${OPTARG}
+        ;;
+    a)
+        a=${OPTARG}
+        ;;
+    l) 
+        l=${OPTARG}
+        ;;
+    r)
+        r=${OPTARG}
+        ;;
+    k)
+        k=${OPTARG}
+        ;;
+    d) 
+        d=${OPTARG}
         ;;
     *)
         usage
@@ -42,13 +71,28 @@ while getopts ":n:s:p:l:q:e:b:f:o:" o; do
 done
 shift $((OPTIND-1))
 
-if [ -z "${n}" ] || [ -z "${s}" ] || [ -z "${p}" ] || [ -z "${o}" ] || [ -z "${q}" ] || [ -z "${e}" ] || [ -z "${b}" ] || [ -z "${f}" ]; then
+if [ -z "${n}" ] || [ -z "${s}" ] || [ -z "${p}" ]  || [ -z "${f}" ] || [ -z "${q}" ] || \
+   [ -z "${v}" ] || [ -z "${o}" ] || [ -z "${e}" ] || [ -z "${b}" ] || [ -z "${h}" ]\
+   [ -z "${c}" ] || [ -z "${a}" ] || [ -z "${l}" ] || [ -z "${r}" ] || [ -z "${k}" ] || \
+   [ -z "${d}" ] ; then
     usage
 fi
 
-source /work/deodagiu/miniconda/bin/activate ae_qml
+if [ $h -eq 0 ] ; then
+        h=""
+elif [ $h -eq 1 ] ; then
+        h="--hybrid" # we use argparse action=store_value
+else 
+    usage
+fi
+
+source /work/vabelis/miniconda3/bin/activate ae_qml_pnl
 export PYTHONUNBUFFERED=TRUE
-python vqc_train --data_folder /work/deodagiu/data/ae_input --norm ${n} --nevents ${s} --model_path ${p} --nqubits ${q} --epochs ${e} --batch_size ${b} --output_folder ${f} --optimiser ${o}
+./vqc_train --data_folder /work/vabelis/data/ae_input --norm ${n} --nevents ${s} \
+            --model_path ${p} --output_folder ${f} --nqubits ${q} --vform_repeats ${v} \
+            --optimiser ${o} --epochs ${e} --batch_size ${b} ${h} \
+            --class_weight ${c} --ntrain ${a} --nvalid ${l} --run_type ${r} \
+            --backend_name ${k} --diff_method ${d}
 export PYTHONUNBUFFERED=FALSE
 
 mv ./logs/vqc_cpu_${SLURM_JOBID}.out ./trained_vqcs/${f}/

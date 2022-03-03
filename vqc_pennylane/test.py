@@ -1,17 +1,15 @@
 # The VQC testing script. Here, a vqc is imported and data is passed through it.
 # The results are quantified in terms of AUC.
 import os
-from time import perf_counter
 from typing import Tuple
 import matplotlib.pyplot as plt
 from sklearn import metrics
-from sklearn.utils import shuffle
 from pennylane import numpy as np
+import re
 
 from . import qdata as qd
 from . import util
-from .vqc import VQC
-from .vqc_hybrid import VQCHybrid
+from .terminal_colors import tcols
 
 
 def main(args):
@@ -20,15 +18,15 @@ def main(args):
         args["norm"],
         args["nevents"],
         args["ae_model_path"],
-        test_events=args["test_events"],
-        valid_events=args["valid_events"],
+        test_events=args["ntest"],
+        valid_events=args["nvalid"],
         seed=args["seed"],
     )
-    outdir = args["vqc_path"]
+    outdir = re.sub("(best_model.pt|best_model.npy)","",args["vqc_path"])
     if not os.path.exists(outdir):
         os.makedirs(outdir)
 
-    hyperparams_file = os.path.join(args["vqc_path"], "hyperparameters.json")
+    hyperparams_file = os.path.join(outdir, "hyperparameters.json")
     vqc_hyperparams = util.import_hyperparams(hyperparams_file)
     args.update(vqc_hyperparams)
     model = util.get_model(args)
@@ -36,17 +34,19 @@ def main(args):
     util.print_model_info(args["ae_model_path"], qdata, model)
 
     _, valid_loader, test_loader = util.get_data(qdata, args)
-
+    x_valid, y_valid = util.split_data_loader(valid_loader)
+    x_test, y_test = util.split_data_loader(test_loader)
     print("\n----------------------------------")
     print("VALID LOSS:")
-    print(model.compute_loss(valid_loader[0], valid_loader[1]))
+    print(model.compute_loss(x_valid, y_valid))
     print("TEST LOSS:")
-    print(model.compute_loss(test_loader[0], test_loader[1]))
+    print(model.compute_loss(x_test, y_test))
     print("----------------------------------\n")
 
-    valid_pred = model.predict(valid_loader[0])
-    test_pred = model.predict(test_loader[0])
-    roc_plots(test_pred, test_loader[1], args["vqc_path"], "vqc_roc_plot")
+    valid_pred = model.predict(x_valid)[-1]
+    test_pred = model.predict(x_test)[-1]
+    roc_plots(test_pred, y_test, outdir, "roc_plot")
+
 
 def set_plotting_misc():
     """Set the misc settings of the plot such as the axes font size, the title size,
@@ -106,9 +106,9 @@ def roc_plots(preds, target, model_path, output_folder):
     fig.savefig(plots_folder + "roc_curve.pdf")
     plt.close()
 
-    print(f"Latent roc plots were saved to {plots_folder}.")
+    print(tcols.OKCYAN + f"Latent roc plots were saved to {plots_folder}."  + tcols.ENDC)
 
-def compute_auc(preds: np.array, target: np.array):
+def compute_auc(preds: np.array, target: np.array) -> Tuple:
     """Split a prediction array into 5, compute the AUC for each, and then calculate
     the mean and stardard deviation of the aucs.
 

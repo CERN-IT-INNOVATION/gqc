@@ -89,6 +89,18 @@ else
     usage
 fi
 
+echo "--------------------------------------- "
+echo "The hyperparameters of this run are:"
+echo " "
+echo "Normalization of the input file: ${n}"
+echo "VQC type: ${t}"
+echo "Number of events in the input file: ${s}"
+echo "Learning rate: ${l}"
+echo "Batch size: ${b}"
+echo "Number of Epochs: ${e}"
+echo "File flag: ${f}"
+echo "--------------------------------------- "
+
 source /work/vabelis/miniconda3/bin/activate ae_qml_pnl
 export PYTHONUNBUFFERED=TRUE
 ./vqc_train --data_folder /work/vabelis/data/ae_input --norm ${n} --nevents ${s} \

@@ -126,7 +126,7 @@ def compute_auc(preds: np.array, target: np.array) -> Tuple:
     for prd, trg in zip(pred_chunks, target_chunks):
         fpr, tpr, thresholds = metrics.roc_curve(trg, prd)
         auc = metrics.roc_auc_score(trg, prd)
-        np.append(aucs, auc)
+        aucs = np.append(aucs, auc)
 
     mean_auc = aucs.mean()
     std_auc = aucs.std()

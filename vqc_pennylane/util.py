@@ -2,14 +2,17 @@
 
 import os
 from typing import List
+from typing import Tuple
+from typing import Union
 import pennylane as pnl
 import pennylane_qiskit
 import json
-from typing import Tuple
 
 from .terminal_colors import tcols
 from .vqc import VQC
 from .vqc_hybrid import VQCHybrid
+from torch.utils.data import DataLoader
+
 
 def create_output_folder(output_folder):
     """
@@ -271,10 +274,31 @@ def get_nonhybrid_data(qdata, args) -> Tuple:
 
 def get_hybrid_data(qdata, args) -> Tuple:
     """Loads the raw input data for hybrid testing."""
-    train_loader = qdata.ae_data.get_loader("train", "cpu", args["batch_size"], True)
-    valid_loader = qdata.ae_data.get_loader("valid", "cpu", shuffle=True)
+    train_loader = None
     test_loader = None
+    if "batch_size" in args:
+        train_loader = qdata.ae_data.get_loader("train", "cpu", args["batch_size"], True)
+    valid_loader = qdata.ae_data.get_loader("valid", "cpu", shuffle=True)
     if "ntest" in args:
         test_loader = qdata.ae_data.get_loader("test", "cpu", shuffle=True)
 
     return train_loader, valid_loader, test_loader
+
+def split_data_loader(data_loader: Union[DataLoader, List]) -> Tuple:
+    """
+    Splits a data loader object to the corresponding data features (x_data) and 
+    labels (y_data). For the VQC training the data loader is simply a list of the
+    form: [x_data, y_data]. For a PyTorch DataLoader object, which is not subscriptable,
+    on needs to do a transformation to an iterable in order to access its elements.
+
+    Args:
+        data_loader: The object which we want to split.
+    Returns:
+        The array of the data vectors and their corresponding labels.
+    """
+    try:
+        x_data, y_data = data_loader[0], data_loader[1]
+    except TypeError:
+        x_data, y_data = iter(data_loader).next()
+        x_data, y_data = x_data.cpu().numpy(), y_data.cpu().numpy()
+    return x_data, y_data

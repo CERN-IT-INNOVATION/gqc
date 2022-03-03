@@ -393,7 +393,7 @@ class VQC:
         """
         if not os.path.exists(model_path):
             raise FileNotFoundError("∄ path.")
-        self._weights = np.load(os.path.join(model_path, "best_model.npy"))
+        self._weights = np.load(model_path)
 
     def predict(self, x_data) -> np.ndarray:
         """
@@ -405,4 +405,4 @@ class VQC:
         x_data = np.array(x_data[:, :], requires_grad=False)
         classification_output = self.forward(x_data)
 
-        return classification_output
+        return [classification_output]

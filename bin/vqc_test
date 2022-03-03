@@ -19,7 +19,7 @@ parser.add_argument("--nevents", type=str, default='7.20e+05',
 parser.add_argument('--ae_model_path', type=str,
                     help="The path to the Auto-Encoder model.")
 parser.add_argument('--vqc_path', type=str,
-                    help="The path to the vqc model.")
+                    help="The path to the saved vqc model (either a .npy or .pt file).")
 parser.add_argument('--nvalid', type=int, default=250,
                     help='Number of validation events for the VQC.')
 parser.add_argument('--ntest', type=int, default=250,
@@ -52,8 +52,8 @@ args = {
     "nevents": args.nevents,
     "ae_model_path": args.ae_model_path,
     "vqc_path": args.vqc_path,
-    "valid_events": args.nvalid,
-    "test_events": args.ntest,
+    "nvalid": args.nvalid,
+    "ntest": args.ntest,
     "seed": seed,
     "run_type": args.run_type,
     "backend_name": args.backend_name,

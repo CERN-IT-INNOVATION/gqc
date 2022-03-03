@@ -37,9 +37,6 @@ def print_model_info(ae_path: str, qdata, vqc):
     )
     print("-------------------------------------------\n")
 
-    print(tcols.OKCYAN + "The VQC circuit about to be trained." + tcols.ENDC)
-    vqc.draw()
-
 def get_private_config(pconfig_path: str) -> dict:
     """Import the private configuration file. This is necessary for running on IBM
     quatum computers and contains the access token. A template of this file can be

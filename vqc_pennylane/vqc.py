@@ -169,6 +169,9 @@ class VQC:
         if optimiser is None:
             raise TypeError("Specified optimiser is not an option atm!")
 
+        print(tcols.OKGREEN + "Optimiser used in this run: " + tcols.ENDC)
+        print(optimiser)
+
         return optimiser
 
     def _early_stopping(self, early_stopping_limit) -> bool:

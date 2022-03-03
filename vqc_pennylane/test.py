@@ -28,12 +28,9 @@ def main(args):
     if not os.path.exists(outdir):
         os.makedirs(outdir)
 
-    hyperparams_file = os.path.join(args["vqc_path"], "hyperparameters.json")
-    vqc_hyperparams = util.import_hyperparams(hyperparams_file)
-    args.update(vqc_hyperparams)
+    args = get_hparams_for_testing(args)
     model = util.get_model(args)
     model.load_model(args["vqc_path"])
-    util.print_model_info(args["ae_model_path"], qdata, model)
 
     _, valid_loader, test_loader = util.get_data(qdata, args)
 
@@ -47,6 +44,25 @@ def main(args):
     valid_pred = model.predict(valid_loader[0])
     test_pred = model.predict(test_loader[0])
     roc_plots(test_pred, test_loader[1], args["vqc_path"], "vqc_roc_plot")
+
+def get_hparams_for_testing(args):
+    """Imports the hyperparameters of the vqc at the given path and sets the
+    optimiser to none such that no optimiser is loaded (none is needed since no
+    training happens within the scope of this script).
+
+    Args:
+        args: Dictionary of hyperparameters for the vqc.
+
+    Returns:
+        Updated args dictionary with the loaded vqc hyperparameters.
+    """
+
+    hyperparams_file = os.path.join(args["vqc_path"], "hyperparameters.json")
+    vqc_hyperparams = util.import_hyperparams(hyperparams_file)
+    args.update(vqc_hyperparams)
+    args.update({"optimiser": "none"})
+
+    return args
 
 def set_plotting_misc():
     """Set the misc settings of the plot such as the axes font size, the title size,
@@ -78,7 +94,7 @@ def make_plots_output_folder(model_path, output_folder):
     Returns:
         Full path of the output folder to save the plots in.
     """
-    plots_folder = os.path.dirname(model_path) + "/" + output_folder + "/"
+    plots_folder = os.path.join(model_path, output_folder)
     if not os.path.exists(plots_folder):
         os.makedirs(plots_folder)
 
@@ -103,7 +119,7 @@ def roc_plots(preds, target, model_path, output_folder):
     plt.plot(fpr, tpr, label=f"AUC: {mean_auc:.3f} ± {std_auc:.3f}", color="navy")
     plt.legend()
 
-    fig.savefig(plots_folder + "roc_curve.pdf")
+    fig.savefig(os.path.join(plots_folder, "roc_curve.pdf"))
     plt.close()
 
     print(f"Latent roc plots were saved to {plots_folder}.")

@@ -26,7 +26,7 @@ def main(args):
 
     model = util.get_model(args)
     model.export_hyperparameters(outdir)
-    util.print_model_info(args["ae_model_path"], qdata, model)
+    model.export_architecture(outdir)
 
     train_loader, valid_loader, _ = util.get_data(qdata, args)
     time_the_training(

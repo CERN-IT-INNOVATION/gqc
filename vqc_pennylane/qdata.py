@@ -101,14 +101,11 @@ class qdata:
 
         raise TypeError("Given data type does not exist!")
 
-    def fold(self, data, target, events_per_kfold):
+    def fold(self, data: np.array, target: np.array, events_per_kfold: int,
+             latent: bool):
         """
         Fold the data, given a number of events you want per fold.
         All data that is not folded is then discarded.
-
-        For kfold=1, the content of the first (and only) fold would be
-        the same as that of self.ae_data.tedata BUT the order of the events
-        is different.
 
         For the case of kfold=n and kfold=m, we should not expect any of the
         folds to be the same between each other. That is, the input @data
@@ -116,12 +113,14 @@ class qdata:
         concatenated and shuffled again. Hence, we should not expect identical
         folds between these two different cases, even for the same self.ntest.
 
-        @data   :: Numpy array of the data to be folded (already shuffled once).
-        @target :: Numpy array of the target corresponding to the data.
-        @events_per_kfold :: The number of events wanted per fold.
+        Args:
+            data: 2D data to be folded (already shuffled once).
+            target: 1D target data corresponding to the @data.
+            events_per_kfold: The number of events wanted per fold.
+            latent: Whether the data should be passed through an ae (True) or not.
 
-        returns :: Folded data set with a certain number of events
-            per fold.
+        Returns:
+            Folded data set with a certain number of events per fold.
         """
         data_sig, data_bkg = self.ae_data.split_sig_bkg(data, target)
         data_sig = data_sig.reshape(-1, int(events_per_kfold / 2), data_sig.shape[1])
@@ -142,28 +141,36 @@ class qdata:
 
         data = data[:, shuffling]
         target = target[:, shuffling]
+        if not latent:
+            return data, target
+
         data = [self.model.predict(kfold)[0] for kfold in data]
         return data, target
 
-    def get_kfolded_data(self, datat):
-        """
-        Get the kfolded data for either the validation or testing data.
-        @datat :: String of the data type.
+    def get_kfolded_data(self, datat: str, latent: bool):
+        """Get the kfolded data for either the validation or testing data. Choose
+        whether this data should be passed through an autoencoder or not.
 
-        returns :: Folded data set with a certain number of events
-            pre fold.
+        Args:
+            datat: The data type, i.e., either 'valid' or 'test'.
+            latent: Whether the data should be passed through an ae (True) or not.
+
+        Returns:
+            Folded data set with a certain number of events per fold.
         """
         if datat == "valid":
             return self.fold(
                 self.ae_kfold_data.vadata,
                 self.ae_kfold_data.vatarget,
                 self.nvalid,
+                latent
             )
         if datat == "test":
             return self.fold(
                 self.ae_kfold_data.tedata,
                 self.ae_kfold_data.tetarget,
                 self.ntest,
+                latent
             )
 
         raise TypeError("Given data type does not exist!")

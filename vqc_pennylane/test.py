@@ -21,12 +21,14 @@ def main(args):
         test_events=args["ntest"],
         valid_events=args["nvalid"],
         seed=args["seed"],
+        kfolds=5
     )
     args = get_hparams_for_testing(args)
     model = util.get_model(args)
     model.load_model(args["vqc_path"])
 
     _, valid_loader, test_loader = util.get_data(qdata, args)
+
     x_valid, y_valid = util.split_data_loader(valid_loader)
     x_test, y_test = util.split_data_loader(test_loader)
     print("\n----------------------------------")
@@ -36,10 +38,11 @@ def main(args):
     print(model.compute_loss(x_test, y_test))
     print("----------------------------------\n")
 
-    valid_pred = model.predict(x_valid)[-1]
-    test_pred = model.predict(x_test)[-1]
-    roc_plots(test_pred, y_test, os.path.dirname(args["vqc_path"]), "roc_plot")
+    x_valid, y_valid, x_test, y_test = util.get_kfolded_data(qdata, args)
+    valid_preds = np.array([model.predict(x)[-1] for x in x_valid])
+    test_preds = np.array([model.predict(x)[-1] for x in x_test])
 
+    roc_plots(test_preds, y_test, os.path.dirname(args["vqc_path"]), "roc_plot")
 
 def get_hparams_for_testing(args):
     """Imports the hyperparameters of the vqc at the given path and sets the
@@ -121,28 +124,25 @@ def roc_plots(preds, target, model_path, output_folder):
 
     print(tcols.OKCYAN + f"Latent roc plots were saved to {plots_folder}."  + tcols.ENDC)
 
-def compute_auc(preds: np.array, target: np.array) -> Tuple:
-    """Split a prediction array into 5, compute the AUC for each, and then calculate
-    the mean and stardard deviation of the aucs.
+def compute_auc(preds: np.array, targets: np.array) -> Tuple:
+    """Compute the AUC for each prediction array, and then calculate the mean and
+    stardard deviation of the aucs.
 
     Args:
         preds: Array of the predictions as computed by the vqc.
-        target: Array of the target corresponding to the predicted data..
+        targets: Array of the targets corresponding to the predicted data.
 
     Returns:
         The ROC curve coordiantes, the AUC, and the standard deviation on the AUC.
     """
-    pred_chunks = np.array_split(preds, 5)
-    target_chunks = np.array_split(target, 5)
-
     aucs = np.array([])
-    for prd, trg in zip(pred_chunks, target_chunks):
+    for prd, trg in zip(preds, targets):
         fpr, tpr, thresholds = metrics.roc_curve(trg, prd)
         auc = metrics.roc_auc_score(trg, prd)
         aucs = np.append(aucs, auc)
 
     mean_auc = aucs.mean()
     std_auc = aucs.std()
-    fpr, tpr, thresholds = metrics.roc_curve(target, preds)
+    fpr, tpr, thresholds = metrics.roc_curve(targets.flatten(), preds.flatten())
 
     return fpr, tpr, mean_auc, std_auc

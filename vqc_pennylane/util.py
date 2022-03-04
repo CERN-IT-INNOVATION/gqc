@@ -239,12 +239,12 @@ def get_data(qdata, args):
     """Load the appropriate data depending on the type of vqc that is used.
 
     Args:
-        qdata (object): Class object with the loaded data.
+        qdata: Class object with the loaded data.
         args: Dictionary containing specifications relating to the data.
 
     Returns:
         The validation and test data tailored to the type of vqc that one
-        is testing with this script.
+        is testing.
     """
     if args["hybrid"]:
         return get_hybrid_data(qdata, args)
@@ -277,7 +277,8 @@ def get_hybrid_data(qdata, args) -> Tuple:
     train_loader = None
     test_loader = None
     if "batch_size" in args:
-        train_loader = qdata.ae_data.get_loader("train", "cpu", args["batch_size"], True)
+        train_loader = qdata.ae_data.get_loader("train", "cpu", args["batch_size"],
+                                                True)
     valid_loader = qdata.ae_data.get_loader("valid", "cpu", shuffle=True)
     if "ntest" in args:
         test_loader = qdata.ae_data.get_loader("test", "cpu", shuffle=True)
@@ -302,3 +303,29 @@ def split_data_loader(data_loader: Union[DataLoader, List]) -> Tuple:
         x_data, y_data = iter(data_loader).next()
         x_data, y_data = x_data.cpu().numpy(), y_data.cpu().numpy()
     return x_data, y_data
+
+def get_kfolded_data(qdata, args: dict):
+    """Get the kfolded data from the qdata and mold it with respect to what kind of
+    vqc we're working with, either hybrid or non-hybrid.
+
+    Args:
+        qdata: Class object with the loaded data.
+        args: Dictionary containing specifications relating to the data.
+
+    Returns:
+        The validation and test data tailored to the type of vqc that one
+        is testing.
+    """
+    if args["hybrid"]:
+        x_valid, y_valid = qdata.get_kfolded_data(datat="valid", latent=False)
+        x_test, y_test = qdata.get_kfolded_data(datat="test", latent=False)
+
+        return x_valid, y_valid, x_test, y_test
+
+    x_valid, y_valid = qdata.get_kfolded_data(datat="valid", latent=True)
+    x_test, y_test = qdata.get_kfolded_data(datat="test", latent=True)
+
+    return x_valid, y_valid, x_test, y_test
+
+
+

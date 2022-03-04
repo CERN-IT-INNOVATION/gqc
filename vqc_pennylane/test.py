@@ -22,10 +22,6 @@ def main(args):
         valid_events=args["nvalid"],
         seed=args["seed"],
     )
-    outdir = re.sub("(best_model.pt|best_model.npy)","",args["vqc_path"])
-    if not os.path.exists(outdir):
-        os.makedirs(outdir)
-
     args = get_hparams_for_testing(args)
     model = util.get_model(args)
     model.load_model(args["vqc_path"])
@@ -42,7 +38,7 @@ def main(args):
 
     valid_pred = model.predict(x_valid)[-1]
     test_pred = model.predict(x_test)[-1]
-    roc_plots(test_pred, y_test, outdir, "roc_plot")
+    roc_plots(test_pred, y_test, os.path.dirname(args["vqc_path"]), "roc_plot")
 
 
 def get_hparams_for_testing(args):
@@ -57,7 +53,8 @@ def get_hparams_for_testing(args):
         Updated args dictionary with the loaded vqc hyperparameters.
     """
 
-    hyperparams_file = os.path.join(args["vqc_path"], "hyperparameters.json")
+    hyperparams_file = os.path.join(os.path.dirname(args["vqc_path"]),
+                                    "hyperparameters.json")
     vqc_hyperparams = util.import_hyperparams(hyperparams_file)
     args.update(vqc_hyperparams)
     args.update({"optimiser": "none"})

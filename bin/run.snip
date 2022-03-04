@@ -7,11 +7,13 @@ python ae_plot --data_folder ../../data/ae_input/ --norm minmax --nevents 7.20e+
 # Run the qsvm on the ae latent space. Choose between ideal, noisy simulation and run on hardware for the qsvm training.
 ./qsvm_launch --data_folder ../../data/ae_input/ --norm minmax --nevents 7.20e+05 --model_path ../ae_models/variational_final/best_model.pt --backend_name ibmq_guadalupe --run_type noisy --output_folder test --c_param 0.1 --ntrain 2 --nvalid 0 --ntest 2
 
-# Run the (hybrid) VQC and AE models. The type of the model is specified by -h <hybrid/non-hybrd> and -c <weight of the VQC classification branch>.
+# Run the (hybrid) VQC and AE models.
 ./vqc_train --data_folder ../../data/ae_input/ --norm minmax --nevents 7.20e+05 --model_path ../ae_models/vanilla_final/best_model.pt --output_folder test_script_hybrid --optimiser adam --epochs 1 --run_type ideal --ntrain 2 --nvalid 2 --learning_rate 0.002 --batch_size 2  --backend_name none --vform_repeats 1 --hybrid --diff_method backprop
 
+# Test the (hybrid) VQC and AE models.
+./vqc_test --ae_model_path ../ae_models/vanilla_final/best_model.pt --vqc_path trained_vqcs/test_vqc2/best_model.npy --ntest 50 --nvalid 100 --run_type ideal
 
 # Using Slurm (workload manager software for high performance computing).
 
-# Run the (hybrid) VQC/AE models. The type of the model is specified by -h <hybrid/non-hybrd> and -c <weight of the VQC classification branch>.
+# Run the (hybrid) VQC/AE models. 
 sbatch submit_vqc_cpu.sh -n minmax -s 7.20e+05 -p ../ae_models/vanilla_final/best_model.pt -f hybrid_ae_c0.2 -q 4 -v 4 -o adam -e 100 -b 50 -g 0.001 -c 0.2 -a 3000 -l 1500 -r ideal -k none -d backprop -h 1

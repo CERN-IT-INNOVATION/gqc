@@ -1,6 +1,5 @@
 # VQC implemented in pennylane.
 import os
-import sys
 import json
 import pennylane as pnl
 
@@ -119,8 +118,10 @@ class VQC:
         Parameterless implementation is not yet available in pennylane,
         and it seems not feasible either by the way pennylane is constructed.
         """
-        drawing = pnl.draw(self._circuit)
-        print(drawing([0] * int(self._hp["nfeatures"]), self._weights))
+        drawing = pnl.draw_mpl(self._circuit)
+        fig, ax = drawing([0] * int(self._hp["nfeatures"]), self._weights)
+
+        return fig, ax
 
     @staticmethod
     def _check_compat(nqubits, nfeatures):
@@ -379,12 +380,9 @@ class VQC:
         Args:
             outdir: The output folder where the circuit file will be saved.
         """
-        outfile = os.path.join(outdir, "circuit_architecture.txt")
-        old_stdout = sys.stdout
-        with open(outfile, 'w') as of:
-            sys.stdout = of
-            self._draw()
-        sys.stdout = old_stdout
+        outfile = os.path.join(outdir, "circuit_architecture.pdf")
+        fig, ax = self._draw()
+        fig.savefig(outfile)
 
         print(tcols.OKGREEN + f"Architecture exported to {outfile}!" + tcols.ENDC)
 

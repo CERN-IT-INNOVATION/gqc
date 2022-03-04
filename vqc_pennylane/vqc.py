@@ -1,5 +1,6 @@
 # VQC implemented in pennylane.
 import os
+import sys
 import json
 import pennylane as pnl
 
@@ -119,9 +120,7 @@ class VQC:
         and it seems not feasible either by the way pennylane is constructed.
         """
         drawing = pnl.draw(self._circuit)
-        print(tcols.OKGREEN)
         print(drawing([0] * int(self._hp["nfeatures"]), self._weights))
-        print(tcols.ENDC)
 
     @staticmethod
     def _check_compat(nqubits, nfeatures):
@@ -381,8 +380,11 @@ class VQC:
             outdir: The output folder where the circuit file will be saved.
         """
         outfile = os.path.join(outdir, "circuit_architecture.txt")
+        old_stdout = sys.stdout
         with open(outfile, 'w') as of:
-            print(self._draw, file=of)
+            sys.stdout = of
+            self._draw()
+        sys.stdout = old_stdout
 
         print(tcols.OKGREEN + f"Architecture exported to {outfile}!" + tcols.ENDC)
 

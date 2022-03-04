@@ -326,6 +326,3 @@ def get_kfolded_data(qdata, args: dict):
     x_test, y_test = qdata.get_kfolded_data(datat="test", latent=True)
 
     return x_valid, y_valid, x_test, y_test
-
-
-

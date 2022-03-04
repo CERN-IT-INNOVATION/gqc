@@ -35,6 +35,7 @@ class VQC:
             "vform_repeats": 4,
             "optimiser": "adam",
             "lr": 0.001,
+            "ae_model_path": "none"
         }
 
         self._hp.update((k, hpars[k]) for k in self._hp.keys() & hpars.keys())
@@ -111,7 +112,7 @@ class VQC:
     def total_weights(self):
         return self._nweights*self._layers
 
-    def draw(self):
+    def _draw(self):
         """
         Draws the circuit using dummy parameters.
         Parameterless implementation is not yet available in pennylane,
@@ -164,13 +165,16 @@ class VQC:
         if choice is None:
             return None
 
-        switcher = {"adam": lambda: AdamOptimizer(stepsize=lr)}
+        switcher = {
+            "adam": lambda: AdamOptimizer(stepsize=lr),
+            "none": lambda: tcols.WARNING + "No Optimiser" + tcols.ENDC
+        }
         optimiser = switcher.get(choice, lambda: None)()
         if optimiser is None:
             raise TypeError("Specified optimiser is not an option atm!")
 
         print(tcols.OKGREEN + "Optimiser used in this run: " + tcols.ENDC)
-        print(optimiser)
+        print(optimiser, '\n')
 
         return optimiser
 
@@ -264,10 +268,10 @@ class VQC:
         """Prints the total weights of the vqc model, to mimic the behaviour that is
         available out of the box for the pytorch counterpart of this hybrid vqc.
         """
-        print("----------------------------------------")
+        print("\n----------------------------------------")
         print(tcols.OKGREEN + "Total number of weights: " + tcols.ENDC +
               f"{self.total_weights}")
-        print("----------------------------------------")
+        print("----------------------------------------\n")
 
     def train_model(self, train_loader, valid_loader, epochs, estopping_limit, outdir):
         """Train an instantiated vqc algorithm.
@@ -367,6 +371,20 @@ class VQC:
         params_file = open(file_path, "w")
         json.dump(self._hp, params_file)
         params_file.close()
+
+        print(tcols.OKGREEN + f"Hyperparameters exported to {file_path}!" + tcols.ENDC)
+
+    def export_architecture(self, outdir):
+        """Saves a drawing of the circuit to a text file.
+
+        Args:
+            outdir: The output folder where the circuit file will be saved.
+        """
+        outfile = os.path.join(outdir, "circuit_architecture.txt")
+        with open(outfile, 'w') as of:
+            print(self._draw, file=of)
+
+        print(tcols.OKGREEN + f"Architecture exported to {outfile}!" + tcols.ENDC)
 
     def load_model(self, model_path):
         """

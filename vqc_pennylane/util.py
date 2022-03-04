@@ -23,23 +23,6 @@ def create_output_folder(output_folder):
     if not os.path.exists(output_folder):
         os.makedirs(output_folder)
 
-def print_model_info(ae_path: str, qdata, vqc):
-    """
-    Print information about the model.
-    @ae_path :: String of path to the autoencoder.
-    @qdata   :: The data object used to train the qsvm.
-    @vqc     :: The qiskit vqc object.
-    """
-    print("\n-------------------------------------------")
-    print(f"Autoencoder model: {ae_path}")
-    print(f"Data path: {qdata.ae_data.data_folder}")
-    print(
-        f"ntrain = {len(qdata.ae_data.trtarget)}, "
-        f"nvalid = {len(qdata.ae_data.vatarget)}, "
-        f"ntest  = {len(qdata.ae_data.tetarget)}, "
-    )
-    print("-------------------------------------------\n")
-
 def get_private_config(pconfig_path: str) -> dict:
     """Import the private configuration file. This is necessary for running on IBM
     quatum computers and contains the access token. A template of this file can be
@@ -172,7 +155,7 @@ def ideal_simulation(wires: int, config: dict) -> pnl.device:
         Pennylane device for ideal simulation.
     """
     print_device_config(config)
-    print(tcols.BOLD + "\nInitialising ideal (statevector) simulation." + tcols.ENDC)
+    print(tcols.BOLD + "\nInitialising ideal (statevector) simulation.\n" + tcols.ENDC)
     return pnl.device(wires=wires, **config)
 
 def hardware_run(
@@ -233,7 +216,7 @@ def get_model(args) -> Tuple:
     auto-encoder attached to it.
 
     Args:
-        *args: Dictionary of hyperparameters for the vqc.
+        args: Dictionary of hyperparameters for the vqc.
 
     Returns:
         An instance of the vqc object with the given specifications (hyperparams).
@@ -257,9 +240,7 @@ def get_data(qdata, args):
 
     Args:
         qdata (object): Class object with the loaded data.
-        *args: Dictionary containing specifications relating to the data,
-            whether the data for the hybrid vqc or the normal vqc should be
-            loaded, and so on.
+        args: Dictionary containing specifications relating to the data.
 
     Returns:
         The validation and test data tailored to the type of vqc that one

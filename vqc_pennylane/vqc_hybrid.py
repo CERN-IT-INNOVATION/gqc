@@ -46,7 +46,7 @@ class VQCHybrid(AE_classifier):
         self._layers = self._check_compatibility(
             self.hp["nqubits"], self.hp["nfeatures"]
         )
-
+        self._diff_method = self.select_diff_method(hpars)
         self.epochs_no_improve = 0
 
         self._vqc_nweights = vf.vforms_weights(
@@ -54,7 +54,8 @@ class VQCHybrid(AE_classifier):
         )
         self._weight_shape = {"weights": (self._layers, self._vqc_nweights)}
 
-        self._circuit = pnl.qnode(self._qdevice, interface="torch")(
+        self._circuit = pnl.qnode(self._qdevice, interface="torch",
+                                  diff_method = self._diff_method)(
             self.__construct_classifier
         )
         self.classifier = pnl.qnn.TorchLayer(self._circuit, self._weight_shape)
@@ -114,6 +115,22 @@ class VQCHybrid(AE_classifier):
             )
 
         return int(nfeatures / nqubits)
+    
+    @staticmethod
+    def select_diff_method(hpars: dict) -> str:
+        """Checks if a differentiation method for the quantum circuit is specified
+        by the user. If not, 'best' is selected as the differentiation method.
+
+        Args:
+            args: Arguments given to the vqc by the user, specifiying various hps.
+
+        Returns:
+            String that specifies which differentiation method to use.
+        """
+        if "diff_method" in hpars:
+            return hpars["diff_method"]
+
+        return "best"
 
     def train_model(self, train_loader, valid_loader, epochs, estopping_limit, outdir):
         """

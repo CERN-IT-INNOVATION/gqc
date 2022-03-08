@@ -2,8 +2,8 @@
 #SBATCH --job-name=vqc_train
 #SBATCH --partition=long
 #SBATCH --ntasks=1
-#SBATCH --cpus-per-task=8
-#SBATCH --mem=4000M
+#SBATCH --cpus-per-task=64
+#SBATCH --mem=40000M
 #SBATCH --time=7-00:00:00
 #SBATCH -o ./logs/vqc_cpu_%j.out
 
@@ -95,6 +95,7 @@ echo " "
 echo "Normalization of the input file: ${n}"
 echo "Number of events in the input file: ${s}"
 echo "Hybrid VQC: ${h}"
+echo "Differentiation method of the quantum circuit: ${d}$"
 echo "Learning rate: ${g}"
 echo "Batch size: ${b}"
 echo "Number of Epochs: ${e}"

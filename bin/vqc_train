@@ -45,7 +45,7 @@ parser.add_argument('--run_type', type=str, required=True,
 parser.add_argument('--backend_name', type=str, default=None,
                     help='The IBMQ backend used for a real quantum hardware run.')
 parser.add_argument('--diff_method', type=str, default='best',
-                    choices=['best', 'parameter-shift', 'backprop'],
+                    choices=['best', 'parameter-shift', 'backprop', 'adjoint'],
                     help='Choose differentiation method for the quantum circuit.')
 parser.add_argument('--private_config', type=str, default=None,
                     help='The private configuration for the quantum computer.')
@@ -57,7 +57,7 @@ seed = 12345
 init_layout = [22, 25, 24, 23, 21, 18, 15, 12]
 pconfig = util.get_private_config("vasilis_private_configuration.json")
 switcher = {
-    'ideal':    lambda: util.config_ideal("default.qubit.autograd"),
+    'ideal':    lambda: util.config_ideal("default.qubit"),
     'noisy':    lambda: util.config_noisy(5000, 3, seed, init_layout, seed, pconfig),
     'hardware': lambda: util.config_hardware(5000, 3, seed, init_layout, pconfig)
 }
@@ -79,6 +79,7 @@ args = {
     "valid_events": args.nvalid,
     "hybrid": args.hybrid,
     "seed": seed,
+    "ae_layers": [67, 16],
     "enc_activ": 'nn.Tanh()',
     "dec_activ": 'nn.Tanh()',
     "class_weight": args.class_weight,

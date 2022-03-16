@@ -397,7 +397,11 @@ class VQC:
 
     def predict(self, x_data) -> np.ndarray:
         """
-        Compute the prediction of the vqc on a data array.
+        Compute the prediction of the vqc on a data array. The output is casted to
+        a list because the test.py is desinged to be model agnostic between VQC and
+        HybridVQC. The predict function of the latter outputs 3 values, from which we
+        want the last one, i.e., the classification branch output (see ae_classifier.py)
+
         @x_data :: Input array to pass through the vqc.
 
         returns :: The latent space of the ae and the reco data.

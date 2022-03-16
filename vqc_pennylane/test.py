@@ -37,7 +37,7 @@ def main(args):
     print("TEST LOSS:")
     print(model.compute_loss(x_test, y_test))
     print("----------------------------------\n")
-
+    
     x_valid, y_valid, x_test, y_test = util.get_kfolded_data(qdata, args)
     valid_preds = np.array([model.predict(x)[-1] for x in x_valid])
     test_preds = np.array([model.predict(x)[-1] for x in x_test])

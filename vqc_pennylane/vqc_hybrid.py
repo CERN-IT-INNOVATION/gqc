@@ -20,7 +20,7 @@ class VQCHybrid(AE_classifier):
     """
     Main skeleton for having a VQC classifier attached to
     latent space of an Autoencoder and for a hybrid encoder (classical NN) + VQC
-    classifier. The latter is can be constructed from the former by "chopping"
+    classifier. The latter can be constructed from the former by "chopping"
     off the decoder branch of the Autoencoder.
         @qdevice :: String containing what kind of device to run the
                     quantum circuit on: simulation, or actual computer?

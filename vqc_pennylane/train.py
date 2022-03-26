@@ -45,4 +45,4 @@ def time_the_training(train, *args):
     train(*args)
     train_time_end = perf_counter()
     print(f"Training completed in: {train_time_end-train_time_start:.2e} s or "
-          f"{(train_time_end-train_time_end)/3600:.2e} h.")
+          f"{(train_time_end-train_time_start)/3600:.2e} h.")

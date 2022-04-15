@@ -190,9 +190,9 @@ class AE_vanilla(nn.Module):
         """
         if self.best_valid_loss > valid_loss:
             self.epochs_no_improve = 0
-            print(tcols.OKGREEN + f"New min: {self.best_valid_loss:.2e}" + tcols.ENDC)
-
             self.best_valid_loss = valid_loss
+
+            print(tcols.OKGREEN + f"New min: {self.best_valid_loss:.2e}" + tcols.ENDC)
             if outdir is not None:
                 torch.save(self.state_dict(), outdir + "best_model.pt")
 

@@ -1,10 +1,9 @@
 #!/bin/sh
 #SBATCH --job-name=vqc_train
-#SBATCH --partition=long
+#SBATCH --partition=standard
 #SBATCH --ntasks=1
-#SBATCH --cpus-per-task=64
-#SBATCH --mem=40000M
-#SBATCH --time=7-00:00:00
+#SBATCH --cpus-per-task=32
+#SBATCH --mem-per-cpu=350M
 #SBATCH -o ./logs/vqc_cpu_%j.out
 
 usage() { echo "Usage: $0 [-n <normalization_name>] [-s <number_of_events>]"\
@@ -95,20 +94,20 @@ echo " "
 echo "Normalization of the input file: ${n}"
 echo "Number of events in the input file: ${s}"
 echo "Hybrid VQC: ${h}"
-echo "Differentiation method of the quantum circuit: ${d}$"
+echo "Differentiation method of the quantum circuit: ${d}"
 echo "Learning rate: ${g}"
 echo "Batch size: ${b}"
 echo "Number of Epochs: ${e}"
 echo "Output folder name: ${f}"
 echo "--------------------------------------- "
 
-source /work/vabelis/miniconda3/bin/activate ae_qml_pnl
+source /work/deodagiu/miniconda/bin/activate ae_qml_pnl
 export PYTHONUNBUFFERED=TRUE
-./vqc_train --data_folder /work/vabelis/data/ae_input --norm ${n} --nevents ${s} \
-            --model_path ${p} --output_folder ${f} --nqubits ${q} --vform_repeats ${v} \
-            --optimiser ${o} --epochs ${e} --learning_rate ${g} --batch_size ${b} ${h} \
-            --class_weight ${c} --ntrain ${a} --nvalid ${l} --run_type ${r} \
-            --backend_name ${k} --diff_method ${d}
+srun vqc_train --data_folder /work/deodagiu/data/ae_input --norm ${n} --nevents ${s} \
+               --model_path ${p} --output_folder ${f} --nqubits ${q} --vform_repeats ${v} \
+               --optimiser ${o} --epochs ${e} --learning_rate ${g} --batch_size ${b} ${h} \
+               --class_weight ${c} --ntrain ${a} --nvalid ${l} --run_type ${r} \
+               --backend_name ${k} --diff_method ${d}
 export PYTHONUNBUFFERED=FALSE
 
 mv ./logs/vqc_cpu_${SLURM_JOBID}.out ./trained_vqcs/${f}/

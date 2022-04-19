@@ -50,9 +50,9 @@ class VQC:
             self._layers, self._nweights, requires_grad=True
         )
 
-        self._diff_method = self.select_diff_method(hpars)
+        self._diff_method = self._select_diff_method(hpars)
         self._optimiser = self._choose_optimiser(self._hp["optimiser"], self._hp["lr"])
-        self._class_loss_function = self._binary_cross_entropy
+        self._class_loss_function = self._shift_bce
         self._epochs_no_improve = 0
         self._best_valid_loss = 999
         self.all_train_loss = []
@@ -81,8 +81,7 @@ class VQC:
                 entanglement="linear",
             )
 
-        y = [[1], [0]] * np.conj([[1], [0]]).T
-        return pnl.expval(pnl.Hermitian(y, wires=[0]))
+        return pnl.expval(pnl.PauliZ(1))
 
     @property
     def nqubits(self):
@@ -140,7 +139,7 @@ class VQC:
         return int(nfeatures / nqubits)
 
     @staticmethod
-    def select_diff_method(hpars: dict) -> str:
+    def _select_diff_method(hpars: dict) -> str:
         """Checks if a differentiation method for the quantum circuit is specified
         by the user. If not, 'best' is selected as the differentiation method.
 
@@ -192,6 +191,20 @@ class VQC:
 
     def forward(self, x_data):
         return [self._circuit(x, self._weights) for x in x_data]
+
+    def _shift_bce(self, y_preds, y_batch):
+        """Shift the input given to this method and then calculate the binary cross
+        entropy loss.
+
+        Args:
+            y_preds: The predictions made by the vqc on the data.
+            y_batch: Batch of the target array.
+
+        Returns:
+            The binary cross entropy loss computed on the given data.
+        """
+        y_preds = (np.array(y_preds) + 1)/2
+        return self._binary_cross_entropy(y_preds, y_batch)
 
     @staticmethod
     def _binary_cross_entropy(y_preds, y_batch):
@@ -323,7 +336,7 @@ class VQC:
         plt.savefig(outdir + "loss_epochs.pdf")
         plt.close()
 
-        print(tcols.OKGREEN + f"Loss plot was saved to {outdir}!" + tcols.ENDC)
+        print(tcols.OKGREEN + f"Loss plot was saved to {outdir}" + tcols.ENDC)
 
     def _loss_plot_header(self, epochs, writing_color, box_color):
         """The header of the loss plot, displaying the best obtained loss during the

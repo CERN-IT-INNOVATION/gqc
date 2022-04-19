@@ -57,12 +57,14 @@ seed = 12345
 init_layout = [22, 25, 24, 23, 21, 18, 15, 12]
 pconfig = util.get_private_config("vasilis_private_configuration.json")
 switcher = {
-    'ideal':    lambda: util.config_ideal("default.qubit"),
+    'ideal':    lambda: util.config_ideal("lightning.qubit"),
     'noisy':    lambda: util.config_noisy(5000, 3, seed, init_layout, seed, pconfig),
     'hardware': lambda: util.config_hardware(5000, 3, seed, init_layout, pconfig)
 }
 config = switcher.get(args.run_type, lambda: None)()
 
+# These are all the arguments that can be used, but that does not mean that they are
+# actually used. For example, ae_layers is not used for the vanilla vqc.
 args = {
     "data_folder": args.data_folder,
     "norm": args.norm,

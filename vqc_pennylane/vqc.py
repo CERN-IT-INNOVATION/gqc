@@ -81,7 +81,7 @@ class VQC:
                 entanglement="linear",
             )
 
-        return pnl.expval(pnl.PauliZ(1))
+        return pnl.expval(pnl.PauliZ(0))
 
     @property
     def nqubits(self):

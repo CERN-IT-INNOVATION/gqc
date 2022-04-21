@@ -1,16 +1,19 @@
 #!/bin/sh
 #SBATCH --job-name=vqc_train
-#SBATCH --partition=standard
-#SBATCH --ntasks=1
-#SBATCH --cpus-per-task=32
-#SBATCH --mem-per-cpu=550M
-#SBATCH -o ./logs/vqc_cpu_%j.out
+#SBATCH --account=gpu_gres
+#SBATCH --partition=gpu
+#SBATCH --nodes=1
+#SBATCH --ntasks=10
+#SBATCH --gres=gpu:2
+#SBATCH --mem-per-cpu=500M
+#SBATCH --time=07:00:00
+#SBATCH -o ./logs/vqc_gpu_%j.out
 
 usage() { echo "Usage: $0 [-n <normalization_name>] [-s <number_of_events>]"\
                "[-p <model_path>] [-f <output_folder>] [-q <nb_of_qubits>]"\
                "[-v <vform_repeats>] [-o <optimizer>] [-e <epochs>] [-b <batch_size>]"\
                "[-h <hybrid> {0 or 1}] [-c <class_weight>] [-a <ntrain>] [-l <nvalid>]"\
-               "[-g <learning_rate> ] [-r <run_type>] [-k <backend_name>]"\
+               "[-g <learning_rate>] [-r <run_type>] [-k <backend_name>]"\
                "[-d <diff_method>] [-i <ideal_device>]" 1>&2; exit 1; }
 
 while getopts ":n:s:p:f:q:v:o:e:b:h:c:a:l:g:r:k:d:i:" x; do
@@ -79,7 +82,7 @@ shift $((OPTIND-1))
 if [ -z "${n}" ] || [ -z "${s}" ] || [ -z "${p}" ] || [ -z "${f}" ] || [ -z "${q}" ] || \
    [ -z "${v}" ] || [ -z "${o}" ] || [ -z "${e}" ] || [ -z "${b}" ] || [ -z "${h}" ] || \
    [ -z "${c}" ] || [ -z "${a}" ] || [ -z "${l}" ] || [ -z "${r}" ] || [ -z "${k}" ] || \
-   [ -z "${g}" ] || [ -z "${d}" ] || [ -z "${i}" ] ; then
+   [ -z "${g}" ] || [ -z "${d}" ] || [ -z "${i}"] ; then
     usage
 fi
 

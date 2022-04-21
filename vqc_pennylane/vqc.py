@@ -326,6 +326,7 @@ class VQC:
         @outdir :: Directory where to save the loss plot.
         """
         epochs = list(range(len(self.all_train_loss)))
+        plt.figure()
         plt.plot(epochs, self.all_train_loss, color="gray", label="Train Loss (avg)")
         plt.plot(epochs, self.all_valid_loss, color="navy", label="Valid Loss")
         self._loss_plot_header(epochs, "blue", "white")
@@ -333,7 +334,7 @@ class VQC:
         plt.xlabel("Epochs")
         plt.ylabel("Loss")
 
-        plt.savefig(outdir + "loss_epochs.pdf")
+        plt.savefig(os.path.join(outdir, "loss_epochs.pdf"))
         plt.close()
 
         print(tcols.OKGREEN + f"Loss plot was saved to {outdir}" + tcols.ENDC)

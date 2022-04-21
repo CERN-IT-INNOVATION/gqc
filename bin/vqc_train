@@ -47,6 +47,9 @@ parser.add_argument('--backend_name', type=str, default=None,
 parser.add_argument('--diff_method', type=str, default='best',
                     choices=['best', 'parameter-shift', 'backprop', 'adjoint'],
                     help='Choose differentiation method for the quantum circuit.')
+parser.add_argument('--ideal_dev', type=str, default='default.qubit',
+                    choices=['default.qubit', 'lightning.qubit', 'lightning.gpu'],
+                    help='Choose a simulation paradigm when running an ideal sim.')
 parser.add_argument('--private_config', type=str, default=None,
                     help='The private configuration for the quantum computer.')
 args = parser.parse_args()
@@ -57,7 +60,7 @@ seed = 12345
 init_layout = [22, 25, 24, 23, 21, 18, 15, 12]
 pconfig = util.get_private_config("vasilis_private_configuration.json")
 switcher = {
-    'ideal':    lambda: util.config_ideal("lightning.qubit"),
+    'ideal':    lambda: util.config_ideal(args.ideal_dev),
     'noisy':    lambda: util.config_noisy(5000, 3, seed, init_layout, seed, pconfig),
     'hardware': lambda: util.config_hardware(5000, 3, seed, init_layout, pconfig)
 }

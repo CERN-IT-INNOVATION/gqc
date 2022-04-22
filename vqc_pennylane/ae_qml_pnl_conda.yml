@@ -47,6 +47,8 @@ dependencies:
   - lame=3.100=h7b6447c_0
   - lcms2=2.12=h3be6417_0
   - ld_impl_linux-64=2.35.1=h7274673_9
+  - libblas=3.9.0=12_linux64_mkl
+  - libcblas=3.9.0=12_linux64_mkl
   - libffi=3.3=he6710b0_2
   - libgcc-devel_linux-64=9.3.0=h7864c58_19
   - libgcc-ng=9.3.0=h5101ec6_17
@@ -55,6 +57,7 @@ dependencies:
   - libgomp=9.3.0=h5101ec6_17
   - libiconv=1.15=h63c8f33_5
   - libidn2=2.3.2=h7f8727e_0
+  - liblapack=3.9.0=12_linux64_mkl
   - libpng=1.6.37=hbc83047_0
   - libstdcxx-devel_linux-64=9.3.0=hb016644_19
   - libstdcxx-ng=9.3.0=hd4cf53a_17
@@ -134,9 +137,9 @@ dependencies:
     - orjson==3.6.6
     - pathspec==0.9.0
     - pbr==5.8.1
-    - pennylane==0.20.0
-    - pennylane-lightning==0.20.2
-    - pennylane-qiskit==0.21.0
+    - pennylane==0.22.2
+    - pennylane-lightning==0.22.1
+    - pennylane-qiskit==0.22.0
     - platformdirs==2.5.0
     - ply==3.11
     - psutil==5.9.0
@@ -164,4 +167,4 @@ dependencies:
     - tweedledum==1.1.1
     - urllib3==1.26.8
     - websocket-client==1.2.3
-prefix: /work/vabelis/miniconda3/envs/ae_qml_pnl
+prefix: /work/deodagiu/miniconda/envs/ae_qml_pnl

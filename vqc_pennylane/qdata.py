@@ -183,14 +183,8 @@ class qdata:
         @data :: Array of data to be split.
         @batch_size :: Int of the batch size.
         """
-        if len(data.shape) == 1:
-            return data.reshape(-1, batch_size)
-        elif len(data.shape) == 2:
-            return data.reshape(-1, batch_size, data.shape[1])
-        else:
-            raise RuntimeError(
-                "Batchify does not cover arrays with dimension larger than 2."
-            )
+        num_splits = np.ceil(data.shape[0]/batch_size)
+        return np.array_split(data, num_splits)
 
     @staticmethod
     def to_onehot(target):

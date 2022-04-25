@@ -3,10 +3,10 @@
 #SBATCH --account=gpu_gres
 #SBATCH --partition=gpu
 #SBATCH --nodes=1
-#SBATCH --ntasks=10
-#SBATCH --gres=gpu:2
-#SBATCH --mem-per-cpu=500M
-#SBATCH --time=07:00:00
+#SBATCH --ntasks=1
+#SBATCH --gres=gpu:1
+#SBATCH --mem-per-cpu=1000M
+#SBATCH --time=10:00:00
 #SBATCH -o ./logs/vqc_gpu_%j.out
 
 usage() { echo "Usage: $0 [-n <normalization_name>] [-s <number_of_events>]"\
@@ -82,7 +82,7 @@ shift $((OPTIND-1))
 if [ -z "${n}" ] || [ -z "${s}" ] || [ -z "${p}" ] || [ -z "${f}" ] || [ -z "${q}" ] || \
    [ -z "${v}" ] || [ -z "${o}" ] || [ -z "${e}" ] || [ -z "${b}" ] || [ -z "${h}" ] || \
    [ -z "${c}" ] || [ -z "${a}" ] || [ -z "${l}" ] || [ -z "${r}" ] || [ -z "${k}" ] || \
-   [ -z "${g}" ] || [ -z "${d}" ] || [ -z "${i}"] ; then
+   [ -z "${g}" ] || [ -z "${d}" ] || [ -z "${i}" ] ; then
     usage
 fi
 
@@ -116,4 +116,4 @@ srun vqc_train --data_folder /work/deodagiu/data/ae_input --norm ${n} --nevents 
                --backend_name ${k} --diff_method ${d} --ideal_dev ${i}
 export PYTHONUNBUFFERED=FALSE
 
-mv ./logs/vqc_cpu_${SLURM_JOBID}.out ./trained_vqcs/${f}/
+mv ./logs/vqc_gpu_${SLURM_JOBID}.out ./trained_vqcs/${f}/

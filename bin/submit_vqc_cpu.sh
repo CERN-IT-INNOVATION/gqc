@@ -1,9 +1,13 @@
 #!/bin/sh
 #SBATCH --job-name=vqc_train
+#SBATCH -p wn
+#SBATCH --account=t3
+#SBATCH -w t3wn63
 #SBATCH --partition=standard
 #SBATCH --ntasks=1
 #SBATCH --cpus-per-task=32
-#SBATCH --mem-per-cpu=550M
+#SBATCH --mem-per-cpu=2000M
+#SBATCH --time=03:00:00
 #SBATCH -o ./logs/vqc_cpu_%j.out
 
 usage() { echo "Usage: $0 [-n <normalization_name>] [-s <number_of_events>]"\

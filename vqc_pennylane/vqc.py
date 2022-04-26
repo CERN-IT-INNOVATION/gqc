@@ -293,7 +293,7 @@ class VQC:
         print(tcols.OKCYAN + "Training the vqc..." + tcols.ENDC)
         rng = np.random.default_rng(12345)
         batch_seeds = rng.integers(low=0, high=100,
-                                   size=(train_loader[1].shape[0], epochs))
+                                   size=(len(train_loader[1]) + 1, epochs))
 
         for epoch in range(epochs):
             train_loss = self._train_all_batches(train_loader, batch_seeds[epoch])

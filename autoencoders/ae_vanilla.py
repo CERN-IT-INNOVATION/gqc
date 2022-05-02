@@ -30,6 +30,7 @@ class AE_vanilla(nn.Module):
             "ae_type": "vanilla",
             "ae_layers": [67, 64, 52, 44, 32, 24, 16],
             "lr": 0.002,
+            "batch_size": 128,
             "enc_activ": "nn.Tanh()",
             "dec_activ": "nn.Tanh()",
         }

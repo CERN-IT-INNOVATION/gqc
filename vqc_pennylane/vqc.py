@@ -35,6 +35,7 @@ class VQC:
             "vform_repeats": 4,
             "optimiser": "adam",
             "lr": 0.001,
+            "batch_size": 128,
             "ae_model_path": "none"
         }
 

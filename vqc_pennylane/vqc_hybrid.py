@@ -1,7 +1,9 @@
 # Hybrid VQC.
 import torch
+from torch import nn
 import pennylane as pnl
 import numpy as np
+import pennylane.numpy as pnp
 
 from autoencoders.ae_classifier import AE_classifier
 from . import feature_maps as fm
@@ -46,7 +48,7 @@ class VQCHybrid(AE_classifier):
         self._layers = self._check_compatibility(
             self.hp["nqubits"], self.hp["nfeatures"]
         )
-        self._diff_method = self.select_diff_method(hpars)
+        self._diff_method = self._select_diff_method(hpars)
         self.epochs_no_improve = 0
 
         self._vqc_nweights = vf.vforms_weights(
@@ -59,6 +61,8 @@ class VQCHybrid(AE_classifier):
             self.__construct_classifier
         )
         self.classifier = pnl.qnn.TorchLayer(self._circuit, self._weight_shape)
+        del self.class_loss_function
+        self.class_loss_function = self._shifted_bce
 
     def __construct_classifier(self, inputs, weights):
         """
@@ -80,9 +84,20 @@ class VQCHybrid(AE_classifier):
                 repeats=self.hp["vform_repeats"],
                 entanglement="linear",
             )
-
-        y = [[1], [0]] * np.conj([[1], [0]]).T
-        return pnl.expval(pnl.Hermitian(y, wires=[0]))
+        
+        return pnl.expval(pnl.PauliZ(0))
+    
+    def _shifted_bce(self, x, y):
+        """
+        Shift the input given to this method and calculate the binary cross entropy
+        loss. This shift is required to have the output of the VQC model in [0,1].
+        Args:
+            x (torch.tensor): Data point/batch to evaluate the loss on.
+            y (torch.tensor): Corresponding labels of the point/batch.
+        Returns:
+            The binary cross entropy loss computed on the given data.
+        """
+        return nn.BCELoss(reduction="mean")((x+1)/2, y)
 
     @property
     def nqubits(self):
@@ -117,7 +132,7 @@ class VQCHybrid(AE_classifier):
         return int(nfeatures / nqubits)
     
     @staticmethod
-    def select_diff_method(hpars: dict) -> str:
+    def _select_diff_method(hpars: dict) -> str:
         """Checks if a differentiation method for the quantum circuit is specified
         by the user. If not, 'best' is selected as the differentiation method.
 

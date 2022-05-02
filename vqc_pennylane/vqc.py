@@ -267,7 +267,7 @@ class VQC:
         nb_of_batches = 0
         x_train, y_train = train_loader
         for x_batch, y_batch in zip(x_train, y_train):
-            np.random.seed(batch_seed)
+            np.random.seed(batch_seed[nb_of_batches])
             perm = np.random.permutation(len(y_batch))
             x_batch = x_batch[perm]
             y_batch = y_batch[perm]
@@ -293,8 +293,7 @@ class VQC:
         print(tcols.OKCYAN + "Training the vqc..." + tcols.ENDC)
         rng = np.random.default_rng(12345)
         batch_seeds = rng.integers(low=0, high=100,
-                                   size=(len(train_loader[1]) + 1, epochs))
-
+                                   size=(epochs, len(train_loader[1])))
         for epoch in range(epochs):
             train_loss = self._train_all_batches(train_loader, batch_seeds[epoch])
             valid_loss = self._validate(valid_loader, outdir)

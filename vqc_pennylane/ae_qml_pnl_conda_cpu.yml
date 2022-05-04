@@ -1,4 +1,4 @@
-name: ae_qml_pnl
+name: ae_qml_pnl_cpu
 channels:
   - pytorch
   - conda-forge

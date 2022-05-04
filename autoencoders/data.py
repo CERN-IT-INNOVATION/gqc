@@ -87,7 +87,6 @@ class AE_data:
         except Exception as e:
             print(f"Exception that occured: {e}")
             print(tcols.WARNING + data_type + " data file not found!" + tcols.ENDC)
-
         return data
 
     def get_numpy_target(self, data_type) -> np.ndarray:
@@ -211,9 +210,10 @@ class AE_data:
         returns :: Two numpy arrays, one with data and one with target,
             containing an equal number of singal and background events.
         """
-        nevents = int(int(nevents) / 2)
         if nevents < 0:
             return data, target
+
+        nevents = int(int(nevents) / 2)
 
         data_sig, data_bkg = self.split_sig_bkg(data, target)
         data = np.vstack((data_sig[:nevents, :], data_bkg[:nevents, :]))

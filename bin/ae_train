@@ -20,9 +20,9 @@ parser.add_argument("--valid_events", type=str, default=-1,
                     help="The exact number of valid events used < nevents.")
 parser.add_argument("--aetype", type=str,
                     help="The type of ae that you will use.")
-parser.add_argument('--lr', type=float, default=2e-03, nargs=2,
+parser.add_argument('--lr', type=float, default=2e-03,
                     help="The learning rate.")
-parser.add_argument("--batch", type=int, default=128, nargs='+',
+parser.add_argument("--batch", type=int, default=128,
                     help="The batch size.")
 parser.add_argument("--epochs", type=int, default=85,
                     help="The number of training epochs.")

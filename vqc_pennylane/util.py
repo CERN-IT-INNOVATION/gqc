@@ -276,7 +276,7 @@ def get_hybrid_data(qdata, args) -> Tuple:
     """Loads the raw input data for hybrid testing."""
     train_loader = None
     test_loader = None
-    if "batch_size" in args:
+    if "ntrain" in args:
         train_loader = qdata.ae_data.get_loader("train", "cpu", args["batch_size"],
                                                 True)
     valid_loader = qdata.ae_data.get_loader("valid", "cpu", shuffle=True)

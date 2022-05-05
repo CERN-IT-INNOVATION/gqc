@@ -16,8 +16,8 @@ def main(args):
         args["norm"],
         args["nevents"],
         args["ae_model_path"],
-        train_events=args["train_events"],
-        valid_events=args["valid_events"],
+        train_events=args["ntrain"],
+        valid_events=args["nvalid"],
         seed=args["seed"],
     )
     outdir = "./trained_vqcs/" + args["outdir"] + "/"
@@ -27,7 +27,7 @@ def main(args):
     model = util.get_model(args)
     model.export_hyperparameters(outdir)
     model.export_architecture(outdir)
-
+    
     train_loader, valid_loader, _ = util.get_data(qdata, args)
     time_the_training(
         model.train_model, train_loader, valid_loader, args["epochs"], 20, outdir

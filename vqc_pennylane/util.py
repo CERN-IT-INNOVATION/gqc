@@ -256,7 +256,7 @@ def get_nonhybrid_data(qdata, args) -> Tuple:
     hybrid VQC testing.
     """
     train_loader = None
-    if "batch_size" in args:
+    if "ntrain" in args:
         train_features = qdata.batchify(qdata.get_latent_space("train"),
                                         args["batch_size"])
         train_labels = qdata.batchify(qdata.ae_data.trtarget, args["batch_size"])

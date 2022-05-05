@@ -27,39 +27,43 @@ performance is benchmarked.
 ## Installing Dependencies
 
 We strongly recommend using `conda` to install the dependencies for this repo.
-If you have conda, creating a virtual environment with all the packages
-used in our code is done easily, by running the command:
-
-```
-conda env create -f ae_qml_conda.yml
-```
-
-Afterwards, you can activate the environment with
-
-```
-conda activate ae_qml
-```
-
-Once inside the environment, you should be able to run the code smoothly.
+If you have 'conda', go into the folder with the code you want to run, then create
+an environment from the .yml file in that folder. Activate the environment.
+Now you can run the code! Go to the *Running the code section.* for further instructions.
 
 If you do not want to use `conda`, here is a list of the packages you
 would need to install:
 
+**Pre-processing**
 * numpy
 * pandas
-* tables
+* pytables
 * matplotlib
 * scikit-learn
-* torch
-* torchvision
-* torchaudio
-* torchinfo
-* cudatoolkit
-* cudatoolkit-dev (adds the nvcc compiler to cudatoolkit)
+
+**Auto-encoders**
+* numpy
+* matplotlib
+* scikit-learn
+* pytorch (follow instruction [here](https://pytorch.org))
 * pykeops
+  * g++ compiler version >= 7
+  * cudatoolkit version >= 10  
 * geomloss
-* qiskit
-* qiskit-machine-learning
+
+**Pennylane VQC**
+* numpy
+* matplotlib
+* scikit-learn
+* pytorch (follow instruction [here](https://pytorch.org))
+* pykeops
+  * g++ compiler version >= 7
+  * cudatoolkit version >= 10  
+* geomloss
+* pennylane
+* pennylane-qiskit
+* pennylane-lightning[gpu]
+  * NVidia cuQuantum SDK 
 
 The pykeops package is required to run the Sinkhorn auto-encoder. However,
 it is a tricky package to manage, so make sure that you have a gcc and a g++

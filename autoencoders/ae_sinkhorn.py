@@ -143,7 +143,6 @@ class AE_sinkhorn(AE_vanilla):
             y_data = torch.from_numpy(y_data).to(self.device)
 
         y_data = self.transform_target_data(y_data)
-        print(y_data)
         latent, recon = self.forward(x_data.float())
 
         noise_input_probs = torch.rand(x_data.shape).to(self.device)

@@ -26,11 +26,11 @@ parser.add_argument("--batch", type=int, default=128,
                     help="The batch size.")
 parser.add_argument("--epochs", type=int, default=85,
                     help="The number of training epochs.")
-parser.add_argument("--varia_weight", type=float, default=1, nargs=2,
+parser.add_argument("--varia_weight", type=float, default=1,
                     help="The weight of the variational AE loss.")
-parser.add_argument("--class_weight", type=int, default=1, nargs=2,
+parser.add_argument("--class_weight", type=float, default=1,
                     help="The weight of the classifier BCE loss.")
-parser.add_argument("--sinkh_weight", type=int, default=1, nargs=2,
+parser.add_argument("--sinkh_weight", type=float, default=1,
                     help="The weight of the sinkhorn AE latent space loss.")
 parser.add_argument("--outdir", type=str, default="",
                     help="Flag the file in a certain way for easier labeling.")

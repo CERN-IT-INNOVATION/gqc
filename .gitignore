@@ -3,21 +3,18 @@ __pycache__
 *.pyc
 *DS_Store*
 
-# Data files.
-*.npy
-*.h5
-*.root
-*.out
-
 # Ouput
 trained_aes/
-models/
 trained_vqcs/
 trained_qsvms/
 
 # Logs
 logs/
 *.log
+*.out
+
+# Slurm submit files.
+*_slurm_*
 
 # Packaging artifacts
 ae_qml.egg-info
@@ -27,4 +24,5 @@ dist/
 pip-wheel-metadata/
 .eggs
 
-bin/private_config_vasilis.json
+# Private configs.
+private_config_*.json

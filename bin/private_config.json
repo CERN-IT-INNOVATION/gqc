@@ -1,8 +1,0 @@
-{
-    "IBMQ": {
-               "ibmq_api_token" : "",
-               "hub": "",
-               "group": "",
-               "project":""
-            }
-  }

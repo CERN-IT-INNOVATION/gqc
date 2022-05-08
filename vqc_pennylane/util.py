@@ -4,15 +4,15 @@ import os
 from typing import List
 from typing import Tuple
 from typing import Union
+import subprocess
+import json
 import pennylane as pnl
 import pennylane_qiskit
-import json
 
 from .terminal_colors import tcols
 from .vqc import VQC
 from .vqc_hybrid import VQCHybrid
 from torch.utils.data import DataLoader
-
 
 def create_output_folder(output_folder):
     """
@@ -43,6 +43,26 @@ def get_private_config(pconfig_path: str) -> dict:
         FileNotFoundError("Error in reading private config: process aborted.")
 
     return private_config
+
+def get_freest_gpu():
+    """Returns the number of the freest GPU.
+    """
+
+    # Get the list of GPUs via nvidia-smi.
+    smi_query_result = subprocess.check_output(
+        "nvidia-smi -q -d Memory | grep -A4 GPU", shell=True
+    )
+
+    # Extract the usage information
+    gpu_info = smi_query_result.decode("utf-8").split("\n")
+    gpu_info = list(filter(lambda info: "Used" in info, gpu_info))
+    gpu_info = [
+        int(x.split(":")[1].replace("MiB", "").strip()) for x in gpu_info
+    ]
+
+    # Find the most free gpu.
+    _, freest_gpu = min((val, idx) for idx, val in enumerate(gpu_info))
+    return str(freest_gpu)
 
 def config_ideal(name: str, shots:int=None) -> dict:
     """The configuration loading of the ideal simulation.

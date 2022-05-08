@@ -2,11 +2,14 @@
 
 import argparse
 import sys
-
+import os
 sys.path.append("..")
+
+os.environ['CUDA_VISIBLE_DEVICES'] = "0"
 
 from vqc_pennylane.train import main
 from vqc_pennylane import util
+
 parser = argparse.ArgumentParser(formatter_class=argparse.
                                  ArgumentDefaultsHelpFormatter)
 parser.add_argument("--data_folder", type=str, default='../../data/ae_input/',

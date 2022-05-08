@@ -46,6 +46,7 @@ would need to install:
 * matplotlib
 * scikit-learn
 * pytorch (follow instruction [here](https://pytorch.org))
+* torchinfo
 * pykeops
   * g++ compiler version >= 7
   * cudatoolkit version >= 10  
@@ -56,6 +57,7 @@ would need to install:
 * matplotlib
 * scikit-learn
 * pytorch (follow instruction [here](https://pytorch.org))
+* torchinfo
 * pykeops
   * g++ compiler version >= 7
   * cudatoolkit version >= 10  

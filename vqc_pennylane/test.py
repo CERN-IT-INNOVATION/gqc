@@ -42,7 +42,16 @@ def main(args):
     valid_preds = np.array([model.predict(x)[-1] for x in x_valid])
     test_preds = np.array([model.predict(x)[-1] for x in x_test])
 
-    roc_plots(test_preds, y_test, os.path.dirname(args["vqc_path"]), "roc_plot")
+    model_dir = os.path.dirname(args["vqc_path"])
+    roc_plots(test_preds, y_test, modle_dir, "roc_plot")
+
+    if args["hybrid"]:
+        x_test_sig, x_test_bkg = qdata.ae_data.split_sig_bkg(x_test, y_test)
+        sig = model.predict(x_test_sig)
+        bkg = model.predict(x_test_bkg)
+        roc_plots(sig[0], bkg[0], args["model_path"], "latent_roc")
+        sig_vs_bkg(sig[0], bkg[0], args["vqc_path"], "latent_plots")
+
 
 def get_hparams_for_testing(args):
     """Imports the hyperparameters of the vqc at the given path and sets the
@@ -146,3 +155,58 @@ def compute_auc(preds: np.array, targets: np.array) -> Tuple:
     fpr, tpr, thresholds = metrics.roc_curve(targets.flatten(), preds.flatten())
 
     return fpr, tpr, mean_auc, std_auc
+
+def sig_vs_bkg(data_sig, data_bkg, model_path, output_folder):
+    """Plot the overlaid signal vs background given data.
+
+    Args:
+        data_sig      :: Numpy array of the signal data.
+        data_bkg      :: Numpy array of the background data.
+        model_path    :: String of path to a trained ae model.
+        output_folder :: Folder where the figures are saved.
+    """
+    plots_folder = os.path.dirname(model_path) + "/" + output_folder + "/"
+    if not os.path.exists(plots_folder):
+        os.makedirs(plots_folder)
+
+    plt.rc("xtick", labelsize=23)
+    plt.rc("ytick", labelsize=23)
+    plt.rc("axes", titlesize=25)
+    plt.rc("axes", labelsize=25)
+    plt.rc("legend", fontsize=22)
+
+    for i in range(data_sig.shape[1]):
+        xmax = max(np.amax(data_sig[:, i]), np.amax(data_bkg[:, i]))
+        xmin = min(np.amin(data_sig[:, i]), np.amin(data_bkg[:, i]))
+        fig = plt.figure(figsize=(12, 10))
+
+        hsig, _, _ = plt.hist(
+            x=data_sig[:, i],
+            density=1,
+            range=(xmin, xmax),
+            bins=50,
+            alpha=0.8,
+            histtype="step",
+            linewidth=2.5,
+            label="Sig",
+            color="navy",
+        )
+
+        hbkg, _, _ = plt.hist(
+            x=data_bkg[:, i],
+            density=1,
+            range=(xmin, xmax),
+            bins=50,
+            alpha=0.4,
+            histtype="step",
+            linewidth=2.5,
+            label="Bkg",
+            color="gray",
+            hatch="xxx",
+        )
+
+        plt.legend()
+        fig.savefig(plots_folder + "Feature " + str(i) + ".pdf")
+        plt.close()
+
+    print(f"Latent plots were saved to {plots_folder}.")

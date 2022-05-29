@@ -56,10 +56,9 @@ class VQCHybrid(AE_classifier):
         )
         self._weight_shape = {"weights": (self._layers, self._vqc_nweights)}
 
-        self._circuit = pnl.qnode(self._qdevice, interface="torch",
-                                  diff_method = self._diff_method)(
-            self.__construct_classifier
-        )
+        self._circuit = pnl.qnode(
+            self._qdevice, interface="torch", diff_method=self._diff_method
+        )(self.__construct_classifier)
         self.classifier = pnl.qnn.TorchLayer(self._circuit, self._weight_shape)
         del self.class_loss_function
         self.class_loss_function = self._shifted_bce
@@ -84,9 +83,9 @@ class VQCHybrid(AE_classifier):
                 repeats=self.hp["vform_repeats"],
                 entanglement="linear",
             )
-        
+
         return pnl.expval(pnl.PauliZ(0))
-    
+
     def _shifted_bce(self, x, y):
         """
         Shift the input given to this method and calculate the binary cross entropy
@@ -97,7 +96,7 @@ class VQCHybrid(AE_classifier):
         Returns:
             The binary cross entropy loss computed on the given data.
         """
-        return nn.BCELoss(reduction="mean")((x+1)/2, y)
+        return nn.BCELoss(reduction="mean")((x + 1) / 2, y)
 
     @property
     def nqubits(self):
@@ -130,7 +129,7 @@ class VQCHybrid(AE_classifier):
             )
 
         return int(nfeatures / nqubits)
-    
+
     @staticmethod
     def _select_diff_method(hpars: dict) -> str:
         """Checks if a differentiation method for the quantum circuit is specified

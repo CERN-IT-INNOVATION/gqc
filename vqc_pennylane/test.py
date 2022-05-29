@@ -21,7 +21,7 @@ def main(args):
         test_events=args["ntest"],
         valid_events=args["nvalid"],
         seed=args["seed"],
-        kfolds=5
+        kfolds=5,
     )
     args = get_hparams_for_testing(args)
     model = util.get_model(args)
@@ -37,7 +37,7 @@ def main(args):
     print("TEST LOSS:")
     print(model.compute_loss(x_test, y_test))
     print("----------------------------------\n")
-    
+
     x_valid, y_valid, x_test, y_test = util.get_kfolded_data(qdata, args)
     valid_preds = np.array([model.predict(x)[-1] for x in x_valid])
     test_preds = np.array([model.predict(x)[-1] for x in x_test])
@@ -65,13 +65,15 @@ def get_hparams_for_testing(args):
         Updated args dictionary with the loaded vqc hyperparameters.
     """
 
-    hyperparams_file = os.path.join(os.path.dirname(args["vqc_path"]),
-                                    "hyperparameters.json")
+    hyperparams_file = os.path.join(
+        os.path.dirname(args["vqc_path"]), "hyperparameters.json"
+    )
     vqc_hyperparams = util.import_hyperparams(hyperparams_file)
     args.update(vqc_hyperparams)
     args.update({"optimiser": "none"})
 
     return args
+
 
 def set_plotting_misc():
     """Set the misc settings of the plot such as the axes font size, the title size,
@@ -84,14 +86,15 @@ def set_plotting_misc():
     plt.rc("axes", labelsize=25)
     plt.rc("legend", fontsize=22)
 
+
 def roc_plot_misc():
-    """Miscellaneous settings for the roc plotting.
-    """
+    """Miscellaneous settings for the roc plotting."""
     plt.plot([0, 1], [0, 1], ls="--", color="gray")
     plt.xlabel("False Positive Rate")
     plt.ylabel("True Positive Rate")
     plt.xlim([0.0, 1.0])
     plt.ylim([0.0, 1.0])
+
 
 def make_plots_output_folder(model_path, output_folder):
     """Make the output folder of the plots.
@@ -108,6 +111,7 @@ def make_plots_output_folder(model_path, output_folder):
         os.makedirs(plots_folder)
 
     return plots_folder
+
 
 def roc_plots(preds, target, model_path, output_folder):
     """Plot the ROC of the vqc predictions.
@@ -131,7 +135,8 @@ def roc_plots(preds, target, model_path, output_folder):
     fig.savefig(os.path.join(plots_folder, "roc_curve.pdf"))
     plt.close()
 
-    print(tcols.OKCYAN + f"Latent roc plots were saved to {plots_folder}."  + tcols.ENDC)
+    print(tcols.OKCYAN + f"Latent roc plots were saved to {plots_folder}." + tcols.ENDC)
+
 
 def compute_auc(preds: np.array, targets: np.array) -> Tuple:
     """Compute the AUC for each prediction array, and then calculate the mean and
@@ -155,6 +160,7 @@ def compute_auc(preds: np.array, targets: np.array) -> Tuple:
     fpr, tpr, thresholds = metrics.roc_curve(targets.flatten(), preds.flatten())
 
     return fpr, tpr, mean_auc, std_auc
+
 
 def sig_vs_bkg(data_sig, data_bkg, model_path, output_folder):
     """Plot the overlaid signal vs background given data.

@@ -14,6 +14,7 @@ from .vqc import VQC
 from .vqc_hybrid import VQCHybrid
 from torch.utils.data import DataLoader
 
+
 def create_output_folder(output_folder):
     """
     Creates output folder for the qsvm.
@@ -22,6 +23,7 @@ def create_output_folder(output_folder):
     """
     if not os.path.exists(output_folder):
         os.makedirs(output_folder)
+
 
 def get_private_config(pconfig_path: str) -> dict:
     """Import the private configuration file. This is necessary for running on IBM
@@ -44,9 +46,9 @@ def get_private_config(pconfig_path: str) -> dict:
 
     return private_config
 
+
 def get_freest_gpu():
-    """Returns the number of the freest GPU.
-    """
+    """Returns the number of the freest GPU."""
 
     # Get the list of GPUs via nvidia-smi.
     smi_query_result = subprocess.check_output(
@@ -56,15 +58,14 @@ def get_freest_gpu():
     # Extract the usage information
     gpu_info = smi_query_result.decode("utf-8").split("\n")
     gpu_info = list(filter(lambda info: "Used" in info, gpu_info))
-    gpu_info = [
-        int(x.split(":")[1].replace("MiB", "").strip()) for x in gpu_info
-    ]
+    gpu_info = [int(x.split(":")[1].replace("MiB", "").strip()) for x in gpu_info]
 
     # Find the most free gpu.
     _, freest_gpu = min((val, idx) for idx, val in enumerate(gpu_info))
     return str(freest_gpu)
 
-def config_ideal(name: str, shots:int=None) -> dict:
+
+def config_ideal(name: str, shots: int = None) -> dict:
     """The configuration loading of the ideal simulation.
 
     Args:
@@ -78,8 +79,14 @@ def config_ideal(name: str, shots:int=None) -> dict:
 
     return config_ideal
 
-def config_noisy(shots: int, optimization_level: int, transpiler_seed: int,
-                 initial_layout: List[int], seed_simulator: int, private_config: dict
+
+def config_noisy(
+    shots: int,
+    optimization_level: int,
+    transpiler_seed: int,
+    initial_layout: List[int],
+    seed_simulator: int,
+    private_config: dict,
 ) -> dict:
     """The configuration loading for the noisy simulation.
 
@@ -97,19 +104,26 @@ def config_noisy(shots: int, optimization_level: int, transpiler_seed: int,
         Dictionary of the configuration for the noisy simulation of the quantum circuit.
     """
     config_noisy = {
-    "backend_config": {"shots": shots,
-                       "optimization_level": optimization_level,
-                       "transpiler_seed": transpiler_seed,
-                       "initial_layout": initial_layout,
-                       "seed_simulator": seed_simulator
-                       },
-    "ibmq_api": private_config["IBMQ"]
+        "backend_config": {
+            "shots": shots,
+            "optimization_level": optimization_level,
+            "transpiler_seed": transpiler_seed,
+            "initial_layout": initial_layout,
+            "seed_simulator": seed_simulator,
+        },
+        "ibmq_api": private_config["IBMQ"],
     }
 
     return config_noisy
 
-def config_hardware(shots: int, optimization_level: int, transpiler_seed: int,
-                    initial_layout: List[int], private_config: dict) -> dict:
+
+def config_hardware(
+    shots: int,
+    optimization_level: int,
+    transpiler_seed: int,
+    initial_layout: List[int],
+    private_config: dict,
+) -> dict:
     """The configuration loading for running our circuits on real quantum computers.
 
     Args:
@@ -122,15 +136,17 @@ def config_hardware(shots: int, optimization_level: int, transpiler_seed: int,
         Dictionary of the configuration for running our circuit on a real quantum compt.
     """
     config_hardware = {
-    "backend_config": {"shots": shots,
-                       "optimization_level": optimization_level,
-                       "transpiler_seed": transpiler_seed,
-                       "initial_layout": initial_layout,
-                      },
-    "ibmq_api": private_config["IBMQ"]
+        "backend_config": {
+            "shots": shots,
+            "optimization_level": optimization_level,
+            "transpiler_seed": transpiler_seed,
+            "initial_layout": initial_layout,
+        },
+        "ibmq_api": private_config["IBMQ"],
     }
 
     return config_hardware
+
 
 def get_qdevice(
     run_type: str, wires: int, backend_name: str, config: dict
@@ -164,6 +180,7 @@ def get_qdevice(
         )
     return qdev
 
+
 def ideal_simulation(wires: int, config: dict) -> pnl.device:
     """
     Loads a pennylane device for ideal simulation.
@@ -177,6 +194,7 @@ def ideal_simulation(wires: int, config: dict) -> pnl.device:
     print_device_config(config)
     print(tcols.BOLD + "\nInitialising ideal (statevector) simulation.\n" + tcols.ENDC)
     return pnl.device(wires=wires, **config)
+
 
 def hardware_run(
     wires: int, backend_name: str, config: dict
@@ -207,6 +225,7 @@ def hardware_run(
     )
     return qdev_hardware
 
+
 def import_hyperparams(hyperparams_file) -> dict:
     """
     Import hyperparameters of an ae from json file.
@@ -223,11 +242,13 @@ def import_hyperparams(hyperparams_file) -> dict:
 
     return hyperparams
 
+
 def print_device_config(config: dict):
     """
     Print the configuration parameters of the used device.
     """
     print(tcols.OKCYAN + "Device configuration parameters:\n" + tcols.ENDC, config)
+
 
 def get_model(args) -> Tuple:
     """Choose the type of VQC to train. The normal vqc takes the latent space
@@ -255,6 +276,7 @@ def get_model(args) -> Tuple:
     vqc = VQC(qdevice, args)
     return vqc
 
+
 def get_data(qdata, args):
     """Load the appropriate data depending on the type of vqc that is used.
 
@@ -271,14 +293,16 @@ def get_data(qdata, args):
 
     return get_nonhybrid_data(qdata, args)
 
+
 def get_nonhybrid_data(qdata, args) -> Tuple:
     """Loads the data from pre-trained autoencoder latent space when we have non
     hybrid VQC testing.
     """
     train_loader = None
     if "ntrain" in args:
-        train_features = qdata.batchify(qdata.get_latent_space("train"),
-                                        args["batch_size"])
+        train_features = qdata.batchify(
+            qdata.get_latent_space("train"), args["batch_size"]
+        )
         train_labels = qdata.batchify(qdata.ae_data.trtarget, args["batch_size"])
         train_loader = [train_features, train_labels]
 
@@ -292,22 +316,25 @@ def get_nonhybrid_data(qdata, args) -> Tuple:
 
     return train_loader, valid_loader, test_loader
 
+
 def get_hybrid_data(qdata, args) -> Tuple:
     """Loads the raw input data for hybrid testing."""
     train_loader = None
     test_loader = None
     if "ntrain" in args:
-        train_loader = qdata.ae_data.get_loader("train", "cpu", args["batch_size"],
-                                                True)
+        train_loader = qdata.ae_data.get_loader(
+            "train", "cpu", args["batch_size"], True
+        )
     valid_loader = qdata.ae_data.get_loader("valid", "cpu", shuffle=True)
     if "ntest" in args:
         test_loader = qdata.ae_data.get_loader("test", "cpu", shuffle=True)
 
     return train_loader, valid_loader, test_loader
 
+
 def split_data_loader(data_loader: Union[DataLoader, List]) -> Tuple:
     """
-    Splits a data loader object to the corresponding data features (x_data) and 
+    Splits a data loader object to the corresponding data features (x_data) and
     labels (y_data). For the VQC training the data loader is simply a list of the
     form: [x_data, y_data]. For a PyTorch DataLoader object, which is not subscriptable,
     on needs to do a transformation to an iterable in order to access its elements.
@@ -323,6 +350,7 @@ def split_data_loader(data_loader: Union[DataLoader, List]) -> Tuple:
         x_data, y_data = iter(data_loader).next()
         x_data, y_data = x_data.cpu().numpy(), y_data.cpu().numpy()
     return x_data, y_data
+
 
 def get_kfolded_data(qdata, args: dict):
     """Get the kfolded data from the qdata and mold it with respect to what kind of

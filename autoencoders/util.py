@@ -44,13 +44,15 @@ def define_torch_device() -> torch.device:
     print("\n")
     with warnings.catch_warnings(record=True) as w:
         warnings.simplefilter("always")
-        device = torch.device("cuda:" + str(get_free_gpu()) if
-            torch.cuda.is_available() else "cpu")
+        device = torch.device(
+            "cuda:" + str(get_free_gpu()) if torch.cuda.is_available() else "cpu"
+        )
         if len(w):
             print(tcols.WARNING + "GPU not available." + tcols.ENDC)
 
     print("\033[92mUsing device:\033[0m", device)
     return device
+
 
 def get_free_gpu(threshold_vram_usage=3000, max_gpus=1):
     """
@@ -71,14 +73,10 @@ def get_free_gpu(threshold_vram_usage=3000, max_gpus=1):
     # Extract the usage information
     gpu_info = smi_query_result.decode("utf-8").split("\n")
     gpu_info = list(filter(lambda info: "Used" in info, gpu_info))
-    gpu_info = [
-        int(x.split(":")[1].replace("MiB", "").strip()) for x in gpu_info
-    ]
+    gpu_info = [int(x.split(":")[1].replace("MiB", "").strip()) for x in gpu_info]
 
     # Keep gpus under threshold only.
-    free_gpus = [
-        str(i) for i, mem in enumerate(gpu_info) if mem < threshold_vram_usage
-    ]
+    free_gpus = [str(i) for i, mem in enumerate(gpu_info) if mem < threshold_vram_usage]
     free_gpus = free_gpus[: min(max_gpus, len(free_gpus))]
     gpus_to_use = ",".join(free_gpus)
 
@@ -86,6 +84,7 @@ def get_free_gpu(threshold_vram_usage=3000, max_gpus=1):
         raise RuntimeError(tcols.FAIL + "No free GPUs found." + tcols.ENDC)
 
     return gpus_to_use
+
 
 def import_hyperparams(hyperparams_file) -> dict:
     """

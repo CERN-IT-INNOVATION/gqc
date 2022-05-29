@@ -36,7 +36,7 @@ class VQC:
             "optimiser": "adam",
             "lr": 0.001,
             "batch_size": 128,
-            "ae_model_path": "none"
+            "ae_model_path": "none",
         }
 
         self._hp.update((k, hpars[k]) for k in self._hp.keys() & hpars.keys())
@@ -110,7 +110,7 @@ class VQC:
 
     @property
     def total_weights(self):
-        return self._nweights*self._layers
+        return self._nweights * self._layers
 
     def _draw(self):
         """
@@ -167,14 +167,14 @@ class VQC:
 
         switcher = {
             "adam": lambda: AdamOptimizer(stepsize=lr),
-            "none": lambda: tcols.WARNING + "No Optimiser" + tcols.ENDC
+            "none": lambda: tcols.WARNING + "No Optimiser" + tcols.ENDC,
         }
         optimiser = switcher.get(choice, lambda: None)()
         if optimiser is None:
             raise TypeError("Specified optimiser is not an option atm!")
 
         print(tcols.OKGREEN + "Optimiser used in this run: " + tcols.ENDC)
-        print(optimiser, '\n')
+        print(optimiser, "\n")
 
         return optimiser
 
@@ -204,7 +204,7 @@ class VQC:
         Returns:
             The binary cross entropy loss computed on the given data.
         """
-        y_preds = (np.array(y_preds) + 1)/2
+        y_preds = (np.array(y_preds) + 1) / 2
         return self._binary_cross_entropy(y_preds, y_batch)
 
     @staticmethod
@@ -283,18 +283,20 @@ class VQC:
         available out of the box for the pytorch counterpart of this hybrid vqc.
         """
         print("\n----------------------------------------")
-        print(tcols.OKGREEN + "Total number of weights: " + tcols.ENDC +
-              f"{self.total_weights}")
+        print(
+            tcols.OKGREEN
+            + "Total number of weights: "
+            + tcols.ENDC
+            + f"{self.total_weights}"
+        )
         print("----------------------------------------\n")
 
     def train_model(self, train_loader, valid_loader, epochs, estopping_limit, outdir):
-        """Train an instantiated vqc algorithm.
-        """
+        """Train an instantiated vqc algorithm."""
         self._print_total_weights()
         print(tcols.OKCYAN + "Training the vqc..." + tcols.ENDC)
         rng = np.random.default_rng(12345)
-        batch_seeds = rng.integers(low=0, high=100,
-                                   size=(epochs, len(train_loader[1])))
+        batch_seeds = rng.integers(low=0, high=100, size=(epochs, len(train_loader[1])))
         for epoch in range(epochs):
             train_loss = self._train_all_batches(train_loader, batch_seeds[epoch])
             valid_loss = self._validate(valid_loader, outdir)

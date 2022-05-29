@@ -101,8 +101,9 @@ class qdata:
 
         raise TypeError("Given data type does not exist!")
 
-    def fold(self, data: np.array, target: np.array, events_per_kfold: int,
-             latent: bool):
+    def fold(
+        self, data: np.array, target: np.array, events_per_kfold: int, latent: bool
+    ):
         """
         Fold the data, given a number of events you want per fold.
         All data that is not folded is then discarded.
@@ -163,14 +164,14 @@ class qdata:
                 self.ae_kfold_data.vadata,
                 self.ae_kfold_data.vatarget,
                 self.nvalid,
-                latent
+                latent,
             )
         if datat == "test":
             return self.fold(
                 self.ae_kfold_data.tedata,
                 self.ae_kfold_data.tetarget,
                 self.ntest,
-                latent
+                latent,
             )
 
         raise TypeError("Given data type does not exist!")
@@ -183,7 +184,7 @@ class qdata:
         @data :: Array of data to be split.
         @batch_size :: Int of the batch size.
         """
-        num_splits = np.ceil(data.shape[0]/batch_size)
+        num_splits = np.ceil(data.shape[0] / batch_size)
         return np.array_split(data, num_splits)
 
     @staticmethod

@@ -2,6 +2,7 @@ __pycache__
 ._*
 *.pyc
 *DS_Store*
+.vscode/
 
 # Ouput
 trained_aes/

@@ -184,7 +184,7 @@ dependencies:
     - networkx==2.8
     - ninja==1.10.2.3
     - ntlm-auth==1.5.0
-    - orjson==3.6.8
+    - orjson==3.7.0
     - pbr==5.9.0
     - pennylane==0.23.0
     - pennylane-lightning==0.23.0

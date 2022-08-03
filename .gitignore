@@ -8,6 +8,7 @@ __pycache__
 trained_aes/
 trained_vqcs/
 trained_qsvms/
+trained_nns/
 
 # Logs
 logs/

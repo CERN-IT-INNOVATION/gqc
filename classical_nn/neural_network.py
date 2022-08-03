@@ -13,7 +13,7 @@ import os
 import json
 import matplotlib.pyplot as plt
 
-from terminal_colors import tcols
+from vqc_pennylane.terminal_colors import tcols
 
 seed = 100
 torch.manual_seed(seed)
@@ -36,6 +36,7 @@ class NeuralNetwork(nn.Module):
             "layers": [67, 64, 52, 44, 32, 24, 16, 1],
             "lr": 0.002,
             "batch_size": 128,
+            "adam_betas": (0.9, 0.999),
             "out_activ": "nn.Sigmoid()",
         }
         self._device = device
@@ -48,8 +49,6 @@ class NeuralNetwork(nn.Module):
         self.best_valid_loss = 9999
         self.all_train_loss = []
         self.all_valid_loss = []
-
-        self.early_stopping_limit = 15
         self.epochs_no_improve = 0
 
         self._network = self.__construct_network()
@@ -73,8 +72,8 @@ class NeuralNetwork(nn.Module):
 
     def instantiate_adam_optimizer(self):
         """Instantiate the optimizer object, used in the training of the model."""
-        self = self.to(self.device)
-        self.optimizer = optim.Adam(self.parameters(), lr=self._hp["lr"])
+        self = self.to(self._device)
+        self.optimizer = optim.Adam(self.parameters(), lr=self._hp["lr"], betas=self._hp["adam_betas"])
 
     def forward(self, x) -> torch.Tensor:
         """Forward pass of the network."""
@@ -91,9 +90,9 @@ class NeuralNetwork(nn.Module):
         Returns: The computed loss function value.
         """
         if isinstance(x_data, np.ndarray):
-            x_data = torch.from_numpy(x_data).to(self.device)
+            x_data = torch.from_numpy(x_data).to(self._device)
         if isinstance(y_data, np.ndarray):
-            y_data = torch.from_numpy(y_data).to(self.device)
+            y_data = torch.from_numpy(y_data).to(self._device)
 
         output = self.forward(x_data.float())
         return self._class_loss_function(output.flatten(), y_data.float())
@@ -169,7 +168,7 @@ class NeuralNetwork(nn.Module):
         else:
             self.epochs_no_improve += 1
 
-    def early_stopping(self) -> bool:
+    def _early_stopping(self, early_stopping_limit) -> bool:
         """
         Stops the training if there has been no improvement in the loss
         function during the past, e.g. 10, number of epochs.
@@ -177,7 +176,7 @@ class NeuralNetwork(nn.Module):
         Returns: True for when the early stopping limit was exceeded and 
                  false otherwise.
         """
-        if self.epochs_no_improve >= self.early_stopping_limit:
+        if self.epochs_no_improve >= early_stopping_limit:
             return 1
         return 0
 
@@ -194,10 +193,10 @@ class NeuralNetwork(nn.Module):
         Returns: Pytorch loss object of the validation loss.
         """
         x_data_valid, y_data_valid = iter(valid_loader).next()
-        x_data_valid = x_data_valid.to(self.device)
+        x_data_valid = x_data_valid.to(self._device)
         self.eval()
 
-        loss = self.compute_loss(x_data_valid, None)
+        loss = self.compute_loss(x_data_valid, y_data_valid)
         self.save_best_loss_model(loss, outdir)
 
         return loss
@@ -215,9 +214,9 @@ class NeuralNetwork(nn.Module):
         Returns: Training loss over a batch.
         """
         feature_size = x_batch.shape[1]
-        init_feats = x_batch.view(-1, feature_size).to(self.device)
+        init_feats = x_batch.view(-1, feature_size).to(self._device)
         if y_batch is not None:
-            y_batch = y_batch.to(self.device)
+            y_batch = y_batch.to(self._device)
 
         loss = self.compute_loss(init_feats, y_batch)
 
@@ -246,7 +245,7 @@ class NeuralNetwork(nn.Module):
         return batch_loss_sum / nb_of_batches
 
     def train_model(self, train_loader: DataLoader, valid_loader:DataLoader, 
-                    epochs: int, outdir: str):
+                    epochs: int, early_stopping_limit: int, outdir: str):
         """
         Train the neural network.
         
@@ -267,7 +266,7 @@ class NeuralNetwork(nn.Module):
             self.train()
             train_loss = self._train_all_batches(train_loader)
             valid_loss = self.valid(valid_loader, outdir)
-            if self.early_stopping():
+            if self._early_stopping(early_stopping_limit):
                 break
 
             self.all_train_loss.append(train_loss.item())
@@ -328,7 +327,7 @@ class NeuralNetwork(nn.Module):
         """
         file_path = os.path.join(outdir, "hyperparameters.json")
         params_file = open(file_path, "w")
-        json.dump(self.hp, params_file)
+        json.dump(self._hp, params_file)
         params_file.close()
 
     def load_model(self, model_path):
@@ -341,7 +340,7 @@ class NeuralNetwork(nn.Module):
         if not os.path.exists(model_path):
             raise FileNotFoundError("∄ path.")
         self.load_state_dict(
-            torch.load(model_path, map_location=torch.device(self.device))
+            torch.load(model_path, map_location=torch.device(self._device))
         )
 
     @torch.no_grad()
@@ -354,6 +353,6 @@ class NeuralNetwork(nn.Module):
 
         Returns: The predicted label of x_data.
         """
-        x_data = torch.from_numpy(x_data).to(self.device)
+        x_data = torch.from_numpy(x_data).to(self._device)
         self.eval()
         return self.forward(x_data.float())

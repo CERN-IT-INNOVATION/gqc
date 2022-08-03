@@ -24,7 +24,13 @@ torch.autograd.profiler.profile(enabled=False)
 
 
 class NeuralNetwork(nn.Module):
+    """
+    TODO
+    """
     def __init__(self, device="cpu", hpars={}):
+        """
+        TODO
+        """
         super().__init__()
         self._hp = {
             "layers": [67, 64, 52, 44, 32, 24, 16, 1],

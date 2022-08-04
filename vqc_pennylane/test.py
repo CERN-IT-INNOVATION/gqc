@@ -5,7 +5,6 @@ from typing import Tuple
 import matplotlib.pyplot as plt
 from sklearn import metrics
 from pennylane import numpy as np
-import re
 
 from . import qdata as qd
 from . import util

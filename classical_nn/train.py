@@ -12,7 +12,6 @@ import torch
 torch.manual_seed(0)
 
 from autoencoders import util as ae_util
-from autoencoders import data
 from vqc_pennylane.terminal_colors import tcols
 from vqc_pennylane import util
 from vqc_pennylane import qdata as qd
@@ -25,16 +24,6 @@ def main():
     if not os.path.exists(outdir):
         os.makedirs(outdir)
 
-    # Data loading. FIXME: this or through qdata to ensure identical loading 
-    # with the hybrid VQC?
-    #ae_data = data.AE_data(
-    #    args["data_folder"],
-    #    args["norm"],
-    #    args["nevents"],
-    #    args["ntrain"],
-    #    args["nvalid"],
-    #    seed=args["seed"],
-    #)
     qdata = qd.qdata(
     args["data_folder"],
     args["norm"],
@@ -45,17 +34,13 @@ def main():
     seed=args["seed"],
     )
     train_loader, valid_loader, _ = util.get_hybrid_data(qdata, args)
-    #train_loader = ae_data.get_loader("train", device, args["batch_size"], True)
-    #valid_loader = ae_data.get_loader("valid", device, None, True)
 
     model = NeuralNetwork(device, args)
-
     model.export_architecture(outdir)
     model.export_hyperparameters(outdir)
     time_the_training(
         model.train_model, train_loader, valid_loader, args["epochs"], 20, outdir
     )
-
     model.loss_plot(outdir)
 
 def get_arguments() -> dict:
@@ -89,7 +74,6 @@ def get_arguments() -> dict:
     args = parser.parse_args()
     
     seed = 12345
-
     args = {
         "data_folder": args.data_folder,
         "norm": args.norm,

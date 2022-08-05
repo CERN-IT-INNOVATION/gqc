@@ -6,10 +6,13 @@
 import time
 import os
 import argparse
+
 import sys
 sys.path.append("..")
+
 import torch
-torch.manual_seed(0)
+seed = 1234567890
+torch.manual_seed(seed)
 
 from autoencoders import util as ae_util
 from vqc_pennylane.terminal_colors import tcols

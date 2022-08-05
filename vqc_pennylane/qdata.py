@@ -49,6 +49,7 @@ class qdata:
         seed=None,
     ):
 
+        self.seed = seed
         device = "cpu"
         model_folder = os.path.dirname(model_path)
         hp_file = os.path.join(model_folder, "hyperparameters.json")
@@ -62,15 +63,14 @@ class qdata:
             train_events,
             valid_events,
             test_events,
-            seed,
+            self.seed,
         )
         self.model = aeutil.choose_ae_model(hp["ae_type"], device, hp)
-        self.model.load_model(model_path)
+        #self.model.load_model(model_path)
 
         self.ntrain = self.ae_data.trdata.shape[0]
         self.nvalid = self.ae_data.vadata.shape[0]
         self.ntest = self.ae_data.tedata.shape[0]
-        self.seed = seed
 
         if kfolds > 0:
             print(tcols.OKCYAN + "Loading k-folded valid data:" + tcols.ENDC)

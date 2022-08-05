@@ -33,10 +33,10 @@ def choose_ae_model(ae_type, device, hyperparams) -> callable:
         "sinkclass": lambda: AE_sinkclass(device, hyperparams),
     }
     model = switcher.get(ae_type, lambda: None)()
-    if model is None:
-        raise TypeError("Specified AE type does not exist!")
-
-    return model
+    #if model is None:
+    #    raise TypeError("Specified AE type does not exist!")
+    #model = None
+    return 0
 
 
 def define_torch_device() -> torch.device:

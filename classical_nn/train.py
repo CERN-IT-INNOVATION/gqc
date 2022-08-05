@@ -9,14 +9,17 @@ import argparse
 import sys
 sys.path.append("..")
 import torch
-torch.manual_seed(0)
+seed = 1234567890
+torch.manual_seed(seed)
 
 from autoencoders import util as ae_util
-from autoencoders import data
+#from autoencoders import data
 from vqc_pennylane.terminal_colors import tcols
 from vqc_pennylane import util
 from vqc_pennylane import qdata as qd
 from neural_network import NeuralNetwork
+
+torch.use_deterministic_algorithms(mode=True)
 
 def main():
     args = get_arguments()
@@ -47,8 +50,12 @@ def main():
     train_loader, valid_loader, _ = util.get_hybrid_data(qdata, args)
     #train_loader = ae_data.get_loader("train", device, args["batch_size"], True)
     #valid_loader = ae_data.get_loader("valid", device, None, True)
-
+    #seed = 1234567890
+    #torch.manual_seed(seed)
     model = NeuralNetwork(device, args)
+    print("Right after model instance:")
+    for param in model.parameters(): 
+        print(param)
 
     model.export_architecture(outdir)
     model.export_hyperparameters(outdir)
@@ -88,7 +95,7 @@ def get_arguments() -> dict:
                         help="Flag the file in a certain way for easier labeling.")
     args = parser.parse_args()
     
-    seed = 12345
+    seed = 1234567890
 
     args = {
         "data_folder": args.data_folder,

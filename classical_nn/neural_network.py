@@ -3,6 +3,7 @@
 
 from typing import Union
 import numpy as np
+
 import torch
 import torch.nn as nn
 import torch.optim as optim
@@ -14,9 +15,6 @@ import json
 import matplotlib.pyplot as plt
 
 from vqc_pennylane.terminal_colors import tcols
-
-seed = 100
-torch.manual_seed(seed)
 
 # Diagnosis tools. Enable in case you need. Disabled to increase performance.
 torch.autograd.set_detect_anomaly(False)
@@ -238,6 +236,7 @@ class NeuralNetwork(nn.Module):
         batch_loss_sum = 0
         nb_of_batches = 0
         for batch in train_loader:
+            print(batch)
             x_batch, y_batch = batch
             batch_loss = self._train_batch(x_batch, y_batch)
             batch_loss_sum += batch_loss
@@ -261,7 +260,9 @@ class NeuralNetwork(nn.Module):
         print(tcols.OKCYAN)
         print("Training the fully connected feed-forward neural network...")
         print(tcols.ENDC)
-
+        print("Init weights right before epochs:")
+        for param in self.parameters():
+            print(param)
         for epoch in range(epochs):
             self.train()
             train_loss = self._train_all_batches(train_loader)

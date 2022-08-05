@@ -10,8 +10,8 @@ from . import feature_maps as fm
 from . import variational_forms as vf
 from .terminal_colors import tcols
 
-seed = 100
-torch.manual_seed(seed)
+#seed = 100 #FIXME move to train.py
+#torch.manual_seed(seed)
 
 # Diagnosis tools. Enable in case you need. Disabled to increase performance.
 torch.autograd.set_detect_anomaly(False)

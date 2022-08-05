@@ -23,21 +23,22 @@ class AE_data:
         self.norm_name = norm_name
         self.nevents = nevents
         self.data_folder = data_folder
+        self.seed = seed
 
         self.trdata = self.get_numpy_data("train")
         self.trtarget = self.get_numpy_target("train")
         self.trdata, self.trtarget = self.get_data(
-            self.trdata, self.trtarget, train_events, seed
+            self.trdata, self.trtarget, train_events, self.seed
         )
         self.vadata = self.get_numpy_data("valid")
         self.vatarget = self.get_numpy_target("valid")
         self.vadata, self.vatarget = self.get_data(
-            self.vadata, self.vatarget, valid_events, seed
+            self.vadata, self.vatarget, valid_events, self.seed
         )
         self.tedata = self.get_numpy_data("test")
         self.tetarget = self.get_numpy_target("test")
         self.tedata, self.tetarget = self.get_data(
-            self.tedata, self.tetarget, test_events, seed
+            self.tedata, self.tetarget, test_events, self.seed
         )
 
         self.nfeats = self.trdata.shape[1]
@@ -163,21 +164,25 @@ class AE_data:
         returns :: Pytorch objects to be passed to the autoencoder for
             training.
         """
+        generator_cpu = torch.Generator()
+        generator_cpu.manual_seed(self.seed) # required to fix the batch shuffling
         dataset = self.get_pytorch_dataset(data_type)
         if batch_size is None:
             batch_size = len(dataset)
 
         if device == "cpu":
             pytorch_loader = torch.utils.data.DataLoader(
-                dataset, batch_size=batch_size, shuffle=shuffle
+                dataset, batch_size=batch_size, shuffle=shuffle,
+                generator=generator_cpu,
             )
         else:
             pytorch_loader = torch.utils.data.DataLoader(
                 dataset, batch_size=batch_size, shuffle=shuffle, pin_memory=True
             )
-        for batch in pytorch_loader:
-            print(batch)
-        exit(1)
+        print("ae data:")
+        #for batch in pytorch_loader:
+        #    print(batch)
+        #exit(1)
         return pytorch_loader
 
     @staticmethod

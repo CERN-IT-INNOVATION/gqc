@@ -355,4 +355,4 @@ class NeuralNetwork(nn.Module):
         """
         x_data = torch.from_numpy(x_data).to(self._device)
         self.eval()
-        return self.forward(x_data.float())
+        return [self.forward(x_data.float())] # To use predict(x)[-1], maybe not..

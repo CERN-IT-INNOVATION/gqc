@@ -3,58 +3,86 @@
 # Run the training of the autoencoder.
 import argparse
 import sys
+
 sys.path.append("..")
 
 from autoencoders.train import main
-parser = argparse.ArgumentParser(formatter_class=argparse.
-                                 ArgumentDefaultsHelpFormatter)
-parser.add_argument("--data_folder", type=str,
-                    help="The folder where the data is stored on the system..")
-parser.add_argument("--norm", type=str,
-                    help="The name of the normalisation that you'll to use.")
-parser.add_argument("--nevents", type=str,
-                    help="The number of signal events of the norm file.")
-parser.add_argument("--train_events", type=int, default=-1,
-                    help="The exact number of training events used < nevents.")
-parser.add_argument("--valid_events", type=int, default=-1,
-                    help="The exact number of valid events used < nevents.")
-parser.add_argument("--aetype", type=str,
-                    help="The type of ae that you will use.")
-parser.add_argument('--lr', type=float, default=2e-03,
-                    help="The learning rate.")
-parser.add_argument("--batch", type=int, default=128,
-                    help="The batch size.")
-parser.add_argument("--epochs", type=int, default=85,
-                    help="The number of training epochs.")
-parser.add_argument("--varia_weight", type=float, default=1,
-                    help="The weight of the variational AE loss.")
-parser.add_argument("--class_weight", type=float, default=1,
-                    help="The weight of the classifier BCE loss.")
-parser.add_argument("--sinkh_weight", type=float, default=1,
-                    help="The weight of the sinkhorn AE latent space loss.")
-parser.add_argument("--outdir", type=str, default="",
-                    help="Flag the file in a certain way for easier labeling.")
+
+parser = argparse.ArgumentParser(formatter_class=argparse.ArgumentDefaultsHelpFormatter)
+parser.add_argument(
+    "--data_folder",
+    type=str,
+    help="The folder where the data is stored on the system..",
+)
+parser.add_argument(
+    "--norm", type=str, help="The name of the normalisation that you'll to use."
+)
+parser.add_argument(
+    "--nevents", type=str, help="The number of signal events of the norm file."
+)
+parser.add_argument(
+    "--train_events",
+    type=int,
+    default=-1,
+    help="The exact number of training events used < nevents.",
+)
+parser.add_argument(
+    "--valid_events",
+    type=int,
+    default=-1,
+    help="The exact number of valid events used < nevents.",
+)
+parser.add_argument("--aetype", type=str, help="The type of ae that you will use.")
+parser.add_argument("--lr", type=float, default=2e-03, help="The learning rate.")
+parser.add_argument("--batch", type=int, default=128, help="The batch size.")
+parser.add_argument(
+    "--epochs", type=int, default=85, help="The number of training epochs."
+)
+parser.add_argument(
+    "--varia_weight",
+    type=float,
+    default=1,
+    help="The weight of the variational AE loss.",
+)
+parser.add_argument(
+    "--class_weight",
+    type=float,
+    default=1,
+    help="The weight of the classifier BCE loss.",
+)
+parser.add_argument(
+    "--sinkh_weight",
+    type=float,
+    default=1,
+    help="The weight of the sinkhorn AE latent space loss.",
+)
+parser.add_argument(
+    "--outdir",
+    type=str,
+    default="",
+    help="Flag the file in a certain way for easier labeling.",
+)
 args = parser.parse_args()
 
 args = {
-    "data_folder":  args.data_folder,
-    "norm":         args.norm,
-    "nevents":      args.nevents,
+    "data_folder": args.data_folder,
+    "norm": args.norm,
+    "nevents": args.nevents,
     "train_events": args.train_events,
     "valid_events": args.valid_events,
-    "aetype":       args.aetype,
-    "ae_layers":    [64, 44, 32, 24, 16],
+    "aetype": args.aetype,
+    "ae_layers": [64, 44, 32, 24, 16],
     "class_layers": [32, 64, 128, 64, 32, 16, 8, 1],
-    "batch":        args.batch,
-    "lr":           args.lr,
-    "epochs":       args.epochs,
-    "enc_activ":    'nn.Tanh()',
-    "dec_activ":    'nn.Tanh()',
+    "batch": args.batch,
+    "lr": args.lr,
+    "epochs": args.epochs,
+    "enc_activ": "nn.Tanh()",
+    "dec_activ": "nn.Tanh()",
     "varia_weight": args.varia_weight,
     "class_weight": args.class_weight,
     "sinkh_weight": args.sinkh_weight,
-    "adam_betas":   (0.9, 0.999),
-    "outdir":       args.outdir,
+    "adam_betas": (0.9, 0.999),
+    "outdir": args.outdir,
 }
 
 main(args)

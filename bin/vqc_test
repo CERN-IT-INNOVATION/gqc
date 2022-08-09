@@ -8,29 +8,55 @@ sys.path.append("..")
 
 from vqc_pennylane.test import main
 from vqc_pennylane import util
-parser = argparse.ArgumentParser(formatter_class=argparse.
-                                 ArgumentDefaultsHelpFormatter)
-parser.add_argument("--data_folder", type=str, default='../../data/ae_input/',
-                    help="The folder where the data is stored on the system.")
-parser.add_argument("--norm", type=str, default='minmax',
-                    help="The name of the normalisation that you'll to use.")
-parser.add_argument("--nevents", type=str, default='7.20e+05',
-                    help="The number of events of the norm file.")
-parser.add_argument('--ae_model_path', type=str,
-                    help="The path to the Auto-Encoder model.")
-parser.add_argument('--vqc_path', type=str,
-                    help="The path to the saved vqc model (either a .npy or .pt file).")
-parser.add_argument('--nvalid', type=int, default=250,
-                    help='Number of validation events for the VQC.')
-parser.add_argument('--ntest', type=int, default=250,
-                    help='Number of test events for the VQC.')
-parser.add_argument('--backend_name', type=str, default=None,
-                    help='The IBMQ backend used for either an ideal simulation or'
-                         'or a real quantum hardware run.')
-parser.add_argument('--run_type', type=str, required=True,
-                    choices=['ideal', 'noisy', 'hardware'],
-                    help='Choose way to run the (hybrid) VQC training: Ideal '
-                         'computation, noisy simulation or on real quantum hardware.')
+
+parser = argparse.ArgumentParser(formatter_class=argparse.ArgumentDefaultsHelpFormatter)
+parser.add_argument(
+    "--data_folder",
+    type=str,
+    default="../../data/ae_input/",
+    help="The folder where the data is stored on the system.",
+)
+parser.add_argument(
+    "--norm",
+    type=str,
+    default="minmax",
+    help="The name of the normalisation that you'll to use.",
+)
+parser.add_argument(
+    "--nevents",
+    type=str,
+    default="7.20e+05",
+    help="The number of events of the norm file.",
+)
+parser.add_argument(
+    "--ae_model_path", type=str, help="The path to the Auto-Encoder model."
+)
+parser.add_argument(
+    "--vqc_path",
+    type=str,
+    help="The path to the saved vqc model (either a .npy or .pt file).",
+)
+parser.add_argument(
+    "--nvalid", type=int, default=250, help="Number of validation events for the VQC."
+)
+parser.add_argument(
+    "--ntest", type=int, default=250, help="Number of test events for the VQC."
+)
+parser.add_argument(
+    "--backend_name",
+    type=str,
+    default=None,
+    help="The IBMQ backend used for either an ideal simulation or"
+    "or a real quantum hardware run.",
+)
+parser.add_argument(
+    "--run_type",
+    type=str,
+    required=True,
+    choices=["ideal", "noisy", "hardware"],
+    help="Choose way to run the (hybrid) VQC training: Ideal "
+    "computation, noisy simulation or on real quantum hardware.",
+)
 
 args = parser.parse_args()
 
@@ -40,9 +66,9 @@ seed = 12345
 init_layout = [22, 25, 24, 23, 21, 18, 15, 12]
 pconfig = util.get_private_config("vasilis_private_configuration.json")
 switcher = {
-    'ideal':    lambda: util.config_ideal("lightning.qubit"),
-    'noisy':    lambda: util.config_noisy(5000, 3, seed, init_layout, seed, pconfig),
-    'hardware': lambda: util.config_hardware(5000, 3, seed, init_layout, pconfig)
+    "ideal": lambda: util.config_ideal("lightning.qubit"),
+    "noisy": lambda: util.config_noisy(5000, 3, seed, init_layout, seed, pconfig),
+    "hardware": lambda: util.config_hardware(5000, 3, seed, init_layout, pconfig),
 }
 config = switcher.get(args.run_type, lambda: None)()
 

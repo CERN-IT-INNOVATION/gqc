@@ -3,58 +3,116 @@
 import argparse
 import sys
 import os
+
 sys.path.append("..")
 
-os.environ['CUDA_VISIBLE_DEVICES'] = "0"
+os.environ["CUDA_VISIBLE_DEVICES"] = "0"
 
 from vqc_pennylane.train import main
 from vqc_pennylane import util
 
-parser = argparse.ArgumentParser(formatter_class=argparse.
-                                 ArgumentDefaultsHelpFormatter)
-parser.add_argument("--data_folder", type=str, default='../../data/ae_input/',
-                    help="The folder where the data is stored on the system.")
-parser.add_argument("--norm", type=str, default='minmax',
-                    help="The name of the normalisation that you'll to use.")
-parser.add_argument("--nevents", type=str, default='7.20e+05',
-                    help="The number of events of the norm file.")
-parser.add_argument('--model_path', type=str,
-                    help="The path to the Auto-Encoder model.")
-parser.add_argument('--output_folder', required=True,
-                    help='The name of the model to be saved.')
-parser.add_argument('--nqubits', type=int, default=4,
-                    help="The number of qubits that the vqc circuit will use.")
-parser.add_argument('--vform_repeats', type=int, default=4,
-                    help='Nb. of repetitions of the variational form.')
-parser.add_argument('--optimiser', default=None,
-                    help='The optimiser used for training the model.')
-parser.add_argument('--epochs', type=int, default=100,
-                    help="The number of epochs to train the vqc for.")
-parser.add_argument('--batch_size', type=int, default=50,
-                    help="The batch size to train the vqc with.")
-parser.add_argument('--learning_rate', type=float, default=0.002,
-                    help="The learning rate to train the vqc with.")
-parser.add_argument('--hybrid', action='store_true',
-                    help='Choose the type of vqc model you are working with.')
-parser.add_argument("--class_weight", type=float, default=0.5,
-                    help="The weight of the classifier BCE loss.")
-parser.add_argument('--ntrain', type=int, default=250,
-                    help='Number of training events.')
-parser.add_argument('--nvalid', type=int, default=250,
-                    help='Number of validation events.')
-parser.add_argument('--run_type', type=str, required=True,
-                    choices=['ideal', 'noisy', 'hardware'],
-                    help='Choose on what to run: ideal sim, noisy sim, or hardware.')
-parser.add_argument('--backend_name', type=str, default=None,
-                    help='The IBMQ backend used for a real quantum hardware run.')
-parser.add_argument('--diff_method', type=str, default='best',
-                    choices=['best', 'parameter-shift', 'backprop', 'adjoint'],
-                    help='Choose differentiation method for the quantum circuit.')
-parser.add_argument('--ideal_dev', type=str, default='default.qubit',
-                    choices=['default.qubit', 'lightning.qubit', 'lightning.gpu'],
-                    help='Choose a simulation paradigm when running an ideal sim.')
-parser.add_argument('--private_config', type=str, default=None,
-                    help='The private configuration for the quantum computer.')
+parser = argparse.ArgumentParser(formatter_class=argparse.ArgumentDefaultsHelpFormatter)
+parser.add_argument(
+    "--data_folder",
+    type=str,
+    default="../../data/ae_input/",
+    help="The folder where the data is stored on the system.",
+)
+parser.add_argument(
+    "--norm",
+    type=str,
+    default="minmax",
+    help="The name of the normalisation that you'll to use.",
+)
+parser.add_argument(
+    "--nevents",
+    type=str,
+    default="7.20e+05",
+    help="The number of events of the norm file.",
+)
+parser.add_argument(
+    "--model_path", type=str, help="The path to the Auto-Encoder model."
+)
+parser.add_argument(
+    "--output_folder", required=True, help="The name of the model to be saved."
+)
+parser.add_argument(
+    "--nqubits",
+    type=int,
+    default=4,
+    help="The number of qubits that the vqc circuit will use.",
+)
+parser.add_argument(
+    "--vform_repeats",
+    type=int,
+    default=4,
+    help="Nb. of repetitions of the variational form.",
+)
+parser.add_argument(
+    "--optimiser", default=None, help="The optimiser used for training the model."
+)
+parser.add_argument(
+    "--epochs", type=int, default=100, help="The number of epochs to train the vqc for."
+)
+parser.add_argument(
+    "--batch_size", type=int, default=50, help="The batch size to train the vqc with."
+)
+parser.add_argument(
+    "--learning_rate",
+    type=float,
+    default=0.002,
+    help="The learning rate to train the vqc with.",
+)
+parser.add_argument(
+    "--hybrid",
+    action="store_true",
+    help="Choose the type of vqc model you are working with.",
+)
+parser.add_argument(
+    "--class_weight",
+    type=float,
+    default=0.5,
+    help="The weight of the classifier BCE loss.",
+)
+parser.add_argument(
+    "--ntrain", type=int, default=250, help="Number of training events."
+)
+parser.add_argument(
+    "--nvalid", type=int, default=250, help="Number of validation events."
+)
+parser.add_argument(
+    "--run_type",
+    type=str,
+    required=True,
+    choices=["ideal", "noisy", "hardware"],
+    help="Choose on what to run: ideal sim, noisy sim, or hardware.",
+)
+parser.add_argument(
+    "--backend_name",
+    type=str,
+    default=None,
+    help="The IBMQ backend used for a real quantum hardware run.",
+)
+parser.add_argument(
+    "--diff_method",
+    type=str,
+    default="best",
+    choices=["best", "parameter-shift", "backprop", "adjoint"],
+    help="Choose differentiation method for the quantum circuit.",
+)
+parser.add_argument(
+    "--ideal_dev",
+    type=str,
+    default="default.qubit",
+    choices=["default.qubit", "lightning.qubit", "lightning.gpu"],
+    help="Choose a simulation paradigm when running an ideal sim.",
+)
+parser.add_argument(
+    "--private_config",
+    type=str,
+    default=None,
+    help="The private configuration for the quantum computer.",
+)
 args = parser.parse_args()
 
 seed = 12345
@@ -63,9 +121,9 @@ seed = 12345
 init_layout = [22, 25, 24, 23, 21, 18, 15, 12]
 pconfig = util.get_private_config("vasilis_private_configuration.json")
 switcher = {
-    'ideal':    lambda: util.config_ideal(args.ideal_dev),
-    'noisy':    lambda: util.config_noisy(5000, 3, seed, init_layout, seed, pconfig),
-    'hardware': lambda: util.config_hardware(5000, 3, seed, init_layout, pconfig)
+    "ideal": lambda: util.config_ideal(args.ideal_dev),
+    "noisy": lambda: util.config_noisy(5000, 3, seed, init_layout, seed, pconfig),
+    "hardware": lambda: util.config_hardware(5000, 3, seed, init_layout, pconfig),
 }
 config = switcher.get(args.run_type, lambda: None)()
 
@@ -88,8 +146,8 @@ args = {
     "hybrid": args.hybrid,
     "seed": seed,
     "ae_layers": [67, 64, 52, 44, 32, 24, 16],
-    "enc_activ": 'nn.Tanh()',
-    "dec_activ": 'nn.Tanh()',
+    "enc_activ": "nn.Tanh()",
+    "dec_activ": "nn.Tanh()",
     "class_weight": args.class_weight,
     "adam_betas": (0.9, 0.999),
     "run_type": args.run_type,

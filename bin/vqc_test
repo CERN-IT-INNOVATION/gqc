@@ -57,6 +57,12 @@ parser.add_argument(
     help="Choose way to run the (hybrid) VQC training: Ideal "
     "computation, noisy simulation or on real quantum hardware.",
 )
+parser.add_argument(
+    "--kfolds",
+    type=int,
+    default=5,
+    help="Number of folds for the k-fold testing.",
+)
 
 args = parser.parse_args()
 
@@ -84,6 +90,7 @@ args = {
     "run_type": args.run_type,
     "backend_name": args.backend_name,
     "config": config,
+    "kfolds": args.kfolds,
 }
 
 main(args)

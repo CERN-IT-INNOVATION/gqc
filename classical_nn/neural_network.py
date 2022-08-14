@@ -1,7 +1,7 @@
 # Classical feedforward neural network model. To serve as a fair benchmark against
 # the VQC and the Hybrid VQC.
 
-from typing import Union
+from typing import Tuple
 import numpy as np
 import torch
 import torch.nn as nn
@@ -24,16 +24,21 @@ torch.autograd.profiler.profile(enabled=False)
 
 
 class NeuralNetwork(nn.Module):
-    """
-    TODO
-    """
-    def __init__(self, device="cpu", hpars={}):
+    """Fully connected neural network class for binary classification."""
+    def __init__(self, device: str = "cpu", hpars: dict = {}):
         """
-        TODO
+        Initialises the hyperparameters of the model in a dictionary format, defines
+        the layers of the network, the cost function to be used in the training.
+
+        Args:
+            device: The device (pytorch) on which the computations relevant for training or
+                    inference will take place. 
+            hpars: Hyperparameters dictionary.
         """
         super().__init__()
         self._hp = {
-            "layers": [67, 64, 52, 44, 32, 24, 16, 1],
+            #"layers": [67, 64, 52, 44, 32, 24, 16, 1],
+            "layers": [67, 64, 52, 44, 32, 24, 16,],
             "lr": 0.002,
             "batch_size": 128,
             "adam_betas": (0.9, 0.999),
@@ -52,6 +57,7 @@ class NeuralNetwork(nn.Module):
         self.epochs_no_improve = 0
 
         self._network = self.__construct_network()
+        self._output_layer = self.__construct_output()
 
     def __construct_network(self) -> nn.Sequential:
         """
@@ -64,20 +70,29 @@ class NeuralNetwork(nn.Module):
         for idx in layer_nbs:
             layers.append(nn.Linear(self._hp["layers"][idx], 
                                     self._hp["layers"][idx + 1]))
-            if idx == len(self._hp["layers"]) - 2:
-                layers.append(self._out_activ)
-                break
             layers.append(nn.ReLU(True))
+            if idx == len(self._hp["layers"]) - 2: break
+
         return nn.Sequential(*layers)
+
+    def __construct_output(self) -> nn.Sequential:
+        """Constructs the output layer of the network."""
+        output_layer = [nn.Linear(self._hp["layers"][-1], 1), self._out_activ]
+        return nn.Sequential(*output_layer)
 
     def instantiate_adam_optimizer(self):
         """Instantiate the optimizer object, used in the training of the model."""
         self = self.to(self._device)
         self.optimizer = optim.Adam(self.parameters(), lr=self._hp["lr"], betas=self._hp["adam_betas"])
 
-    def forward(self, x) -> torch.Tensor:
-        """Forward pass of the network."""
-        return self._network(x)
+    def forward(self, x: torch.Tensor) -> Tuple[torch.Tensor]:
+        """Forward pass of the network.
+        Returns: 
+            The second to last layer (`latent space`) and the output of the network.
+        """
+        lat = self._network(x)
+        out = self._output_layer(lat)
+        return lat, out
 
     def compute_loss(self, x_data: np.ndarray, y_data:np.ndarray) -> float:
         """
@@ -94,7 +109,7 @@ class NeuralNetwork(nn.Module):
         if isinstance(y_data, np.ndarray):
             y_data = torch.from_numpy(y_data).to(self._device)
 
-        output = self.forward(x_data.float())
+        _, output = self.forward(x_data.float())
         return self._class_loss_function(output.flatten(), y_data.float())
 
     @staticmethod
@@ -150,7 +165,7 @@ class NeuralNetwork(nn.Module):
         print(self.optimizer)
         print("\n\n")
 
-    def save_best_loss_model(self, valid_loss: float, outdir: str):
+    def save_best_loss_model(self, valid_loss: float, outdir: str) -> int:
         """
         Prints a message and saves the optimised model with the best loss.
         
@@ -344,15 +359,19 @@ class NeuralNetwork(nn.Module):
         )
 
     @torch.no_grad()
-    def predict(self, x_data: np.ndarray) -> np.ndarray:
+    def predict(self, x_data: np.ndarray) -> Tuple[np.ndarray]:
         """
         Compute the model prediction for x_data.
         
         Args:
             x_data: Input data array for which the predicted label is computed.
 
-        Returns: The predicted label of x_data.
+        Returns: The latent variables (second to last output layer) and the 
+                 predicted label of x_data.
         """
         x_data = torch.from_numpy(x_data).to(self._device)
         self.eval()
-        return [self.forward(x_data.float())] # To use predict(x)[-1], maybe not..
+        lat, out = self.forward(x_data.float())
+        lat = lat.cpu().numpy()
+        out = out.cpu().numpy()
+        return lat, out

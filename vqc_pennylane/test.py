@@ -1,12 +1,12 @@
-# The VQC testing script. Here, a vqc is imported and data is passed through it.
-# The results are quantified in terms of AUC.
+# The (Hybrid) VQC testing script. Here, a trained model is imported and data
+# is passed through it. The results are quantified in terms of ROC curves and AUC.
+
 import os
 from typing import Tuple
 import matplotlib.pyplot as plt
 from sklearn import metrics
 from sklearn.utils import shuffle
 import numpy as np
-import re
 
 from . import qdata as qd
 from . import util
@@ -50,30 +50,42 @@ def main(args):
         x_test_sig, x_test_bkg = qdata.ae_data.split_sig_bkg(x_test, y_test)
         sig = model.predict(x_test_sig)
         bkg = model.predict(x_test_bkg)
-        latent_roc_plot(sig,bkg, model_dir, "latent_plots")
+        latent_roc_plot(sig, bkg, model_dir, "latent_plots")
         sig_vs_bkg(sig[0], bkg[0], args["vqc_path"], "latent_plots")
+
 
 def latent_roc_plot(sig: np.ndarray, bkg: np.ndarray, dir: str, name: str):
     """Creates the data folds and computes the ROC and AUC of the individual features
     in the latent space. Saves the output plots to file.
-    
-    Args: TODO
+
+    Args:
+        sig: Array of shape (kfolds, n_test, n_features) the latent feature
+             distributions of signal samples.
+        bkg: Array of shape (kfolds, n_test, n_features) the latent feature
+             distributions of background samples.
+        dir: The directory in which to save the plots.
+        name: The name of the folder that contains the plots.
     """
     features = np.vstack((sig[0], bkg[0]))
     labels = np.concatenate((np.ones(sig[0].shape[0]), np.zeros(bkg[0].shape[0])))
-    
+
     features, labels = shuffle(features, labels, random_state=0)
     features_folds = np.array(np.array_split(features, 5))
     labels_folds = np.array(np.array_split(labels, 5))
-    
-    print("Computing ROCs of the latent space variables... ",end="")
+
+    print("Computing ROCs of the latent space variables... ", end="")
     for ifeature in range(features_folds.shape[2]):
-        roc_plots(features_folds[:,:,ifeature], labels_folds, dir, 
-                  name, f"roc_{ifeature}.pdf")
-    print("Done.")
+        roc_plots(
+            features_folds[:, :, ifeature],
+            labels_folds,
+            dir,
+            name,
+            f"roc_{ifeature}.pdf",
+        )
+    print(tcols.OKGREEN + "Done." + tcols.ENDC)
 
 
-def get_hparams_for_testing(args):
+def get_hparams_for_testing(args: dict):
     """Imports the hyperparameters of the vqc at the given path and sets the
     optimiser to none such that no optimiser is loaded (none is needed since no
     training happens within the scope of this script).
@@ -116,7 +128,7 @@ def roc_plot_misc():
     plt.ylim([0.0, 1.0])
 
 
-def make_plots_output_folder(model_path, output_folder):
+def make_plots_output_folder(model_path: str, output_folder: str):
     """Make the output folder of the plots.
 
     Args:
@@ -133,12 +145,19 @@ def make_plots_output_folder(model_path, output_folder):
     return plots_folder
 
 
-def roc_plots(scores, target, model_path, output_folder, file_name="roc_curve.pdf"):
-    # FIXME mention that it takes folded data.
+def roc_plots(
+    scores: np.ndarray,
+    target: np.ndarray,
+    model_path: str,
+    output_folder: str,
+    file_name: str = "roc_curve.pdf",
+):
     """Plot the ROC of the vqc predictions.
+
     Args:
-        scores: Score predictions of the vqc for a data set.
-        target: Target corresponding to the data.
+        scores: Score predictions of the vqc for a data set of
+                shape (kfolds, n_test,).
+        target: Target corresponding to the data of shape (kfolds, n_test,).
         model_path: Path to a trained model.
         output_folder: Name of the output folder to save the plots in.
     """
@@ -154,7 +173,7 @@ def roc_plots(scores, target, model_path, output_folder, file_name="roc_curve.pd
     fig.savefig(os.path.join(plots_folder, file_name))
     plt.close()
 
-    if file_name == "roc_curve.pdf": # To not print n_feature times for latent rocs
+    if file_name == "roc_curve.pdf":  # To not print n_feature times for latent rocs
         print(tcols.OKCYAN + f"ROC plots were saved to {plots_folder}." + tcols.ENDC)
 
 
@@ -182,7 +201,9 @@ def compute_auc(scores: np.array, targets: np.array) -> Tuple:
     return fpr, tpr, mean_auc, std_auc
 
 
-def sig_vs_bkg(data_sig, data_bkg, model_path, output_folder):
+def sig_vs_bkg(
+    data_sig: np.ndarray, data_bkg: np.ndarray, model_path: str, output_folder: str
+):
     """Plot the overlaid signal vs background given data.
 
     Args:

@@ -325,10 +325,6 @@ def get_hybrid_data(qdata, args) -> Tuple:
         train_loader = qdata.ae_data.get_loader(
             "train", "cpu", args["batch_size"], True
         )
-    print("From qdata:")
-    #for batch in train_loader:
-    #    print(batch)
-    #exit(1)
     valid_loader = qdata.ae_data.get_loader("valid", "cpu", shuffle=True)
     if "ntest" in args:
         test_loader = qdata.ae_data.get_loader("test", "cpu", shuffle=True)

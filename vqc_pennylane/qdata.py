@@ -31,23 +31,23 @@ class qdata:
     ):
         """
         Args:
-        data_folder (str): Path to the input data of the Auto-Encoder.
-        norm_name (str): Specify the normalisation of the input data
-                         e.g., minmax, maxabs etc.
-        nevents (float): Number of signal data samples in the input data file.
-                         Conventionally, we encode this number in the file
-                         name, e.g., nevents = 7.20e+05.
-        model_path (str): Path to the save PyTorch Auto-Encoder model.
-        train_events (int): Number of desired train events to be loaded by
-                            qdata.
-        valid_events (int): Number of desired validation events to be loaded
-                            by qdata.
-        test_events (int): Number of desired test events to be loaded by
-                            qdata.
-        kfolds (int): Number of folds (i.e. statistiaclly independent datasets)
-                      to use for validation/testing of the trained QML models.
-        seed (int): Seed for the shufling of the train/test/validation and
-                    k-folds datasets.
+            data_folder (str): Path to the input data of the Auto-Encoder.
+            norm_name (str): Specify the normalisation of the input data
+                             e.g., minmax, maxabs etc.
+            nevents (float): Number of signal data samples in the input data file.
+                             Conventionally, we encode this number in the file
+                             name, e.g., nevents = 7.20e+05.
+            model_path (str): Path to the save PyTorch Auto-Encoder model.
+            train_events (int): Number of desired train events to be loaded by
+                                qdata.
+            valid_events (int): Number of desired validation events to be loaded
+                                by qdata.
+            test_events (int): Number of desired test events to be loaded by
+                                qdata.
+            kfolds (int): Number of folds (i.e. statistiaclly independent datasets)
+                          to use for validation/testing of the trained QML models.
+            seed (int): Seed for the shufling of the train/test/validation and
+                        k-folds datasets.
         """
 
         device = "cpu"

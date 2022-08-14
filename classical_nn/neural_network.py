@@ -25,6 +25,7 @@ torch.autograd.profiler.profile(enabled=False)
 
 class NeuralNetwork(nn.Module):
     """Fully connected neural network class for binary classification."""
+
     def __init__(self, device: str = "cpu", hpars: dict = {}):
         """
         Initialises the hyperparameters of the model in a dictionary format, defines
@@ -32,12 +33,11 @@ class NeuralNetwork(nn.Module):
 
         Args:
             device: The device (pytorch) on which the computations relevant for training or
-                    inference will take place. 
+                    inference will take place.
             hpars: Hyperparameters dictionary.
         """
         super().__init__()
         self._hp = {
-            #"layers": [67, 64, 52, 44, 32, 24, 16, 1],
             "layers": [67, 64, 52, 44, 32, 24, 16,],
             "lr": 0.002,
             "batch_size": 128,
@@ -68,10 +68,12 @@ class NeuralNetwork(nn.Module):
         layers = []
         layer_nbs = range(len(self._hp["layers"]))
         for idx in layer_nbs:
-            layers.append(nn.Linear(self._hp["layers"][idx], 
-                                    self._hp["layers"][idx + 1]))
+            layers.append(
+                nn.Linear(self._hp["layers"][idx], self._hp["layers"][idx + 1])
+            )
             layers.append(nn.ReLU(True))
-            if idx == len(self._hp["layers"]) - 2: break
+            if idx == len(self._hp["layers"]) - 2:
+                break
 
         return nn.Sequential(*layers)
 
@@ -83,21 +85,23 @@ class NeuralNetwork(nn.Module):
     def instantiate_adam_optimizer(self):
         """Instantiate the optimizer object, used in the training of the model."""
         self = self.to(self._device)
-        self.optimizer = optim.Adam(self.parameters(), lr=self._hp["lr"], betas=self._hp["adam_betas"])
+        self.optimizer = optim.Adam(
+            self.parameters(), lr=self._hp["lr"], betas=self._hp["adam_betas"]
+        )
 
     def forward(self, x: torch.Tensor) -> Tuple[torch.Tensor]:
         """Forward pass of the network.
-        Returns: 
+        Returns:
             The second to last layer (`latent space`) and the output of the network.
         """
         lat = self._network(x)
         out = self._output_layer(lat)
         return lat, out
 
-    def compute_loss(self, x_data: np.ndarray, y_data:np.ndarray) -> float:
+    def compute_loss(self, x_data: np.ndarray, y_data: np.ndarray) -> float:
         """
         Compute the loss of a forward pass.
-        
+
         Args:
             x_data: Array of the input data.
             y_data: Array of the input data labels.
@@ -113,11 +117,12 @@ class NeuralNetwork(nn.Module):
         return self._class_loss_function(output.flatten(), y_data.float())
 
     @staticmethod
-    def print_losses(epoch, epochs: int, train_loss: torch.Tensor, 
-                     valid_loss: torch.Tensor):
+    def print_losses(
+        epoch, epochs: int, train_loss: torch.Tensor, valid_loss: torch.Tensor
+    ):
         """
         Prints the training and validation losses in a nice format.
-        
+
         Args:
             epoch: Current epoch.
             epochs: Total number of epochs.
@@ -168,7 +173,7 @@ class NeuralNetwork(nn.Module):
     def save_best_loss_model(self, valid_loss: float, outdir: str) -> int:
         """
         Prints a message and saves the optimised model with the best loss.
-        
+
         Args:
             valid_loss: Float of the validation loss.
             outdir: Directory where the best model is saved.
@@ -188,7 +193,7 @@ class NeuralNetwork(nn.Module):
         Stops the training if there has been no improvement in the loss
         function during the past, e.g. 10, number of epochs.
 
-        Returns: True for when the early stopping limit was exceeded and 
+        Returns: True for when the early stopping limit was exceeded and
                  false otherwise.
         """
         if self.epochs_no_improve >= early_stopping_limit:
@@ -200,7 +205,7 @@ class NeuralNetwork(nn.Module):
         """
         Evaluate the validation loss for the model and save the model if a new
         new minimum is found.
-        
+
         Args:
             valid_loader: Pytorch data loader with the validation data.
             outdir: Output folder where to save the model.
@@ -216,12 +221,13 @@ class NeuralNetwork(nn.Module):
 
         return loss
 
-    def _train_batch(self, x_batch: torch.Tensor, 
-                     y_batch: torch.Tensor = None) -> float:
+    def _train_batch(
+        self, x_batch: torch.Tensor, y_batch: torch.Tensor = None
+    ) -> float:
         """
         Train the model on a batch and evaluate the loss.
         Propagate this backwards for minimum train_loss.
-        
+
         Args:
             x_batch: Pytorch batch object with the data.
             y_batch: Pytorch batch object with the target.
@@ -244,10 +250,10 @@ class NeuralNetwork(nn.Module):
     def _train_all_batches(self, train_loader: DataLoader) -> float:
         """
         Train the model on all the batches.
-        
+
         Args:
             train_loader: Pytorch loader object with the training data.
-        
+
         Returns: The training loss averaged over all the batches in an epoch.
         """
         batch_loss_sum = 0
@@ -259,11 +265,17 @@ class NeuralNetwork(nn.Module):
             nb_of_batches += 1
         return batch_loss_sum / nb_of_batches
 
-    def train_model(self, train_loader: DataLoader, valid_loader:DataLoader, 
-                    epochs: int, early_stopping_limit: int, outdir: str):
+    def train_model(
+        self,
+        train_loader: DataLoader,
+        valid_loader: DataLoader,
+        epochs: int,
+        early_stopping_limit: int,
+        outdir: str,
+    ):
         """
         Train the neural network.
-        
+
         Args:
             train_loader: Pytorch data loader with the training data.
             valid_loader: Pytorch data loader with the validation data.
@@ -291,7 +303,7 @@ class NeuralNetwork(nn.Module):
     def loss_plot(self, outdir: str):
         """
         Plots the loss for each epoch for the training and validation data.
-        
+
         Args:
             outdir: Directory where to save the loss plot.
         """
@@ -326,7 +338,7 @@ class NeuralNetwork(nn.Module):
     def export_architecture(self, outdir: str):
         """
         Saves the structure of the NN to a file.
-        
+
         Args:
             outdir: Directory where to save the architecture of the network.
         """
@@ -336,7 +348,7 @@ class NeuralNetwork(nn.Module):
     def export_hyperparameters(self, outdir: str):
         """
         Saves the hyperparameters of the model to a json file.
-        
+
         Args:
             outdir: Directory where to save the json file.
         """
@@ -348,7 +360,7 @@ class NeuralNetwork(nn.Module):
     def load_model(self, model_path):
         """
         Loads the weights of a trained model saved in a .pt file.
-        
+
         Args:
             model_path: Directory where a trained model was saved.
         """
@@ -362,11 +374,11 @@ class NeuralNetwork(nn.Module):
     def predict(self, x_data: np.ndarray) -> Tuple[np.ndarray]:
         """
         Compute the model prediction for x_data.
-        
+
         Args:
             x_data: Input data array for which the predicted label is computed.
 
-        Returns: The latent variables (second to last output layer) and the 
+        Returns: The latent variables (second to last output layer) and the
                  predicted label of x_data.
         """
         x_data = torch.from_numpy(x_data).to(self._device)

@@ -175,10 +175,6 @@ class AE_data:
             pytorch_loader = torch.utils.data.DataLoader(
                 dataset, batch_size=batch_size, shuffle=shuffle, pin_memory=True
             )
-        print("From ae data:")
-        #for batch in pytorch_loader:
-        #    print(batch)
-        #exit(1)
         return pytorch_loader
 
     @staticmethod

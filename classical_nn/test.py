@@ -1,8 +1,9 @@
-# The classical NN testing script. Here, a trained NN is imported 
+# The classical NN testing script. Here, a trained NN is imported
 # and data is passed through it.The results are quantified in terms of ROCs and AUCs.
 
 import os
 import sys
+
 sys.path.append("..")
 import time
 import argparse
@@ -11,8 +12,6 @@ from typing import Tuple
 import matplotlib.pyplot as plt
 from sklearn import metrics
 import numpy as np
-import torch
-#from pennylane import numpy as np
 from sklearn.utils import shuffle
 
 from autoencoders import util as ae_util
@@ -268,32 +267,50 @@ def sig_vs_bkg(
 
     print(f"Latent plots were saved to {plots_folder}.")
 
+
 def get_arguments() -> dict:
     """
     Parses command line arguments and gives back a dictionary.
-    
+
     Returns: Dictionary with the arguments
     """
-    parser = argparse.ArgumentParser(formatter_class=
-                                 argparse.ArgumentDefaultsHelpFormatter)
-    parser.add_argument("--data_folder", type=str,
-                        help="The folder where the data is stored on the system..")
-    parser.add_argument("--norm", type=str,
-                        help="The name of the normalisation that you'll to use.")
-    parser.add_argument('--ae_model_path', type=str,
-                        help="The path to the Auto-Encoder model.")
-    parser.add_argument("--nevents", type=str,
-                        help="The number of signal events of the norm file.")
-    parser.add_argument('--nn_model_path', type=str,
-                    help="The path to the saved NN model (.pt file).")
-    parser.add_argument("--nvalid", type=int, default=-1,
-                        help="The exact number of valid events used < nevents.")
-    parser.add_argument("--ntest", type=int, default=-1,
-                        help="The exact number of testing events used < nevents.")
-    parser.add_argument("--kfolds", type=int, default=5,
-                        help="Number of folds for the test.")                        
+    parser = argparse.ArgumentParser(
+        formatter_class=argparse.ArgumentDefaultsHelpFormatter
+    )
+    parser.add_argument(
+        "--data_folder",
+        type=str,
+        help="The folder where the data is stored on the system..",
+    )
+    parser.add_argument(
+        "--norm", type=str, help="The name of the normalisation that you'll to use."
+    )
+    parser.add_argument(
+        "--ae_model_path", type=str, help="The path to the Auto-Encoder model."
+    )
+    parser.add_argument(
+        "--nevents", type=str, help="The number of signal events of the norm file."
+    )
+    parser.add_argument(
+        "--nn_model_path", type=str, help="The path to the saved NN model (.pt file)."
+    )
+    parser.add_argument(
+        "--nvalid",
+        type=int,
+        default=-1,
+        help="The exact number of valid events used < nevents.",
+    )
+    parser.add_argument(
+        "--ntest",
+        type=int,
+        default=-1,
+        help="The exact number of testing events used < nevents.",
+    )
+    parser.add_argument(
+        "--kfolds", type=int, default=5, help="Number of folds for the test."
+    )
     args = parser.parse_args()
-    
+
     seed = 12345
     args = {
         "data_folder": args.data_folder,
@@ -308,6 +325,7 @@ def get_arguments() -> dict:
     }
     return args
 
+
 def time_the_training(train: callable, *args):
     """Times the training of the neural network.
 
@@ -319,10 +337,11 @@ def time_the_training(train: callable, *args):
     train(*args)
     train_time_end = time.perf_counter()
     print(
-        tcols.OKCYAN +
-        f"Training completed in: {train_time_end-train_time_start:.2e} s or "
+        tcols.OKCYAN
+        + f"Training completed in: {train_time_end-train_time_start:.2e} s or "
         f"{(train_time_end-train_time_start)/3600:.2e} h." + tcols.ENDC
     )
+
 
 if __name__ == "__main__":
     main()

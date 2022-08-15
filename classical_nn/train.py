@@ -11,7 +11,6 @@ import sys
 sys.path.append("..")
 
 import torch
-
 seed = 1234567890
 torch.manual_seed(seed)
 
@@ -22,8 +21,7 @@ from vqc_pennylane import qdata as qd
 from neural_network import NeuralNetwork
 
 
-def main():
-    args = get_arguments()
+def main(args: dict):
     device = ae_util.define_torch_device()
     outdir = "./trained_nns/" + args["outdir"] + "/"
     if not os.path.exists(outdir):
@@ -33,7 +31,7 @@ def main():
         args["data_folder"],
         args["norm"],
         args["nevents"],
-        args["model_path"],
+        args["ae_model_path"],
         train_events=args["ntrain"],
         valid_events=args["nvalid"],
         seed=args["seed"],
@@ -67,7 +65,7 @@ def get_arguments() -> dict:
         "--norm", type=str, help="The name of the normalisation that you'll to use."
     )
     parser.add_argument(
-        "--model_path", type=str, help="The path to the Auto-Encoder model."
+        "--ae_model_path", type=str, help="The path to the Auto-Encoder model."
     )
     parser.add_argument(
         "--nevents", type=str, help="The number of signal events of the norm file."
@@ -102,7 +100,7 @@ def get_arguments() -> dict:
         "data_folder": args.data_folder,
         "norm": args.norm,
         "nevents": args.nevents,
-        "model_path": args.model_path,
+        "ae_model_path": args.ae_model_path,
         "ntrain": args.ntrain,
         "nvalid": args.nvalid,
         "ae_layers": [67, 64, 52, 44, 32, 24, 16, 1],
@@ -135,4 +133,5 @@ def time_the_training(train: callable, *args):
 
 
 if __name__ == "__main__":
-    main()
+    args = get_arguments()
+    main(args)

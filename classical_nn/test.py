@@ -21,8 +21,9 @@ from vqc_pennylane.terminal_colors import tcols
 from neural_network import NeuralNetwork
 
 
-def main():
-    args = get_arguments()
+def main(args: dict):
+    print(tcols.OKCYAN + "\n\nTesting the fully connected feed-forward neural network..."
+          + tcols.ENDC)
     device = ae_util.define_torch_device()
     qdata = qd.qdata(
         args["data_folder"],
@@ -344,4 +345,5 @@ def time_the_training(train: callable, *args):
 
 
 if __name__ == "__main__":
-    main()
+    args = get_arguments()
+    main(args)

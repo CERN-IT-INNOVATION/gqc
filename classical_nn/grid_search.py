@@ -11,16 +11,42 @@ import train
 import test
 
 def main():
-    args_train, args_test, batch_size_space, learning_rate_space = get_arguments()
-
-    print(tcols.HEADER + "Initialising grid search for {batch_size_space} and "
-          f"{learning_rate_space}" + tcols.ENDC)
+    args_train, args_test, learning_rate_space, batch_size_space = get_arguments()
+    original_outdir = args_train["outdir"]
+    print(tcols.BOLD + tcols.HEADER + "\nGrid search "
+          f"for batch_size = {batch_size_space} and "
+          f"learning_rate = {learning_rate_space}" + tcols.ENDC)
+    
     for batch_size in batch_size_space:
         for lr in learning_rate_space:
-            
+            print(tcols.BOLD + tcols.UNDERLINE + f"\nTraining and testing for "
+                  f"batch_size = {batch_size} & learning_rate = {lr}" + tcols.ENDC)
+            update_hpars(args_train, args_test, batch_size, lr, original_outdir)
             train.main(args_train)
-            #args_test = get_test_args()
-            #test.main(args_test)
+            test.main(args_test)
+
+
+def update_hpars(args_train: dict, args_test: dict, batch_size: int, lr: float, 
+                 origin_outdir: str) -> dict: 
+    """Update the hyperparameters of the NN classifier and prepare for the next
+    train-test iteration.
+    
+    Args:
+        args_train: Current arguments and hyperparameters dictionary 
+                    for the train module.
+        args_test: Current arguments and hyperparameters dictionary 
+                    for the test module.                    
+        batch_size: The batch size for the current grid search iteration.
+        lr: The learning rate for the current grid search iteration.
+        origin_outdir: Name of output folder of the NN training, needed to change
+                       the output directory at every grid search iteration.
+    
+    Returns: The updated hyperparameter dictionary used by the train and test modules.
+    """
+    new_outdir = origin_outdir + f"_b{batch_size}_lr{lr}"
+    new_hpars = {"lr": lr, "batch_size": batch_size, "outdir": new_outdir}
+    args_train.update(new_hpars)
+    args_test.update({"nn_model_path": "trained_nns/" + new_outdir + "/best_model.pt"})
 
 
 def get_arguments():
@@ -80,13 +106,17 @@ def get_arguments():
     parser.add_argument(
         "--kfolds", type=int, default=5, help="Number of folds for the test."
     )
+    parser.add_argument("--batch_size_space", type=int, nargs='+', 
+                        default=[128, 256, 512, 1024, 2048],
+                        help="The batch size space to be probed in the grid search.")
+    parser.add_argument("--learning_rate_space", type=float, nargs='+', 
+                        default=[0.0001, 0.001, 0.005, 0.01, 0,1],
+                        help="The learning rate space to be probed in the grid search.")
     args = parser.parse_args()
 
     seed = 12345
-    #batch_size_space = [128, 256, 512, 1024, 2048]
-    #learning_rate_space = [0.0001, 0.001, 0.005, 0.01, 0,1]
-    batch_size_space = [512, 1024]
-    learning_rate_space = [0.005, 0.01]
+    #batch_size_space = [512, 1024]
+    #learning_rate_space = [0.005, 0.01]
     args_train = {
         "data_folder": args.data_folder,
         "norm": args.norm,
@@ -115,9 +145,7 @@ def get_arguments():
         "seed": seed,
         "kfolds": args.kfolds,
     }
-    
-    return args_train, args_test, learning_rate_space, batch_size_space
+    return args_train, args_test, args.learning_rate_space, args.batch_size_space
 
 if __name__ == "__main__":
-
     main()

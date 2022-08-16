@@ -22,8 +22,11 @@ from neural_network import NeuralNetwork
 
 
 def main(args: dict):
-    print(tcols.OKCYAN + "\n\nTesting the fully connected feed-forward neural network..."
-          + tcols.ENDC)
+    print(
+        tcols.OKCYAN
+        + "\n\nTesting the fully connected feed-forward neural network..."
+        + tcols.ENDC
+    )
     device = ae_util.define_torch_device()
     qdata = qd.qdata(
         args["data_folder"],
@@ -163,7 +166,7 @@ def roc_plots(
     model_path: str,
     output_folder: str,
     file_name: str = "roc_curve.pdf",
-) -> Union[tuple, None]: 
+) -> Union[tuple, None]:
     """Plot the ROC of the vqc predictions.
 
     Args:
@@ -172,7 +175,7 @@ def roc_plots(
         target: Target corresponding to the data of shape (kfolds, n_test,).
         model_path: Path to a trained model.
         output_folder: Name of the output folder to save the plots in.
-    
+
     Returns: The mean the std of the AUC of the model or None if the method is used
              for computing the ROCs and AUC of individual features.
     """
@@ -190,10 +193,15 @@ def roc_plots(
 
     if file_name == "roc_curve.pdf":  # To not print n_feature times for latent rocs
         print(tcols.OKCYAN + f"ROC plots were saved to {plots_folder}." + tcols.ENDC)
-        print("\nMean AUC accross the folds: " 
-              + tcols.BOLD + f"{mean_auc:.3f} ± {std_auc:.3f}" + tcols.ENDC)
+        print(
+            "\nMean AUC accross the folds: "
+            + tcols.BOLD
+            + f"{mean_auc:.3f} ± {std_auc:.3f}"
+            + tcols.ENDC
+        )
         return mean_auc, std_auc
     return None
+
 
 def compute_auc(scores: np.array, targets: np.array) -> Tuple:
     """Compute the AUC for each prediction array, and then calculate the mean and

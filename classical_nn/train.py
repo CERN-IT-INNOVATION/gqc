@@ -8,9 +8,11 @@ import os
 import argparse
 
 import sys
+
 sys.path.append("..")
 
 import torch
+
 seed = 1234567890
 torch.manual_seed(seed)
 

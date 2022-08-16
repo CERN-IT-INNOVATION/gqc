@@ -7,7 +7,7 @@ import sys
 sys.path.append("..")
 import time
 import argparse
-from typing import Tuple
+from typing import Tuple, Union
 
 import matplotlib.pyplot as plt
 from sklearn import metrics
@@ -55,13 +55,15 @@ def main(args: dict):
     test_preds = np.array([model.predict(x)[-1].squeeze() for x in x_test])
 
     model_dir = os.path.dirname(args["nn_model_path"])
-    roc_plots(test_preds, y_test, model_dir, "roc_plot")
+    auc = roc_plots(test_preds, y_test, model_dir, "roc_plot")
 
     x_test_sig, x_test_bkg = qdata.ae_data.split_sig_bkg(x_test, y_test)
     sig = model.predict(x_test_sig)
     bkg = model.predict(x_test_bkg)
     latent_roc_plot(sig, bkg, model_dir, "latent_plots")
     sig_vs_bkg(sig[0], bkg[0], args["nn_model_path"], "latent_plots")
+
+    return auc
 
 
 def latent_roc_plot(sig: np.ndarray, bkg: np.ndarray, dir: str, name: str):
@@ -161,7 +163,7 @@ def roc_plots(
     model_path: str,
     output_folder: str,
     file_name: str = "roc_curve.pdf",
-):
+) -> Union[tuple, None]: 
     """Plot the ROC of the vqc predictions.
 
     Args:
@@ -170,6 +172,9 @@ def roc_plots(
         target: Target corresponding to the data of shape (kfolds, n_test,).
         model_path: Path to a trained model.
         output_folder: Name of the output folder to save the plots in.
+    
+    Returns: The mean the std of the AUC of the model or None if the method is used
+             for computing the ROCs and AUC of individual features.
     """
     plots_folder = make_plots_output_folder(model_path, output_folder)
     set_plotting_misc()
@@ -185,7 +190,10 @@ def roc_plots(
 
     if file_name == "roc_curve.pdf":  # To not print n_feature times for latent rocs
         print(tcols.OKCYAN + f"ROC plots were saved to {plots_folder}." + tcols.ENDC)
-
+        print("\nMean AUC accross the folds: " 
+              + tcols.BOLD + f"{mean_auc:.3f} ± {std_auc:.3f}" + tcols.ENDC)
+        return mean_auc, std_auc
+    return None
 
 def compute_auc(scores: np.array, targets: np.array) -> Tuple:
     """Compute the AUC for each prediction array, and then calculate the mean and

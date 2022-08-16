@@ -5,6 +5,7 @@
 import sys
 sys.path.append("..")
 import argparse
+from typing import List, Tuple
 
 from vqc_pennylane.terminal_colors import tcols
 import train 
@@ -12,18 +13,38 @@ import test
 
 def main():
     args_train, args_test, learning_rate_space, batch_size_space = get_arguments()
-    original_outdir = args_train["outdir"]
-    print(tcols.BOLD + tcols.HEADER + "\nGrid search "
-          f"for batch_size = {batch_size_space} and "
-          f"learning_rate = {learning_rate_space}" + tcols.ENDC)
-    
+    original_outdir, best_perf = init_perf_eval(args_train, learning_rate_space, batch_size_space)    
+    final_best_perf = run_grid_search(args_train, args_test, learning_rate_space, batch_size_space, original_outdir, best_perf)
+    print_results(final_best_perf)
+
+
+def print_results(final_best_perf: dict):
+    """Prints the results of the grid search."""
+    print("\n\n" + tcols.SPARKS + tcols.UNDERLINE, end="")
+    print(" Best performing model " + tcols.ENDC + tcols.SPARKS)
+    print(f"AUC: {final_best_perf['auc']:.3f} ± {final_best_perf['std']:.3f}")
+    print("Saved in: " + tcols.BOLD + f"{final_best_perf['model_folder']}/ " 
+          + tcols.ENDC + tcols.ROCKET + "\n")
+
+def run_grid_search(args_train, args_test, learning_rate_space, batch_size_space, original_outdir, best_perf):
     for batch_size in batch_size_space:
         for lr in learning_rate_space:
             print(tcols.BOLD + tcols.UNDERLINE + f"\nTraining and testing for "
                   f"batch_size = {batch_size} & learning_rate = {lr}" + tcols.ENDC)
             update_hpars(args_train, args_test, batch_size, lr, original_outdir)
             train.main(args_train)
-            test.main(args_test)
+            auc = test.main(args_test)
+            check_best_performance(auc[0], auc[1], best_perf, args_train["outdir"])
+    return best_perf
+
+
+def check_best_performance(auc: float, std: float, best_perf: dict, outdir: str):
+    """Check best performing model according to its AUC value."""
+    if best_perf["auc"] < auc: 
+        print(tcols.OKBLUE + f"Found new best AUC: {auc:.3f} ± {std:.3f}" + tcols.ENDC)
+        print(f"Current best model saved in {outdir}")
+        best_perf.update({"auc": auc, "std": std, "model_folder": outdir})
+    # TODO record the AUC and std along with the model path in a .log file.
 
 
 def update_hpars(args_train: dict, args_test: dict, batch_size: int, lr: float, 
@@ -48,6 +69,21 @@ def update_hpars(args_train: dict, args_test: dict, batch_size: int, lr: float,
     args_train.update(new_hpars)
     args_test.update({"nn_model_path": "trained_nns/" + new_outdir + "/best_model.pt"})
 
+def init_perf_eval(args_train: dict, learning_rate_space: List[float], batch_size_space: List[int] ) -> Tuple[str, dict]:
+    """Declare and initialise the best performing model variables: AUC and std values
+    and directory in which the best model is saved. These variables will be updated
+    during the grid search to identify the best performing model.
+
+    Args: TODO
+
+    Returns: TODO
+    """
+    original_outdir = args_train["outdir"]
+    best_perf = {"auc": -999, "std": -999, "model_folder": None}
+    print(tcols.BOLD + tcols.HEADER + "\nGrid search "
+          f"for batch_size = {batch_size_space} and "
+          f"learning_rate = {learning_rate_space}" + tcols.ENDC)
+    return original_outdir, best_perf
 
 def get_arguments():
     """
@@ -115,8 +151,6 @@ def get_arguments():
     args = parser.parse_args()
 
     seed = 12345
-    #batch_size_space = [512, 1024]
-    #learning_rate_space = [0.005, 0.01]
     args_train = {
         "data_folder": args.data_folder,
         "norm": args.norm,

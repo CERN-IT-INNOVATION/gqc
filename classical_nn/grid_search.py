@@ -85,11 +85,11 @@ def run_grid_search(
 
 
 def check_best_performance(auc: float, std: float, best_perf: dict, outdir: str):
-    """Check best performing model according to its AUC value. Update the best 
+    """Check best performing model according to its AUC value. Update the best
     performing model info in a dictionary that contains the AUC and its std along
     with the name of the folder that contains the best performing model.
-    
-    Args: 
+
+    Args:
         auc: The AUC of the current model.
         std: The standard deviation of the model.
         best_perf: The dictionary that contains the previous best performing model
@@ -151,16 +151,19 @@ def init_perf_eval(
     write_log_file(original_outdir)
     return original_outdir, best_perf
 
-def write_log_file(path: str, auc: Tuple[float, float] = None, model_outdir: str = None):
+
+def write_log_file(
+    path: str, auc: Tuple[float, float] = None, model_outdir: str = None
+):
     """Logs the AUC's, the corresponding std's, and the corresponding paths in which
-    the models are saved. If a log file with the same name exists, it will be 
+    the models are saved. If a log file with the same name exists, it will be
     overwritten at the beggining of the grid search.
-    
-    Args: 
+
+    Args:
         path: Name prefix of the directories in which the models trained and tested
               through grid search will be saved. E.g., giving `--outdir grid_search`
-              with argparse will produce folders with the prefix `grid_search` of 
-              the form: `grid_search_b<batch_size>_lr<lr>`. The log file will be 
+              with argparse will produce folders with the prefix `grid_search` of
+              the form: `grid_search_b<batch_size>_lr<lr>`. The log file will be
               stored in `trained_nns/grid_search.log`.
         auc: The tuple that contains the AUC and its std for a given model.
         model_outdir: The name of the folder in which the given model is saved.
@@ -168,14 +171,15 @@ def write_log_file(path: str, auc: Tuple[float, float] = None, model_outdir: str
     """
     path = f"trained_nns/{path}.log"
     if auc is None and model_outdir is None:
-         print(f"Creating logging file: {path}")
-         with open(path, 'w') as file:
-             file.write("--- Initialising grid search ---\n\n")
+        print(f"Creating logging file: {path}")
+        with open(path, "w") as file:
+            file.write("--- Initialising grid search ---\n\n")
     else:
-         print("Appending results to log file.")
-         with open(path, 'a') as file:
-             text = f"AUC: {auc[0]:.3f} ± {auc[1]:.3f} | {model_outdir}\n"
-             file.write(text)
+        print("Appending results to log file.")
+        with open(path, "a") as file:
+            text = f"AUC: {auc[0]:.3f} ± {auc[1]:.3f} | {model_outdir}\n"
+            file.write(text)
+
 
 def get_arguments():
     """

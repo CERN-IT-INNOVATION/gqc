@@ -5,11 +5,11 @@
 ./ae_plot --data_folder ../../data/ae_input/ --norm minmax --nevents 7.20e+05 --model_path ./trained_aes/first_run/best_model.pt
 
 # Run the qsvm on the ae latent space. Choose between ideal, noisy simulation and run on hardware for the qsvm training.
-./qsvm_launch --data_folder ../../data/ae_input/ --norm minmax --nevents 7.20e+05 --model_path ../ae_models/variational_final/best_model.pt --backend_name ibmq_guadalupe --run_type noisy --output_folder test --c_param 0.1 --ntrain 500 --nvalid 0 --ntest 100
+./qsvm_launch --data_folder ../../data/ae_input/ --norm minmax --nevents 7.20e+05 --model_path ../trained_aes/variational_final/best_model.pt --backend_name ibmq_guadalupe --run_type noisy --output_folder test --c_param 0.1 --ntrain 500 --nvalid 0 --ntest 100
 
 # Train the (hybrid) VQC and AE models.
-./vqc_train --data_folder ../../data/ae_input/ --norm minmax --nevents 7.20e+05 --model_path ../ae_models/vanilla_final/best_model.pt --output_folder test_hybrid --optimiser adam --epochs 60 --run_type ideal --ntrain 1000 --nvalid 500 --learning_rate 0.002 --batch_size 50 --backend_name none --nqubits 4 --vform_repeats 2 --hybrid --diff_method backprop --class_weight 1
+./vqc_train --data_folder ../../data/ae_input/ --norm minmax --nevents 7.20e+05 --model_path ../trained_aes/vanilla_final/best_model.pt --output_folder test_hybrid --optimiser adam --epochs 60 --run_type ideal --ntrain 1000 --nvalid 500 --learning_rate 0.002 --batch_size 50 --backend_name none --nqubits 4 --vform_repeats 2 --hybrid --diff_method adjoint ideal_dev lightning.qubit --class_weight 1
 
 # Test the (hybrid) VQC and AE models.
-./vqc_test --ae_model_path ../ae_models/vanilla_final/best_model.pt --vqc_path trained_vqcs/test_vqc2/best_model.npy --ntest 1000 --nvalid 1000 --run_type ideal
+./vqc_test --ae_model_path ../traines_aes/vanilla_final/best_model.pt --vqc_path trained_vqcs/test_vqc2/best_model.npy --ntest 1000 --nvalid 1000 --run_type ideal
 

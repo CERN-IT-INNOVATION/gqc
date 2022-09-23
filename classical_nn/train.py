@@ -105,7 +105,7 @@ def get_arguments() -> dict:
         "ae_model_path": args.ae_model_path,
         "ntrain": args.ntrain,
         "nvalid": args.nvalid,
-        "ae_layers": [67, 64, 52, 44, 32, 24, 16, 1],
+        "layers": [67, 64, 52, 44, 32, 24, 16,],
         "batch_size": args.batch_size,
         "lr": args.lr,
         "epochs": args.epochs,

@@ -11,9 +11,6 @@ import geomloss
 from .ae_vanilla import AE_vanilla
 from .terminal_colors import tcols
 
-seed = 100
-torch.manual_seed(seed)
-
 # Diagnosis tools. Enable in case you need.
 torch.autograd.set_detect_anomaly(False)
 torch.autograd.profiler.profile(enabled=False)

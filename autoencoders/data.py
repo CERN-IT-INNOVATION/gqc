@@ -175,7 +175,6 @@ class AE_data:
             pytorch_loader = torch.utils.data.DataLoader(
                 dataset, batch_size=batch_size, shuffle=shuffle, pin_memory=True
             )
-
         return pytorch_loader
 
     @staticmethod

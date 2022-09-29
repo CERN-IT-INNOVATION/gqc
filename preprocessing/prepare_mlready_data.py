@@ -107,15 +107,16 @@ def make_flat_numpy_array(data, is_signal=True) -> np.ndarray:
 
 
 def map_jet_btag_values(data) -> np.ndarray:
-    """
-    Map the jet btag from being 0-10 to being 0 when there are no jets
-    and being one when there are any number of jets.
+    """Map the btag from [0, 1, 2, 3, 4, 5, 6, 7] to [0, 1].
+
+
+
     @data :: Pandas data frame object containing the data.
 
     returns :: The modified pandas data frame object.
     """
     for idx in range(10):
-        data["jets_btag_" + str(idx)] = data[f"jets_btag_{idx}"] > 1
+        data["jets_btag_" + str(idx)] = data[f"jets_btag_{idx}"] >= 1
         data["jets_btag_" + str(idx)] = data[f"jets_btag_{idx}"].astype(float)
 
     return data

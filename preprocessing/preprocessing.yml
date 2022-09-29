@@ -1,4 +1,4 @@
-name: preprocessing
+name: ae_preprocessing
 channels:
   - defaults
 dependencies:

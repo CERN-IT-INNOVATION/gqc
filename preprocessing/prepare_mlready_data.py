@@ -43,7 +43,8 @@ parser.add_argument(
 # Consistent with https://arxiv.org/abs/2104.07692.
 njets = 7
 nleps = 1
-jet_feats = ["pt", "eta", "phi", "en", "px", "py", "pz", "btag"]
+# jet_feats = ["pt", "eta", "phi", "en", "px", "py", "pz", "btag"]
+jet_feats = ["pt", "eta", "phi", "en", "px", "py", "pz"]
 lep_feats = ["pt", "eta", "phi", "en", "px", "py", "pz"]
 met_feats = ["phi", "pt", "px", "py"]
 selection = "nleps == 1 & (nbtags >= 2) & (njets >= 4)"

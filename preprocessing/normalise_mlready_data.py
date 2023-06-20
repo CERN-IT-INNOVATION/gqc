@@ -311,7 +311,7 @@ def varname(index):
         "$p_x$",
         "$p_y$",
         "$p_z$",
-        "btag",
+        # "btag",
     ]
     jet_nvars = len(jet_feats)
     num_jets = 7

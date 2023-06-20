@@ -145,7 +145,7 @@ args = {
     "nvalid": args.nvalid,
     "hybrid": args.hybrid,
     "seed": seed,
-    "ae_layers": [67, 64, 52, 44, 32, 24, 16],
+    "ae_layers": [67, 16],
     "enc_activ": "nn.Sigmoid()", # "nn.Tanh()"
     "dec_activ": "nn.Tanh()",
     "class_weight": args.class_weight,

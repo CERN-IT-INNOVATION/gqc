@@ -21,3 +21,5 @@ lep_feats = ["pt","eta","phi","en","px","py","pz"]
 jet_feats = ["pt","eta","phi","en","px","py","pz","btag"]
 
 Thus, in total, we have 67 features. The .npy file produced in prepare_mlready_data.npy should have 67 columns and nevets rows. These .npy arrays can then be imported into normalise_mlready_dataset.py where they are normalised using different normalisations available in sklearn (and possibly beyond, in the future).
+
+CAREFUL ABOUT btag INCLUSION WHEN PREPROCESSING!!!!

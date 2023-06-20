@@ -20,8 +20,10 @@ def zzfm(nqubits, inputs):
 
     for qpair in list(combinations(range(len(inputs)), 2)):
         pnl.CZ(wires=[qpair[0], qpair[1]])
+        #pnl.CNOT(wires=[qpair[0], qpair[1]])
         pnl.RZ(
             2.0 * (np.pi - inputs[qpair[0]]) * (np.pi - inputs[qpair[1]]),
             wires=qpair[1],
         )
         pnl.CZ(wires=[qpair[0], qpair[1]])
+        #pnl.CNOT(wires=[qpair[0], qpair[1]])

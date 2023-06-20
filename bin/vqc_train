@@ -5,6 +5,7 @@ import sys
 import os
 
 sys.path.append("..")
+os.environ['CXX'] = 'g++'
 
 os.environ["CUDA_VISIBLE_DEVICES"] = "0"
 
@@ -145,6 +146,8 @@ args = {
     "nvalid": args.nvalid,
     "hybrid": args.hybrid,
     "seed": seed,
+    #"ae_layers": [67, 64, 52, 44, 32, 24, 16],
+    #"ae_layers": [60, 52, 44, 32, 24, 16],
     "ae_layers": [67, 16],
     "enc_activ": "nn.Sigmoid()", # "nn.Tanh()"
     "dec_activ": "nn.Tanh()",

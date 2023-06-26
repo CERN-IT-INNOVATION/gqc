@@ -181,7 +181,7 @@ def roc_plots(
     """
     plots_folder = make_plots_output_folder(model_path, output_folder)
     set_plotting_misc()
-    fpr, tpr, mean_auc, std_auc = compute_auc(scores, target)
+    fpr, tpr, mean_auc, std_auc = compute_auc(scores, target, plots_folder)
     fig = plt.figure(figsize=(12, 10))
     roc_plot_misc()
 
@@ -203,7 +203,13 @@ def roc_plots(
     return None
 
 
-def compute_auc(scores: np.array, targets: np.array) -> Tuple:
+def find_nearest(array: np.ndarray, value: float):
+    """Finds the index of the nearest value in an array to a given value."""
+    array = np.asarray(array)
+    return (np.abs(array - value)).argmin()
+
+
+def compute_auc(scores: np.array, targets: np.array, outdir: str) -> Tuple:
     """Compute the AUC for each prediction array, and then calculate the mean and
     stardard deviation of the aucs.
 
@@ -215,11 +221,22 @@ def compute_auc(scores: np.array, targets: np.array) -> Tuple:
         The ROC curve coordiantes, the AUC, and the standard deviation on the AUC.
     """
     aucs = np.array([])
+    fprs_at_tprs = np.array([])
+    tpr_baseline = np.linspace(0.025, 0.99, 100)
+    fold = 0
     for prd, trg in zip(scores, targets):
+        fold += 1
         fpr, tpr, thresholds = metrics.roc_curve(trg, prd)
+        fpr_baseline = np.interp(tpr_baseline, tpr, fpr)
+        fpr_baseline.astype("float32").tofile(os.path.join(outdir, f"fpr_{fold}.dat"))
+        tpr_baseline.astype("float32").tofile(os.path.join(outdir, f"tpr_{fold}.dat"))
+        tpr_idx = find_nearest(tpr, 0.8)
+        fprs_at_tprs = np.append(fprs_at_tprs, fpr[tpr_idx])
         auc = metrics.roc_auc_score(trg, prd)
         aucs = np.append(aucs, auc)
 
+    fprs_at_tprs.astype("float32").tofile(os.path.join(outdir, "fprs_at_tprs.dat"))
+    aucs.astype("float32").tofile(os.path.join(outdir, "aucs.dat"))
     mean_auc = aucs.mean()
     std_auc = aucs.std()
     fpr, tpr, thresholds = metrics.roc_curve(targets.flatten(), scores.flatten())

@@ -264,7 +264,7 @@ def get_arguments():
         "nvalid": args.nvalid,
         #"layers": [67, 64, 52, 44, 32, 24, 16,],
         #"layers": [60, 52, 44, 32, 24, 16,],
-        "layers": [67, 16],
+        "layers": [60, 16],
         "batch_size": args.batch_size,
         "lr": args.lr,
         "epochs": args.epochs,

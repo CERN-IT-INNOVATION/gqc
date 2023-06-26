@@ -177,7 +177,9 @@ def sig_vs_bkg(data_sig, data_bkg, model_path, output_folder):
         plt.legend()
         fig.savefig(plots_folder + "Feature " + str(i) + ".pdf")
         plt.close()
-
+    
+    np.save(plots_folder + "bkg.npy", data_bkg)
+    np.save(plots_folder + "sig.npy", data_sig)
     print(f"Latent plots were saved to {plots_folder}.")
 
 

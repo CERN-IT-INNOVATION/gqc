@@ -4,9 +4,7 @@
 [![License: version](https://img.shields.io/badge/license-MIT-purple?style=flat-square)](https://github.com/QML-HEP/ae_qml/blob/main/LICENSE)
 [![Code style: black](https://img.shields.io/badge/code%20style-black-black?style=flat-square&logo=black)](https://github.com/psf/black)
 
-# AE QML
-
-### Using autoencoders to train quantum machine learning models for Higgs boson identification.
+# Guided Quantum Compression for Higgs Identification
 
 
 ## What is it?

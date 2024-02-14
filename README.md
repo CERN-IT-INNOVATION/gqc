@@ -6,20 +6,8 @@
 
 # Guided Quantum Compression for Higgs Identification
 
-
-## What is it?
-
-Near-term Intermediate Size Quantum (NISQ) devices can only provide a limited
-number of bits for Quantum Machine Learning (QML) algorithms to run on. Feature
-reduction methods need to be applied to larger datasets if they are to be
-processed by QML algorithms. For example, the Quantum Support Vector
-Machine (QSVM) and the Variational Quantum Circuit (VQC) implemented in this
-work take an input that has a maximum dimensionality of 16. However, the
-studied data set has a dimensionality of 67. Thus, different types of
-autoencoders are implemented to reduce the dimensionality of our
-High Energy Physics (HEP) data set (ttHbb). The latent spaces of these
-autoencoders are then given to the QSVM and VQC to train on and their
-performance is benchmarked.
+Many data sets are too complex for currently available quantum computers. Consequently, quantum machine learning applications conventionally resort to dimensionality reduction algorithms, e.g., auto-encoders, before passing data through the quantum models. 
+We show that using a classical auto-encoder as an independent preprocessing step can significantly decrease the classification performance of a quantum machine learning algorithm. To ameliorate this issue, we design an architecture that unifies the preprocessing and quantum classification algorithms into a single trainable model: the guided quantum compression model. The utility of this model is demonstrated by using it to identify the Higgs boson in proton-proton collisions at the LHC, where the conventional approach proves ineffective. Conversely, the guided quantum compression model excels at solving this classification problem, achieving a good accuracy. Additionally, the model developed herein shows better performance compared to the classical benchmark when using only low-level kinematic features.
 
 
 ## Installing Dependencies

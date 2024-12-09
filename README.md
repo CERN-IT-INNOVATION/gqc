@@ -12,7 +12,8 @@ We show that using a classical auto-encoder as an independent preprocessing step
 This repository represents the source code of the following paper [Guided quantum compression for high dimensional data classification](https://iopscience.iop.org/article/10.1088/2632-2153/ad5fdd)
 
 If you plan to use or take part of the code, please cite the usage:
-$@article{Belis_2024,
+```
+@article{Belis_2024,
    title={Guided quantum compression for high dimensional data classification},
    volume={5},
    ISSN={2632-2153},
@@ -23,7 +24,11 @@ $@article{Belis_2024,
    publisher={IOP Publishing},
    author={Belis, Vasilis and Odagiu, Patrick and Grossi, Michele and Reiter, Florentin and Dissertori, Günther and Vallecorsa, Sofia},
    year={2024},
-   month=jul, pages={035010} }$
+   month=jul, pages={035010} }
+```
+
+
+
 
 ## Installing Dependencies
 

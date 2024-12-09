@@ -9,6 +9,21 @@
 Many data sets are too complex for currently available quantum computers. Consequently, quantum machine learning applications conventionally resort to dimensionality reduction algorithms, e.g., auto-encoders, before passing data through the quantum models. 
 We show that using a classical auto-encoder as an independent preprocessing step can significantly decrease the classification performance of a quantum machine learning algorithm. To ameliorate this issue, we design an architecture that unifies the preprocessing and quantum classification algorithms into a single trainable model: the guided quantum compression model. The utility of this model is demonstrated by using it to identify the Higgs boson in proton-proton collisions at the LHC, where the conventional approach proves ineffective. Conversely, the guided quantum compression model excels at solving this classification problem, achieving a good accuracy. Additionally, the model developed herein shows better performance compared to the classical benchmark when using only low-level kinematic features.
 
+This repository represents the source code of the following paper [Guided quantum compression for high dimensional data classification](https://iopscience.iop.org/article/10.1088/2632-2153/ad5fdd)
+
+If you plan to use or take part of the code, please cite the usage:
+$@article{Belis_2024,
+   title={Guided quantum compression for high dimensional data classification},
+   volume={5},
+   ISSN={2632-2153},
+   url={http://dx.doi.org/10.1088/2632-2153/ad5fdd},
+   DOI={10.1088/2632-2153/ad5fdd},
+   number={3},
+   journal={Machine Learning: Science and Technology},
+   publisher={IOP Publishing},
+   author={Belis, Vasilis and Odagiu, Patrick and Grossi, Michele and Reiter, Florentin and Dissertori, Günther and Vallecorsa, Sofia},
+   year={2024},
+   month=jul, pages={035010} }$
 
 ## Installing Dependencies
 
